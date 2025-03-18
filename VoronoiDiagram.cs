@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-public partial class VoronoiDiagram
+public partial class VoronoiDiagram : Node
 {
 	//private int width;
 	//private int height;
@@ -15,25 +15,26 @@ public partial class VoronoiDiagram
 	public Texture2D coloredProMap;
 
 
+	
 
-	//[Export] private Polygon2D[] provincePolygons;
+    //[Export] private Polygon2D[] provincePolygons;
 
-	//private List<Vector2I> borderLines = new List<Vector2I>();
-
-	public List<Vector2I> GetCapitals()
+    //private List<Vector2I> borderLines = new List<Vector2I>();
+   
+    public List<Vector2I> GetCapitals()
 	{
 		return placedCords;
 	}
 	public VoronoiDiagram(int mapsizex, int mapsizey, int numCapitals, List<Vector2I> mapCoords, TileMapLayer tilemaplayer)
 	{
-		this.desiredPointCount = numCapitals;
+        
+        this.desiredPointCount = numCapitals;
 		this.allPossibleCoords = mapCoords;
 		this.tml = tilemaplayer;
 		this.mapSizeX = mapsizex;
 		this.mapSizeY = mapsizey; //tiles
 		GeneratePoints();
 		this.coloredProMap = CreateProvinceMap();
-		
 		
 
 	}
@@ -151,6 +152,7 @@ public partial class VoronoiDiagram
 			}
 		}
 		image.SavePng("C:\\Users\\lyonp\\Desktop\\Images\\file.png");
-		return ImageTexture.CreateFromImage(image);
+		Texture2D rVal = ImageTexture.CreateFromImage(image);
+		return rVal;
 	}
 }

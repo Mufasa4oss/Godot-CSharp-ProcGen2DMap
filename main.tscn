@@ -1,0 +1,39 @@
+[gd_scene load_steps=8 format=3 uid="uid://0hfhleea62dd"]
+
+[ext_resource type="Script" uid="uid://df44kupi16q7n" path="res://Main.cs" id="1_ig7tw"]
+[ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesetTest.tres" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://cwhcbdkbuor5u" path="res://Camera.cs" id="3_h2yge"]
+[ext_resource type="Shader" uid="uid://c7x55l0jlk2iu" path="res://tr.gdshader" id="4_1bvp3"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
+noise_type = 3
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_h2yge"]
+seamless = true
+noise = SubResource("FastNoiseLite_0xm2m")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lquwl"]
+shader = ExtResource("4_1bvp3")
+shader_parameter/screen_texture_size = Vector2(0, 0)
+
+[node name="Main" type="Node2D"]
+z_as_relative = false
+script = ExtResource("1_ig7tw")
+Nht = SubResource("NoiseTexture2D_h2yge")
+
+[node name="0zTileMapLayer" type="TileMapLayer" parent="."]
+z_as_relative = false
+tile_set = ExtResource("2_0xm2m")
+rendering_quadrant_size = 64
+
+[node name="Camera2D" type="Camera2D" parent="."]
+scale = Vector2(0.999742, 1)
+zoom = Vector2(0.1, 0.1)
+position_smoothing_enabled = true
+script = ExtResource("3_h2yge")
+ZoomLimits = Vector2(0.1, 3)
+
+[node name="TextureRect" type="TextureRect" parent="."]
+material = SubResource("ShaderMaterial_lquwl")
+offset_right = 40.0
+offset_bottom = 40.0

@@ -1,17 +1,25 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\GitHub\\KingsOfResource\\",
+  "WorkspaceRootPath": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\github\\kingsofresource\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\mapmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:mapmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\coloredprovincessprite.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:coloredprovincessprite.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\github\\kingsofresource\\provinces.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:provinces.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\voronoidiagram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:voronoidiagram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\github\\kingsofresource\\camera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\camera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:camera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -22,33 +30,58 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Main.cs",
-              "DocumentMoniker": "C:\\GitHub\\KingsOfResource\\Main.cs",
-              "RelativeDocumentMoniker": "Main.cs",
-              "ToolTip": "C:\\GitHub\\KingsOfResource\\Main.cs",
-              "RelativeToolTip": "Main.cs",
-              "ViewState": "AgIAAE4AAAAAAAAAAAAwwF8AAAACAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "ColoredProvincesSprite.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\ColoredProvincesSprite.cs",
+              "RelativeDocumentMoniker": "ColoredProvincesSprite.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\ColoredProvincesSprite.cs",
+              "RelativeToolTip": "ColoredProvincesSprite.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACUAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-17T16:55:37.579Z",
-              "IsPinned": true,
+              "WhenOpened": "2025-03-21T03:53:23.198Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Provinces.cs",
-              "DocumentMoniker": "C:\\GitHub\\KingsOfResource\\Provinces.cs",
-              "RelativeDocumentMoniker": "Provinces.cs",
-              "ToolTip": "C:\\GitHub\\KingsOfResource\\Provinces.cs",
-              "RelativeToolTip": "Provinces.cs",
-              "ViewState": "AgIAAA8AAAAAAAAAAAAcwCUAAAAeAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "Camera.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\Camera.cs",
+              "RelativeDocumentMoniker": "Camera.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\Camera.cs",
+              "RelativeToolTip": "Camera.cs",
+              "ViewState": "AgIAAB8AAAAAAAAAAAAgwC8AAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-18T15:44:22.852Z",
+              "WhenOpened": "2025-03-21T03:04:28.58Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Main.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\Main.cs",
+              "RelativeDocumentMoniker": "Main.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\Main.cs",
+              "RelativeToolTip": "Main.cs",
+              "ViewState": "AgIAAEgAAAAAAAAAAAAAAFwAAAADAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-21T03:51:48.546Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MapManager.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\MapManager.cs",
+              "RelativeDocumentMoniker": "MapManager.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\MapManager.cs",
+              "RelativeToolTip": "MapManager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-21T02:51:57.34Z",
               "EditorCaption": ""
             }
           ]
@@ -59,13 +92,13 @@
       "Orientation": 0,
       "VerticalTabListWidth": 256,
       "FloatingWindowState": {
-        "Id": "77104624-ca16-4700-946f-481f880dd052",
-        "Display": 0,
-        "X": 1609,
-        "Y": 414,
-        "Width": 884,
-        "Height": 971,
-        "WindowState": 0
+        "Id": "116f388a-46a0-4394-98f8-f675081fce6c",
+        "Display": 1,
+        "X": 1,
+        "Y": 1,
+        "Width": 1918,
+        "Height": 1030,
+        "WindowState": 2
       },
       "DocumentGroups": [
         {
@@ -74,15 +107,15 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "Camera.cs",
-              "DocumentMoniker": "C:\\GitHub\\KingsOfResource\\Camera.cs",
-              "RelativeDocumentMoniker": "Camera.cs",
-              "ToolTip": "C:\\GitHub\\KingsOfResource\\Camera.cs",
-              "RelativeToolTip": "Camera.cs",
-              "ViewState": "AgIAABsAAAAAAAAAAAAgwCwAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 3,
+              "Title": "VoronoiDiagram.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\VoronoiDiagram.cs",
+              "RelativeDocumentMoniker": "VoronoiDiagram.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\VoronoiDiagram.cs",
+              "RelativeToolTip": "VoronoiDiagram.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-18T19:45:54.416Z",
+              "WhenOpened": "2025-03-21T02:55:54.308Z",
               "EditorCaption": ""
             }
           ]

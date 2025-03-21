@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class Provinces : Sprite2D
+public partial class ColoredProvincesSprite : Sprite2D
 {
 	private bool isInitialized = false;
 	Sprite2D provinceSprite;
@@ -16,15 +16,15 @@ public partial class Provinces : Sprite2D
 
 		Scale = targetSize / textureSize; // Scale to fit the map
 		Position = targetSize / 2; // Center it
-		//camera = GetNode<Camera2D>("/root/Main/Camera2D");
-		//shader stuff really no idea how it works. But this makes thick black provincial borders
+								   //camera = GetNode<Camera2D>("/root/Main/Camera2D");
+								   //shader stuff really no idea how it works. But this makes thick black provincial borders
 		ShaderMaterial shade = new ShaderMaterial();
 		shade.Shader = ResourceLoader.Load<Shader>("res://tr.gdshader");
 		Material = shade;
 		shade.SetShaderParameter("province_map", Texture);
 		shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));
-		
-		
+		Main.PropertyAssigned -= Main_PropertyAssigned;
+
 	}
 	//configuration
 	public override void _Ready()
@@ -35,13 +35,8 @@ public partial class Provinces : Sprite2D
 
 	private void Main_PropertyAssigned(Texture2D t)
 	{
-		GD.Print("Event triggered");
+		//GD.Print("Event triggered");
 		isInitialized = true;
 		InitializeProvinces(t);
-	}
-
-	public override void _ExitTree()
-	{
-		Main.PropertyAssigned -= Main_PropertyAssigned;
 	}
 }

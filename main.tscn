@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://df44kupi16q7n" path="res://Main.cs" id="1_ig7tw"]
 [ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesetTest.tres" id="2_0xm2m"]
 [ext_resource type="Script" uid="uid://cwhcbdkbuor5u" path="res://Camera.cs" id="3_h2yge"]
-[ext_resource type="Script" uid="uid://dax3qo8iosuny" path="res://Provinces.cs" id="4_1bvp3"]
+[ext_resource type="Script" uid="uid://b0ngrdntkysn3" path="res://ColoredProvincesSprite.cs" id="4_1bvp3"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3

@@ -1,7 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-
+/*Map and ModeView Mode Generation*/
 
 
 public partial class Main : Node2D
@@ -12,19 +12,20 @@ public partial class Main : Node2D
 	Vector2I grassAtlas;
 	Vector2I waterAtlas;
 	Vector2I sandAtlas;
-	
+
 	[Export] NoiseTexture2D Nht;
-	[Export]int numProvinces = 1;
+	[Export] int numProvinces = 1;
 	//[Export] Texture2D coloredProMap;
 	Noise noise;
 	TileMapLayer tml;
+	VoronoiDiagram vD;
 	//TileMapLayer bhl;
 	TextureRect textureRect;
 	private List<Vector2I> mapCoordsLand = new List<Vector2I>();
 
 	public static int MapSizeX = 512;
 	public static int MapSizeY = 512; //in tiles
-	//public event Ree Created;
+									  //public event Ree Created;
 
 	public static event Action<Texture2D> PropertyAssigned;
 	Sprite2D provinceSprite;
@@ -35,7 +36,7 @@ public partial class Main : Node2D
 
 	{
 		//
-		
+
 		//
 
 		noise = Nht.Noise; // noise is set the noise parameter of the NoiseTexture2D Nht.
@@ -63,7 +64,7 @@ public partial class Main : Node2D
 		//_Draw();
 	}
 
-   
+
 
 	public void GenerateWorldNoise(int width, int height)
 	{
@@ -93,17 +94,21 @@ public partial class Main : Node2D
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
 		//Dictionary<string, Vector2I> atlas = bitmaskObj.atlasDict;
 		bitmaskObj.OrientCells();
-		
-		var vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml);
+
+		vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml);
 		var provinceTexture = vD.coloredProMap;
 		PropertyAssigned?.Invoke(provinceTexture);
-
-
-		//Created?.Invoke(); //triggers the event
-		//Province Colored Map is created here
-		//coloredProMap = vD.coloredProMap;
-		////
+		MapManager mapManager = new MapManager(vD, tml);
+		AddChild(mapManager);
 	}
+
+	//MapManager mapManager = new MapManager(vD, tml);
+	
+
+	//Created?.Invoke(); //triggers the event
+	//Province Colored Map is created here
+	//coloredProMap = vD.coloredProMap;
+	////
 }
 		
 	

@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-public partial class VoronoiDiagram : Node
+public partial class VoronoiDiagram
 {
 	//private int width;
 	//private int height;
@@ -13,22 +13,22 @@ public partial class VoronoiDiagram : Node
 	private int mapSizeX;
 	private int mapSizeY;
 	public Texture2D coloredProMap;
+	public Dictionary<Vector2I, Vector2I> provincesDictionary; //key is any coord and the value is the (coords of) closest province center
 
 
-	
 
-    //[Export] private Polygon2D[] provincePolygons;
+	//[Export] private Polygon2D[] provincePolygons;
 
-    //private List<Vector2I> borderLines = new List<Vector2I>();
-   
-    public List<Vector2I> GetCapitals()
+	//private List<Vector2I> borderLines = new List<Vector2I>();
+
+	public List<Vector2I> GetCapitals()
 	{
 		return placedCords;
 	}
 	public VoronoiDiagram(int mapsizex, int mapsizey, int numCapitals, List<Vector2I> mapCoords, TileMapLayer tilemaplayer)
 	{
-        
-        this.desiredPointCount = numCapitals;
+		
+		this.desiredPointCount = numCapitals;
 		this.allPossibleCoords = mapCoords;
 		this.tml = tilemaplayer;
 		this.mapSizeX = mapsizex;
@@ -64,7 +64,7 @@ public partial class VoronoiDiagram : Node
 	}
 
 
-	private Dictionary<Vector2I, Vector2I> getDictionaryOfTilesCapitals() //Currently a brute-force voronoi diagram generation
+	private Dictionary<Vector2I, Vector2I> CreateDictionaryOfTilesCapitals() //Currently a brute-force voronoi diagram generation
 	{
 		Dictionary<Vector2I, Vector2I> coordsProvinceCenter = new Dictionary<Vector2I, Vector2I>(); //key is any coord and the value is the (coords of) closest province center
 
@@ -128,8 +128,8 @@ public partial class VoronoiDiagram : Node
 		int pixelSizeY = mapSizeX;
 		HashSet<Color> colorSet = CreateUniqueColorSet();
 		Image image = Image.CreateEmpty(pixelSizeX, pixelSizeY, false, Image.Format.Rgba8);
-		Dictionary<Vector2I, Vector2I> provinceMap = getDictionaryOfTilesCapitals();
-
+		Dictionary<Vector2I, Vector2I> provinceMap = CreateDictionaryOfTilesCapitals();
+		provincesDictionary = provinceMap;
 		Dictionary<Vector2I, Color> provinceColors = new Dictionary<Vector2I, Color>();
 
 
@@ -151,7 +151,7 @@ public partial class VoronoiDiagram : Node
 				image.SetPixel(tile.X, tile.Y, pc);
 			}
 		}
-		image.SavePng("C:\\Users\\lyonp\\Desktop\\Images\\file.png");
+		//image.SavePng("C:\\Users\\lyonp\\Desktop\\Images\\file.png");
 		Texture2D rVal = ImageTexture.CreateFromImage(image);
 		return rVal;
 	}

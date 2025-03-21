@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\GitHub\\KingsOfResource\\KingsOfResource.csproj": {}
+    "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\KingsOfResource.csproj": {}
   },
   "projects": {
-    "C:\\GitHub\\KingsOfResource\\KingsOfResource.csproj": {
+    "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\KingsOfResource.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\GitHub\\KingsOfResource\\KingsOfResource.csproj",
+        "projectUniqueName": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\KingsOfResource.csproj",
         "projectName": "KingsOfResource",
-        "projectPath": "C:\\GitHub\\KingsOfResource\\KingsOfResource.csproj",
+        "projectPath": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\KingsOfResource.csproj",
         "packagesPath": "C:\\Users\\lyonp\\.nuget\\packages\\",
-        "outputPath": "C:\\GitHub\\KingsOfResource\\.godot\\mono\\temp\\obj\\",
+        "outputPath": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\.godot\\mono\\temp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -26,6 +26,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -44,7 +45,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.100"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -79,7 +80,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.200/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -8,7 +8,7 @@ public partial class VoronoiDiagram
 	//private int height;
 	private int desiredPointCount;
 	private List<Vector2I> allPossibleCoords = new List<Vector2I>(); //coords of all land cells
-	private List<Vector2I> placedCords = new List<Vector2I>(); // all capital coords
+	public List<Vector2I> placedCords = new List<Vector2I>(); // all capital coords
 	private TileMapLayer tml;
 	private int mapSizeX;
 	private int mapSizeY;

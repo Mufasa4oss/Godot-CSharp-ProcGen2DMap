@@ -104,9 +104,10 @@ public partial class Main : Node2D
 		MapManager mapManager = new MapManager(vD, tml);
 		AddChild(mapManager);
 		
+		Line2d borders = new Line2d(tml,MapSizeX,MapSizeY,vD.provincesDictionary,vD.placedCords);
 
 
-	}
+    }
 	
 
 	//MapManager mapManager = new MapManager(vD, tml);

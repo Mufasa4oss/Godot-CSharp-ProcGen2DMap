@@ -46,6 +46,7 @@ texture_region_size = Vector2i(64, 64)
 shader = ExtResource("3_ifacn")
 shader_parameter/time_speed = 1.0
 shader_parameter/wave_strength = 1.0
+shader_parameter/tile_size = Vector2(64, 64)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jsr7x"]
 resource_name = "Grass"

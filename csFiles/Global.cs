@@ -6,7 +6,7 @@ using Godot;
 
 namespace kingsofresource;
 
-public static class MyGlobalClass
+public static class Global
 {
 	static int tileSize = 64;
 	public static HashSet<Vector2> ArrayConvertToWorldCoords(HashSet<Vector2I> tiles)

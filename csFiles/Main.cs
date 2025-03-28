@@ -1,7 +1,11 @@
 using Godot;
+using Godot.NativeInterop;
+using kingsofresource;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using static System.Net.WebRequestMethods;
 /*Map and ModeView Mode Generation*/
 
 
@@ -103,15 +107,38 @@ public partial class Main : Node2D
 		MapTextureCreated?.Invoke(provinceTexture);
 		MapManager mapManager = new MapManager(vD, tml);
 		AddChild(mapManager);
+
+		//AddChild(line);
 		
-		Line2d borders = new Line2d(tml,MapSizeX,MapSizeY,vD.provincesDictionary,vD.placedCords);
 
+		//
+		//var holyDict = vD.provincesDictionary;
+		//var cApital = vD.GetCapitals();
+		var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
+		//new section this draws the borders of the provinces
+		foreach (Vector2I capital in vD.placedCords)
+		{
+			//Line2d line = new Line2d(tml, MapSizeX, MapSizeY, vD.provincesDictionary, vD.placedCords, bitmaskObj);
+			HashSet<Vector2I> borTiles = MyGlobalClass.GetBorderCoords(capital, vD.provincesDictionary);
+			foreach (Vector2I tile in borTiles)
+			{
+				Vector2I atlasCoords = tml.GetCellAtlasCoords(tile);
+				borderLayer.SetCell(tile, 1, atlasCoords);
+				//GD.Print("setting tile here/to: " + tile);
+			}
+			
+		}
+		
+	}
 
-    }
-	
+	/*ShaderMaterial shade = new ShaderMaterial();
+		shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
+		Material = shade;
+		shade.SetShaderParameter("province_map", Texture);
+		shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));.*/
 
 	//MapManager mapManager = new MapManager(vD, tml);
-	
+
 
 	//Created?.Invoke(); //triggers the event
 	//Province Colored Map is created here

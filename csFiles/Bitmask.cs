@@ -24,7 +24,7 @@ public class Bitmask
 		
 	}
 
-	private Vector2I[] GetSurroundingTiles(Vector2I thisTileCoords) //returns a [] of coord values of surrounding tiles
+    private Vector2I[] GetSurroundingTiles(Vector2I thisTileCoords) //returns a [] of coord values of surrounding tiles
 	  {
 		  Vector2I[] surroundingTiles = new Vector2I[8];
 		  surroundingTiles[0] = new Vector2I(thisTileCoords.X - 1, thisTileCoords.Y - 1); // top-left   // 0000 0001
@@ -38,9 +38,9 @@ public class Bitmask
 		return (surroundingTiles);
 	  }
 
-	//broken always returns 0 or -1//rewrite so that it check noise elevation and then passes an appropriate value
+	
 	public int GetBitmaskAllSurroundingTiles(Vector2I tile)//based off of tile we are view we get the bitmasks of every surrounding tile
-	{  // the bitmask is an integer. When coverted to a byte format it looks like so 0010 000. where one represents land. Zero no land
+	{  // the bitmask is an integer. When coverted to a byte format it looks like so 0010 0000. where one represents land. Zero no land
 		int bitmask = 0;// 0000 0000 -topLeft,top,topRight,Left,Right,BottomLeft,Bottom,BottomRight
 		//now we have a map of correct tiles all with sourceIDs assined so I need to loop through every tile and assign tiles based on the surrounding tiles sourceids.
 		Vector2I[] surrTiles = GetSurroundingTiles(tile);

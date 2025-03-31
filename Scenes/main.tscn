@@ -27,6 +27,7 @@ tile_set = ExtResource("2_kry3j")
 rendering_quadrant_size = 64
 
 [node name="BordersLayer" type="TileMapLayer" parent="0zTileMapLayer"]
+visible = false
 tile_set = ExtResource("3_kry3j")
 
 [node name="Camera2D" type="Camera2D" parent="."]

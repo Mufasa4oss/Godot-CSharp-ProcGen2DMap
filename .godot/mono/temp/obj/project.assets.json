@@ -94,11 +94,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\KingsOfResource.csproj",
+      "projectUniqueName": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\kingsofresource\\KingsOfResource.csproj",
       "projectName": "KingsOfResource",
-      "projectPath": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\KingsOfResource.csproj",
+      "projectPath": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\kingsofresource\\KingsOfResource.csproj",
       "packagesPath": "C:\\Users\\lyonp\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\.godot\\mono\\temp\\obj\\",
+      "outputPath": "C:\\Users\\lyonp\\Desktop\\KingsOfResource\\kingsofresource\\.godot\\mono\\temp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

@@ -31,37 +31,23 @@ public static class MyGlobalClass
 			return worldPos;
 		}
 	}
-	public static System.Collections.Generic.List<Godot.Vector2I> AllCoordsWithCapital(Vector2I capital, System.Collections.Generic.Dictionary<Godot.Vector2I, Godot.Vector2I> proDict)
-	{
-        List<Vector2I> matchingKeys = proDict
-    .Where(pair => pair.Value == capital)
-    .Select(pair => pair.Key)
-    .ToList();
+	public static Dictionary<Vector2I,List<Vector2I>> AllCoordsWithCapital(Vector2I capital, System.Collections.Generic.Dictionary<Godot.Vector2I, Godot.Vector2I> proDict) // Province coords: Capital coords
+    {
+        Dictionary<Vector2I, List<Vector2I>> matchingKeys = new Dictionary<Vector2I, List<Vector2I>>(); // capital: [all coords associated with this capital]
+        //create a list of all the keys that have the same value
+        List<Vector2I> keys = new List<Vector2I>();
 
+        List<Vector2I> list = (from key in proDict.Keys
+                              where proDict[key] == capital
+                              select key).ToList();
+
+
+        matchingKeys.Add(capital, list);
         // Example: Print all keys that share the same value
         return matchingKeys;
 
     }
-    public static HashSet<Vector2I> GetBorderCoords(Vector2I capital, Dictionary<Vector2I,Vector2I> provincesDictionary)//array of coords is all coords associated with a particular capital which therefore makes up a province
-    {
-        HashSet<Vector2I> borderCoords = new HashSet<Vector2I>();
-        var arrayOfCoords = MyGlobalClass.AllCoordsWithCapital(capital, provincesDictionary);
-
-        foreach (Vector2I coord in arrayOfCoords)
-        {
-            Vector2I[] surroundingTiles = GetSurroundingTiles(coord);
-
-            for (int i = 0; i < surroundingTiles.Length; i++)
-            {
-                if (!arrayOfCoords.Contains(surroundingTiles[i]))
-                {
-                    //if the surrounding tile is not in the array of coords then it is a border tile
-                    borderCoords.Add(coord);
-                }
-            }
-        }
-        return borderCoords;
-    }
+    
     private static Vector2I[] GetSurroundingTiles(Vector2I thisTileCoords) //returns a [] of coord values of surrounding tiles
     {
         Vector2I[] surroundingTiles = new Vector2I[8];

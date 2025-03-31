@@ -37,7 +37,7 @@ public partial class MapManager : TileMapLayer
 			Vector2 mousePosition = tml.GetLocalMousePosition();
 			Dictionary<Vector2I, Vector2I> provincesDictionary = vD.provincesDictionary; //key is any coord and the value is the (coords of) closest province center
 			Vector2I tileCoords = tml.LocalToMap(tml.ToLocal(mousePosition));
-			//GD.Print("tileCoords: " + tileCoords);
+			GD.Print("tileCoords: " + tileCoords);
 			provincesDictionary.TryGetValue(tileCoords, out x);
 			//GD.Print("capital at: " + x);
 		}

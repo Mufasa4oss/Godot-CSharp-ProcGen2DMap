@@ -97,7 +97,7 @@ public partial class Main : Node2D
 				}
 			}
 
-			
+
 		}
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
 		//Dictionary<string, Vector2I> atlas = bitmaskObj.atlasDict;
@@ -109,41 +109,40 @@ public partial class Main : Node2D
 		AddChild(mapManager);
 
 		//AddChild(line);
-		
+
 
 		//
 		//var holyDict = vD.provincesDictionary;
 		//var cApital = vD.GetCapitals();
 		var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
 		//new section this draws the borders of the provinces
-		foreach (Vector2I capital in vD.placedCords)
+
+		Border border = new Border();
+
+		border.GetSurroundingTilesTLRB(vD.placedCords[0]);
+		var listOfBorderTiles = border.GetBorderTiles(vD.placedCords[0], vD.provincesDictionary);
+		GD.Print(listOfBorderTiles.Count);
+		foreach (Vector2I tile in listOfBorderTiles)
 		{
-			//Line2d line = new Line2d(tml, MapSizeX, MapSizeY, vD.provincesDictionary, vD.placedCords, bitmaskObj);
-			HashSet<Vector2I> borTiles = MyGlobalClass.GetBorderCoords(capital, vD.provincesDictionary);
-			foreach (Vector2I tile in borTiles)
-			{
-				Vector2I atlasCoords = tml.GetCellAtlasCoords(tile);
-				borderLayer.SetCell(tile, 1, atlasCoords);
-				//GD.Print("setting tile here/to: " + tile);
-			}
-			
+			GD.Print(tile);
+			tml.SetCell(tile, 1, new Vector2I(6, 1));
 		}
-		
+
+
+
+		/*ShaderMaterial shade = new ShaderMaterial();
+			shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
+			Material = shade;
+			shade.SetShaderParameter("province_map", Texture);
+			shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));.*/
+
+			//MapManager mapManager = new MapManager(vD, tml);
+
+
+			//Created?.Invoke(); //triggers the event
+			//Province Colored Map is created here
+			//coloredProMap = vD.coloredProMap;
+			////
 	}
-
-	/*ShaderMaterial shade = new ShaderMaterial();
-		shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
-		Material = shade;
-		shade.SetShaderParameter("province_map", Texture);
-		shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));.*/
-
-	//MapManager mapManager = new MapManager(vD, tml);
-
-
-	//Created?.Invoke(); //triggers the event
-	//Province Colored Map is created here
-	//coloredProMap = vD.coloredProMap;
-	////
 }
-		
 	

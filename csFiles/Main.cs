@@ -26,7 +26,7 @@ public partial class Main : Node2D
 	VoronoiDiagram vD;
 	//TileMapLayer bhl;
 	TextureRect textureRect;
-	private List<Vector2I> mapCoordsLand = new List<Vector2I>();
+	private List<Vector2I> mapCoordsLand = new List<Vector2I>();//coords of all placed tiles not water
 
 	public static int MapSizeX = 512;
 	public static int MapSizeY = 512; //in tiles
@@ -116,17 +116,9 @@ public partial class Main : Node2D
 		//var cApital = vD.GetCapitals();
 		var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
 		//new section this draws the borders of the provinces
+		//var borderTileImage = ResourceLoader.Load<Texture2D>("res://Images/35%_OpacityBlack.png");
 
-		Border border = new Border();
-
-		border.GetSurroundingTilesTLRB(vD.placedCords[0]);
-		var listOfBorderTiles = border.GetBorderTiles(vD.placedCords[0], vD.provincesDictionary);
-		GD.Print(listOfBorderTiles.Count);
-		foreach (Vector2I tile in listOfBorderTiles)
-		{
-			GD.Print(tile);
-			tml.SetCell(tile, 1, new Vector2I(6, 1));
-		}
+		
 
 
 

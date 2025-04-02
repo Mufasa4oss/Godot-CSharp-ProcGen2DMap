@@ -2,13 +2,14 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using kingsofresource;
 
 public partial class MapManager : TileMapLayer
 {
 	private VoronoiDiagram vD;
 	private TileMapLayer tml;
 	private Sprite2D provinces;
-	
+	private HashSet<Vector2I> previousTiles = null;
 	public MapManager(VoronoiDiagram vD, TileMapLayer tml)
 	{
 		this.vD = vD;
@@ -33,13 +34,29 @@ public partial class MapManager : TileMapLayer
 			 // Prevent input handling if not yet initialized
 		if (Input.IsActionJustPressed("LeftClick"))
 		{
-			Vector2I x;
+			if (previousTiles != null)
+			{
+				//GD.Print(previousTiles.Count);
+				foreach (Vector2I tile in previousTiles)
+				{
+					var atlasCoords = tml.GetCellAtlasCoords(tile);
+					tml.SetCell(tile, 2, atlasCoords);
+				}
+			}
+			Vector2I capital;
 			Vector2 mousePosition = tml.GetLocalMousePosition();
 			Dictionary<Vector2I, Vector2I> provincesDictionary = vD.provincesDictionary; //key is any coord and the value is the (coords of) closest province center
 			Vector2I tileCoords = tml.LocalToMap(tml.ToLocal(mousePosition));
-			GD.Print("tileCoords: " + tileCoords);
-			provincesDictionary.TryGetValue(tileCoords, out x);
-			//GD.Print("capital at: " + x);
+			provincesDictionary.TryGetValue(tileCoords, out capital);
+			Dictionary<Vector2I,HashSet<Vector2I>> allCoords = MyGlobalClass.AllCoordsWithCapital(capital, provincesDictionary); //capital:[allcordswithcapital]
+			//Material material = ResourceLoader.Load<ShaderMaterial>("res://Shaders/BorderGlowEffect.tres");
+
+			foreach(Vector2I tile in allCoords[capital])
+			{
+				var atlasCoords = tml.GetCellAtlasCoords(tile);
+				tml.SetCell(tile,4,atlasCoords);
+				previousTiles = allCoords[capital];
+			}
 		}
 		if (Input.IsActionJustPressed("QPressed"))
 		{

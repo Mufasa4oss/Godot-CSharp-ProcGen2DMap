@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://0hfhleea62dd"]
+[gd_scene load_steps=9 format=3 uid="uid://0hfhleea62dd"]
 
 [ext_resource type="Script" uid="uid://df44kupi16q7n" path="res://csFiles/Main.cs" id="1_jjvhh"]
 [ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesets/tilesetTest.tres" id="2_kry3j"]
 [ext_resource type="Script" uid="uid://cwhcbdkbuor5u" path="res://csFiles/Camera.cs" id="3_21xkr"]
 [ext_resource type="TileSet" uid="uid://dx55c1nn6ogax" path="res://tilesets/BorderHighlight.tres" id="3_kry3j"]
 [ext_resource type="Script" uid="uid://b0ngrdntkysn3" path="res://csFiles/ColoredProvincesSprite.cs" id="4_6bp64"]
+[ext_resource type="Script" uid="uid://dvwfmpswuy84h" path="res://Scenes/UI.cs" id="6_21xkr"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3
@@ -40,3 +41,20 @@ ZoomLimits = Vector2(0.1, 3)
 visible = false
 z_index = 1
 script = ExtResource("4_6bp64")
+
+[node name="Control" type="Control" parent="."]
+z_index = 2
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="BoxContainer" type="BoxContainer" parent="Control"]
+offset_right = 53.0
+offset_bottom = 40.0
+tooltip_text = "box"
+script = ExtResource("6_21xkr")
+
+[node name="Button" type="Button" parent="Control/BoxContainer"]
+layout_mode = 2
+text = "Hello!"

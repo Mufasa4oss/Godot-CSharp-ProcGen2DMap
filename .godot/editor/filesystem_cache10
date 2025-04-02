@@ -1,16 +1,16 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1743534159
+::res://::1743609183
 README.md::TextFile/TextFile::-1::1743428034::0::1::::<><><>0<>0<><>::
 storm.txt::TextFile/TextFile::-1::1743428034::0::1::::<><><>0<>0<><>::
 vert.gdshader::Shader/Shader::1261454771326792211::1743428034::0::1::::<><><>0<>0<><>::
-::res://csFiles/::1743534149
+::res://csFiles/::1743535122
 Bitmask.cs::CSharpScript/CSharpScript::1696572828558220517::1743428034::0::1::::<><><>0<>0<><>::
-Border.cs::CSharpScript::6917468996357983201::1743533873::0::1::::<>Line2D<><>0<>0<><>::
+Border.cs::CSharpScript::6917468996357983201::1743534288::0::1::::<>Line2D<><>0<>0<><>::
 Camera.cs::CSharpScript::6331569964571598500::1743428034::0::1::::<>Camera2D<><>0<>0<><>::
 ColoredProvincesSprite.cs::CSharpScript::4168373524429778590::1743428034::0::1::::<>Sprite2D<><>0<>0<><>::
-Main.cs::CSharpScript::7571852948905010277::1743534149::0::1::::<>Node2D<><>0<>0<><>::
+Main.cs::CSharpScript::7571852948905010277::1743535122::0::1::::<>Node2D<><>0<>0<><>::
 MapManager.cs::CSharpScript::3222048960674134358::1743428034::0::1::::<>TileMapLayer<><>0<>0<><>::
-MyGlobalClass.cs::CSharpScript::4858446792307862418::1743532388::0::1::::<><><>0<>0<><>::
+MyGlobalClass.cs::CSharpScript/CSharpScript::4858446792307862418::1743532388::0::1::::<><><>0<>0<><>::
 VoronoiDiagram.cs::CSharpScript/CSharpScript::6729969354824036409::1743428034::0::1::::<><><>0<>0<><>::
 ::res://Images/::1743432299
 35%_OpacityBlack.png::CompressedTexture2D/CompressedTexture2D::2359822777159892635::1743428034::1743432299::1::::<><><>0<>0<>18c0dadcb2f6f94468589f7344ee10ed<>res://.godot/imported/35%_OpacityBlack.png-c7ea870733d452573d442aad7882800e.ctex::
@@ -22,15 +22,15 @@ icon.svg::CompressedTexture2D/CompressedTexture2D::7524820621361881682::17434280
 texture13.png::CompressedTexture2D/CompressedTexture2D::7297193074961827034::1743428034::1743432299::1::::<><><>0<>0<>31ec894b903ac2d7289f7e420a212813<>res://.godot/imported/texture13.png-8dcffd99017aaae5cee50012f45eddb1.ctex::
 texture13b.png::CompressedTexture2D/CompressedTexture2D::1499464579753399381::1743428034::1743432299::1::::<><><>0<>0<>7f5e3b250a01d69e457824605ff239ee<>res://.godot/imported/texture13b.png-24940aa33df67f21b259323d9c778df9.ctex::
 texture13c.png::CompressedTexture2D/CompressedTexture2D::6078770114874353803::1743428034::1743432299::1::::<><><>0<>0<>34c298138fe2540dbbb450a654a33999<>res://.godot/imported/texture13c.png-6d202e9b89a55bbac7163234779d5739.ctex::
-::res://Scenes/::1743533317
-main.tscn::PackedScene::1769488404869455309::1743533317::0::1::::<><><>0<>0<><>::uid://df44kupi16q7n::::res://csFiles/Main.cs<>uid://dhpknl1krdn23::::res://tilesets/tilesetTest.tres<>uid://cwhcbdkbuor5u::::res://csFiles/Camera.cs<>uid://dx55c1nn6ogax::::res://tilesets/BorderHighlight.tres<>uid://b0ngrdntkysn3::::res://csFiles/ColoredProvincesSprite.cs
-::res://Shaders/::1743533651
-BorderGlow.gdshader::Shader::3482288847951074972::1743533651::0::1::::<><><>0<>0<><>::
+::res://Scenes/::1743535140
+main.tscn::PackedScene::1769488404869455309::1743535140::0::1::::<><><>0<>0<><>::uid://df44kupi16q7n::::res://csFiles/Main.cs<>uid://dhpknl1krdn23::::res://tilesets/tilesetTest.tres<>uid://cwhcbdkbuor5u::::res://csFiles/Camera.cs<>uid://dx55c1nn6ogax::::res://tilesets/BorderHighlight.tres<>uid://b0ngrdntkysn3::::res://csFiles/ColoredProvincesSprite.cs
+::res://Shaders/::1743535215
+BorderGlow.gdshader::Shader::3482288847951074972::1743535215::0::1::::<><><>0<>0<><>::
 BorderGlowEffect.tres::ShaderMaterial/ShaderMaterial::1119422237748574700::1743428034::0::1::::<><><>0<>0<><>::uid://bpu312tpdawwi::::res://Shaders/BorderGlow.gdshader
-tr.gdshader::Shader::7068240752547759088::1743533651::0::1::::<><><>0<>0<><>::
-::res://tilesets/::1743531988
-BorderHighlight.tres::TileSet::8837363255068850287::1743531988::0::1::::<><><>0<>0<><>::uid://8vd63o52ag16::::res://Images/35%_OpacityBlack.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres<>uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png
-tilesetTest.tres::TileSet::7682180626503827022::1743531988::0::1::::<><><>0<>0<><>::uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png<>uid://55o842nsqmkq::::res://Tiny Swords (Update 010)/Terrain/Water/Water.png<>uid://cbbf4o36sw7s0::::res://Images/BetterCastle64.png
+tr.gdshader::Shader::7068240752547759088::1743535215::0::1::::<><><>0<>0<><>::
+::res://tilesets/::1743534398
+BorderHighlight.tres::TileSet::8837363255068850287::1743534398::0::1::::<><><>0<>0<><>::uid://8vd63o52ag16::::res://Images/35%_OpacityBlack.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres<>uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png
+tilesetTest.tres::TileSet::7682180626503827022::1743534398::0::1::::<><><>0<>0<><>::uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png<>uid://55o842nsqmkq::::res://Tiny Swords (Update 010)/Terrain/Water/Water.png<>uid://cbbf4o36sw7s0::::res://Images/BetterCastle64.png
 ::res://Tiny Swords (Update 010)/::1743428034
 ::res://Tiny Swords (Update 010)/Deco/::1743428034
 01.png::CompressedTexture2D/CompressedTexture2D::7083981749985603285::1743428034::1743428034::1::::<><><>0<>0<>294fcd09d357597eb404b4ee0d50640d<>res://.godot/imported/01.png-dbfe14c4e6643a68f65115097eb9e4ee.ctex::

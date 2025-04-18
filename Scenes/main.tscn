@@ -1,11 +1,11 @@
 [gd_scene load_steps=9 format=3 uid="uid://0hfhleea62dd"]
 
-[ext_resource type="Script" uid="uid://df44kupi16q7n" path="res://csFiles/Main.cs" id="1_jjvhh"]
+[ext_resource type="Script" uid="uid://tgfnjdirc5w0" path="res://csFiles/Main.cs" id="1_jjvhh"]
 [ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesets/tilesetTest.tres" id="2_kry3j"]
-[ext_resource type="Script" uid="uid://cwhcbdkbuor5u" path="res://csFiles/Camera.cs" id="3_21xkr"]
+[ext_resource type="Script" uid="uid://mljyfmte7eo0" path="res://csFiles/Camera.cs" id="3_21xkr"]
 [ext_resource type="TileSet" uid="uid://dx55c1nn6ogax" path="res://tilesets/BorderHighlight.tres" id="3_kry3j"]
-[ext_resource type="Script" uid="uid://b0ngrdntkysn3" path="res://csFiles/ColoredProvincesSprite.cs" id="4_6bp64"]
-[ext_resource type="Script" uid="uid://bc6suudvfrky4" path="res://csFiles/UIManager.cs" id="6_21xkr"]
+[ext_resource type="Script" uid="uid://qlx3vw53csji" path="res://csFiles/ColoredProvincesSprite.cs" id="4_6bp64"]
+[ext_resource type="Script" uid="uid://drtpk6f0itqkp" path="res://csFiles/UIManager.cs" id="6_21xkr"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3

@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://cwhcbdkbuor5u" path="res://csFiles/Camera.cs" id="3_21xkr"]
 [ext_resource type="TileSet" uid="uid://dx55c1nn6ogax" path="res://tilesets/BorderHighlight.tres" id="3_kry3j"]
 [ext_resource type="Script" uid="uid://b0ngrdntkysn3" path="res://csFiles/ColoredProvincesSprite.cs" id="4_6bp64"]
-[ext_resource type="Script" uid="uid://dvwfmpswuy84h" path="res://Scenes/UI.cs" id="6_21xkr"]
+[ext_resource type="Script" uid="uid://bc6suudvfrky4" path="res://csFiles/UIManager.cs" id="6_21xkr"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3
@@ -42,19 +42,27 @@ visible = false
 z_index = 1
 script = ExtResource("4_6bp64")
 
-[node name="Control" type="Control" parent="."]
-z_index = 2
+[node name="UIManager" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="BoxContainer" type="BoxContainer" parent="Control"]
-offset_right = 53.0
-offset_bottom = 40.0
-tooltip_text = "box"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
 script = ExtResource("6_21xkr")
 
-[node name="Button" type="Button" parent="Control/BoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="UIManager"]
+layout_mode = 0
+offset_right = 152.0
+offset_bottom = 123.0
+
+[node name="VBox" type="VBoxContainer" parent="UIManager/PanelContainer"]
 layout_mode = 2
-text = "Hello!"
+
+[node name="WoodLabel" type="Label" parent="UIManager/PanelContainer/VBox"]
+layout_mode = 2
+
+[node name="StoneLabel" type="Label" parent="UIManager/PanelContainer/VBox"]
+layout_mode = 2
+
+[node name="GrainLabel" type="Label" parent="UIManager/PanelContainer/VBox"]
+layout_mode = 2

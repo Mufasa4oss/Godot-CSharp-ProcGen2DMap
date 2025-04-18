@@ -1,22 +1,34 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\",
+  "WorkspaceRootPath": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\csfiles\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:csfiles\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\project\\kingsofresource\\csfiles\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|solutionrelative:csfiles\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\csfiles\\border.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:csfiles\\border.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\project\\kingsofresource\\csfiles\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|solutionrelative:csfiles\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\csfiles\\myglobalclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:csfiles\\myglobalclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\project\\kingsofresource\\csfiles\\uimanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|solutionrelative:csfiles\\uimanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\kingsofresource\\csfiles\\voronoidiagram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8B3C299F-06CB-4E34-A9ED-F6E9AB1C007B}|KingsOfResource.csproj|solutionrelative:csfiles\\voronoidiagram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\project\\kingsofresource\\csfiles\\resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|solutionrelative:csfiles\\resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\project\\kingsofresource\\csfiles\\resourceitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|solutionrelative:csfiles\\resourceitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\project\\kingsofresource\\csfiles\\voronoidiagram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|solutionrelative:csfiles\\voronoidiagram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|c:\\users\\lyonp\\desktop\\project\\kingsofresource\\csfiles\\mapmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{44876BF8-4252-44AC-AE86-0AC1DB437AD8}|KingsOfResource.csproj|solutionrelative:csfiles\\mapmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,59 +38,97 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "VoronoiDiagram.cs",
-              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\VoronoiDiagram.cs",
-              "RelativeDocumentMoniker": "csFiles\\VoronoiDiagram.cs",
-              "ToolTip": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\VoronoiDiagram.cs",
-              "RelativeToolTip": "csFiles\\VoronoiDiagram.cs",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAABMAAAAxAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-27T23:56:40.851Z",
-              "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "MyGlobalClass.cs",
-              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\MyGlobalClass.cs",
-              "RelativeDocumentMoniker": "csFiles\\MyGlobalClass.cs",
-              "ToolTip": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\MyGlobalClass.cs",
-              "RelativeToolTip": "csFiles\\MyGlobalClass.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAC0AAAAhAAAAAAAAAA==",
+              "Title": "UIManager.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\UIManager.cs",
+              "RelativeDocumentMoniker": "csFiles\\UIManager.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\UIManager.cs",
+              "RelativeToolTip": "csFiles\\UIManager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAoAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-29T18:34:40.155Z",
+              "WhenOpened": "2025-04-18T17:43:45.235Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Border.cs",
-              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\Border.cs",
-              "RelativeDocumentMoniker": "csFiles\\Border.cs",
-              "ToolTip": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\Border.cs",
-              "RelativeToolTip": "csFiles\\Border.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAAAgwHcAAAACAAAAAAAAAA==",
+              "DocumentIndex": 5,
+              "Title": "VoronoiDiagram.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\VoronoiDiagram.cs",
+              "RelativeDocumentMoniker": "csFiles\\VoronoiDiagram.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\VoronoiDiagram.cs",
+              "RelativeToolTip": "csFiles\\VoronoiDiagram.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAgwAkAAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-29T18:30:36.371Z",
+              "WhenOpened": "2025-04-18T17:21:55.335Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "MapManager.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\MapManager.cs",
+              "RelativeDocumentMoniker": "csFiles\\MapManager.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\MapManager.cs",
+              "RelativeToolTip": "csFiles\\MapManager.cs",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAqwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-18T17:19:12.158Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ResourceItem.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\ResourceItem.cs",
+              "RelativeDocumentMoniker": "csFiles\\ResourceItem.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\ResourceItem.cs",
+              "RelativeToolTip": "csFiles\\ResourceItem.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-18T17:10:43.858Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Main.cs",
-              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\Main.cs",
-              "RelativeDocumentMoniker": "csFiles\\Main.cs",
-              "ToolTip": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\csFiles\\Main.cs",
-              "RelativeToolTip": "csFiles\\Main.cs",
-              "ViewState": "AgIAAGoAAAAAAAAAAAAAAHgAAAACAAAAAAAAAA==",
+              "Title": "TickManager.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\TickManager.cs",
+              "RelativeDocumentMoniker": "csFiles\\TickManager.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\TickManager.cs",
+              "RelativeToolTip": "csFiles\\TickManager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-27T22:05:23.997Z",
+              "WhenOpened": "2025-04-18T16:18:48.45Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ResourceManager.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\ResourceManager.cs",
+              "RelativeDocumentMoniker": "csFiles\\ResourceManager.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\ResourceManager.cs",
+              "RelativeToolTip": "csFiles\\ResourceManager.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAACwAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-18T16:08:29.481Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Main.cs",
+              "DocumentMoniker": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\Main.cs",
+              "RelativeDocumentMoniker": "csFiles\\Main.cs",
+              "ToolTip": "C:\\Users\\lyonp\\Desktop\\Project\\kingsofresource\\csFiles\\Main.cs",
+              "RelativeToolTip": "csFiles\\Main.cs",
+              "ViewState": "AgIAAH4AAAAAAAAAAAASwJkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-18T16:00:47.639Z",
               "EditorCaption": ""
             }
           ]

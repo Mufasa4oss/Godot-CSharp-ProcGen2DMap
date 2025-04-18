@@ -17,7 +17,7 @@ public partial class Main : Node2D
 	Vector2I grassAtlas;
 	Vector2I waterAtlas;
 	Vector2I sandAtlas;
-
+	TickManager tickManager;
 	[Export] NoiseTexture2D Nht;
 	[Export] int numProvinces = 1;
 	//[Export] Texture2D coloredProMap;
@@ -31,7 +31,7 @@ public partial class Main : Node2D
 	public static int MapSizeX = 512;
 	public static int MapSizeY = 512; //in tiles
 									  //public event Ree Created;
-
+	UIManager control;
 	public static event Action<Texture2D> MapTextureCreated; //event that is triggered when the property is assigned this is a delgate auto defined returns null one arguement
 	public static event Action ProvincesSceneInitalized;
 	Sprite2D provinceSprite;
@@ -49,28 +49,17 @@ public partial class Main : Node2D
 
 		Nht.Height = MapSizeY;
 		Nht.Width = MapSizeX;
-		// h = Nht.Height; //gets the noise textures dimensions
-		//w = Nht.Width;
 
 		tml = GetNode<TileMapLayer>("0zTileMapLayer");
-		//textureRect = GetNode<TextureRect>("TextureRect");
-
-		//bhl = GetNode<TileMapLayer>("BorderHighlightLayer");
-
-		//var viewportSize = GetViewport().GetVisibleRect().Size;
-		//Vector2I tileSize = tml.TileSet.TileSize;
-		//Camera2D c = GetNode<Camera2D>("Camera2D");
-		//c.Align();
-		//MapSizeX = 512; // this value represents the number of cells created
-		//MapSizeY = 512;
-		//GD.Print(viewportSize);
-
+		control = GetNode<UIManager>("UIManager");
 		GenerateWorldNoise(Nht.Width, Nht.Height);
 
 		//_Draw();
 	}
 
-
+	/// <summary>
+	/// ////////////
+	/// </summary>
 
 	public void GenerateWorldNoise(int width, int height)
 	{
@@ -99,6 +88,10 @@ public partial class Main : Node2D
 
 
 		}
+
+
+
+
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
 		//Dictionary<string, Vector2I> atlas = bitmaskObj.atlasDict;
 		bitmaskObj.OrientCells();
@@ -118,23 +111,68 @@ public partial class Main : Node2D
 		//new section this draws the borders of the provinces
 		//var borderTileImage = ResourceLoader.Load<Texture2D>("res://Images/35%_OpacityBlack.png");
 
+
+		var capitalResources = initCapitalResource();
+		ResourceManager resourceManager = new ResourceManager(capitalResources);
 		
-
-
-
-		/*ShaderMaterial shade = new ShaderMaterial();
-			shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
-			Material = shade;
-			shade.SetShaderParameter("province_map", Texture);
-			shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));.*/
-
-			//MapManager mapManager = new MapManager(vD, tml);
-
-
-			//Created?.Invoke(); //triggers the event
-			//Province Colored Map is created here
-			//coloredProMap = vD.coloredProMap;
-			////
+		tickManager = new TickManager(resourceManager,vD.placedCords, control);
+		//Control control = GetNode<Control>("UIManager");
 	}
-}
+	/// <summary>
+	/// /////////////////////////////////
+	/// </summary>
 	
+	private Dictionary<Vector2I, ResourceItem> initCapitalResource()
+	{
+		RandomNumberGenerator rng = new RandomNumberGenerator();
+		Dictionary<Vector2I, ResourceItem> capitalsResources = new Dictionary<Vector2I, ResourceItem>();
+		foreach (Vector2I capital in vD.placedCords)
+		{
+			float distro = rng.Randf(); //random number between 0 and 1
+			if (distro < 0.33f)
+			{
+				ResourceItem resourceItem = new ResourceItem(0, "Wood", 1);
+				capitalsResources.Add(capital, resourceItem);
+			}
+			else if (distro < 0.66f)
+			{
+				ResourceItem resourceItem = new ResourceItem(0, "Stone", 1);
+				capitalsResources.Add(capital, resourceItem);
+			}
+			else
+			{
+				ResourceItem resourceItem = new ResourceItem(0, "Grain", 1);
+				capitalsResources.Add(capital, resourceItem);
+			}
+		}
+		return capitalsResources;
+	}
+
+	/// <summary>
+	/// /////////////////
+	/// </summary>
+	public override void _Process(double delta)
+	{
+		
+		tickManager.Update((float)delta);
+	}// Update the tick manager with the time since the last frame. Handles time passing
+
+	
+
+
+
+}//EOF
+   
+	/*ShaderMaterial shade = new ShaderMaterial();
+		shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
+		Material = shade;
+		shade.SetShaderParameter("province_map", Texture);
+		shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));.*/
+
+	//MapManager mapManager = new MapManager(vD, tml);
+
+
+	//Created?.Invoke(); //triggers the event
+	//Province Colored Map is created here
+	//coloredProMap = vD.coloredProMap;
+	////

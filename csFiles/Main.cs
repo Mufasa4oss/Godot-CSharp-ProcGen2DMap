@@ -20,7 +20,6 @@ public partial class Main : Node2D
 	TickManager tickManager;
 	[Export] NoiseTexture2D Nht;
 	[Export] int numProvinces = 1;
-	//[Export] Texture2D coloredProMap;
 	Noise noise;
 	TileMapLayer tml;
 	VoronoiDiagram vD;
@@ -53,6 +52,7 @@ public partial class Main : Node2D
 		tml = GetNode<TileMapLayer>("0zTileMapLayer");
 		control = GetNode<UIManager>("UIManager");
 		GenerateWorldNoise(Nht.Width, Nht.Height);
+
 
 		//_Draw();
 	}
@@ -149,8 +149,10 @@ public partial class Main : Node2D
 	}
 
 	/// <summary>
-	/// /////////////////
+	/// ///////////////// Time and Date System Calls
 	/// </summary>
+	
+	
 	public override void _Process(double delta)
 	{
 		
@@ -162,17 +164,3 @@ public partial class Main : Node2D
 
 
 }//EOF
-   
-	/*ShaderMaterial shade = new ShaderMaterial();
-		shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
-		Material = shade;
-		shade.SetShaderParameter("province_map", Texture);
-		shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));.*/
-
-	//MapManager mapManager = new MapManager(vD, tml);
-
-
-	//Created?.Invoke(); //triggers the event
-	//Province Colored Map is created here
-	//coloredProMap = vD.coloredProMap;
-	////

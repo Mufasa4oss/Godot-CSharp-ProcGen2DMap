@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
-
+//Not used//Not used//Not used//Not used//Not used//Not used//Not used
 
 public partial class Border : Line2D
 {
-
+	//Not used
 	//I am thinking more and more that it would just be so much easier overall to just use tilemaps for borders ask Christine to draw fortifications pictures like walls and shit
 
 	public static List<Vector2I> GetBorderTiles(Vector2I capital, Dictionary<Vector2I, Vector2I> provincesDictionary)

@@ -2,23 +2,20 @@ using Godot;
 using System;
 
 using System.Collections.Generic;
-public partial class TickManager : Node
+public class TickManager
 {
 	// Manages tick timing and dispatches updates to everything else
 	 
 	public int currentTick = 0;
-	public float tickInterval = 1.0f; // Time in seconds between ticks 
+	public float tickInterval = 1.0f /30.0f; // Time in seconds between ticks 
 	public float tickTimer = 0.0f; // Timer to track elapsed time
+
 	ResourceManager rm; // passed by reference from the main scene
 	UIManager uiManager; // passed by reference from the main.cs
 	List<Vector2I> capitals; // List of capitals to manage resources for
+	GameTime gameTime = new GameTime();
 	// Constructor
-	public override void _Ready()
-	{
-		//uiManager = GetTree().Root.FindChild("UIManager", true); // Get the UIManager node from the scene tree
-		//var test = GetNodeOrNull<UIManager>("UIManager"); // Get the ResourceManager node from the scene tree
-		//GD.Print(test); // Print the current tick number
-	}
+	
 
 	//constructor
 	public TickManager(ResourceManager rm, List<Vector2I> capitals, UIManager control )
@@ -37,21 +34,28 @@ public partial class TickManager : Node
 		if (tickTimer >= tickInterval)
 		{
 			currentTick++; // Increment the tick count
-			tickTimer = 0.0f; // Reset the timer
-			GD.Print("Tick: " + currentTick); // Print the current tick number
-		}
-		//rm.UpdateQuantityForCapital(); // Call the UpdateQuantity method on the ResourceManager instance
-							 //rm.UpdateQuantity(); // Update the resource quantities for every capital
+			tickTimer -= tickInterval; // Reset the timer
+									   //test
+			if (currentTick % 30 == 0) // when current tick is fully divisible by 30. AKA no remainder when divided. Then one second has passed
+			{
+				foreach (Vector2I capital in capitals)
+				{
+					rm.UpdateQuantityForCapital(capital); // Update the resource quantity for each capital
+				}
 
-		foreach (Vector2I capital in capitals)
-		{
-			rm.UpdateQuantityForCapital(capital); // Update the resource quantity for each capital
+				var temp = capitals[0];
+				var resourceItem = rm.GetResourceItem(temp);
+				var quantity = rm.GetResourceQuantity(temp);
+				uiManager.UpdateResourceDisplayAll(quantity, quantity, quantity);
+				GD.Print(gameTime.tickToSecond(currentTick));
+			}
 		}
+		
 
-		var temp = capitals[0];
-		var resourceItem = rm.GetResourceItem(temp); // Get the resource item for the first capital
-		var quantity = rm.GetResourceQuantity(temp); // Get the resource quantity for the first capital
+
 		//GD.Print(uiManager);
-		uiManager.UpdateResourceDisplayAll(quantity, quantity, quantity); // Update the UI with the resource information for the first capital
+
 	}
+
+	
 }

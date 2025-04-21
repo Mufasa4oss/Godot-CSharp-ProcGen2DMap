@@ -42,7 +42,7 @@ public class Bitmask
 	public int GetBitmaskAllSurroundingTiles(Vector2I tile)//based off of tile we are view we get the bitmasks of every surrounding tile
 	{  // the bitmask is an integer. When coverted to a byte format it looks like so 0010 0000. where one represents land. Zero no land
 		int bitmask = 0;// 0000 0000 -topLeft,top,topRight,Left,Right,BottomLeft,Bottom,BottomRight
-		//now we have a map of correct tiles all with sourceIDs assined so I need to loop through every tile and assign tiles based on the surrounding tiles sourceids.
+		//now we have a map of correct tiles all with sourceIDs assigned so I need to loop through every tile and assign tiles based on the surrounding tiles sourceids.
 		Vector2I[] surrTiles = GetSurroundingTiles(tile);
 		for (int i = 0; i < surrTiles.Length; i++)//order topLeft->top->topRight->Left etc.
 		{
@@ -69,7 +69,7 @@ public class Bitmask
 		return bitmask;
 	}
 	//Builds bitmask dictionary//atlasDict
-	public void BuildBitmaskAtlas()
+	private void BuildBitmaskAtlas() //adds all possible grass tiles to atlas dictionary
 	{
 		//Needs bitmask, Vector2I coords topLeft -> topRight...etc
 		this.atlasDict.Add("topLeft", new Vector2I(0, 0));
@@ -131,7 +131,6 @@ public class Bitmask
 				else // not water
 				{
 					string s = DetermineTileType(bitmask);
-					//bool check = s.Equals("botSpecial");
 					switch (s)
 					{
 						case ("surrounded"): tml.SetCell(current, sid, atlasDict["surrounded"]); break;

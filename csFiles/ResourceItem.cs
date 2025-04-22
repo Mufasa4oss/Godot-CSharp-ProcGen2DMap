@@ -1,7 +1,10 @@
 using Godot;
 using System;
+using System.Runtime.Serialization;
 
-public partial class ResourceItem : Node
+
+
+public partial class ResourceItem : Resource
 {
     public int quantity;
     public string name;
@@ -12,9 +15,8 @@ public partial class ResourceItem : Node
         this.name = name;
         this.rateOfAquistion = roa;
     }
-
-    public override string ToString()
+    public ResourceItem()
     {
-        return $"{name}: {quantity}";
     }
+   
 }

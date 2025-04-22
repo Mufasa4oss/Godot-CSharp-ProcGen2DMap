@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KingsOfResource")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eba9ba9383a8688d908934a1743979715aa293fc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+61d6e5944fe7c07c2732683efd00e5835e70e883")]
 [assembly: System.Reflection.AssemblyProductAttribute("KingsOfResource")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KingsOfResource")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

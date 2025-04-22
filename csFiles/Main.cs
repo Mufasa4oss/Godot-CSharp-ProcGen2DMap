@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using static System.Net.WebRequestMethods;
 /*Map and ModeView Mode Generation*/
 
 
@@ -26,13 +25,13 @@ public partial class Main : Node2D
 	//TileMapLayer bhl;
 	TextureRect textureRect;
 	private List<Vector2I> mapCoordsLand = new List<Vector2I>();//coords of all placed tiles not water
-
+	Dictionary<Vector2I, ResourceItem> capitalResources;
 	public static int MapSizeX = 512;
 	public static int MapSizeY = 512; //in tiles
 									  //public event Ree Created;
 	UIManager control;
 	public static event Action<Texture2D> MapTextureCreated; //event that is triggered when the property is assigned this is a delgate auto defined returns null one arguement
-	public static event Action ProvincesSceneInitalized;
+	//public static event Action ProvincesSceneInitalized;
 	Sprite2D provinceSprite;
 
 	public Main() { }
@@ -51,17 +50,17 @@ public partial class Main : Node2D
 
 		tml = GetNode<TileMapLayer>("0zTileMapLayer");
 		control = GetNode<UIManager>("UIManager");
-		GenerateWorldNoise(Nht.Width, Nht.Height);
-
+		PlaceTiles();
+		CreateObjs();
 
 		//_Draw();
 	}
 
 	/// <summary>
-	/// ////////////
+	/// ////////////World Generation
 	/// </summary>
 
-	public void GenerateWorldNoise(int width, int height)
+	private void PlaceTiles()
 	{
 
 		Vector2I StartingAtlasVector = new Vector2I(0, 0);
@@ -85,82 +84,106 @@ public partial class Main : Node2D
 					//tiles.Append<Vector2I>(currentTile);
 				}
 			}
-
-
 		}
 
+		//metric shitton of object creation warning order matters way too much remade into an objectinstancing method
 
 
+		
 
+		//var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
+	}
+	private void CreateObjs()
+	{
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
 		//Dictionary<string, Vector2I> atlas = bitmaskObj.atlasDict;
 		bitmaskObj.OrientCells();
+		//
 		vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml);
+		//
+		ResourceManager resourceManager = new ResourceManager(vD.placedCords);
+		capitalResources = resourceManager.capitalsResources;
+		//
+		tickManager = new TickManager(resourceManager, vD.placedCords, control);
+		//
+		MapManager mapManager = new MapManager(vD, tml, Nht, numProvinces, tickManager);
+		AddChild(mapManager);
+		//end object creation
+
 		var provinceTexture = vD.coloredProMap;
 		MapTextureCreated?.Invoke(provinceTexture);
-		MapManager mapManager = new MapManager(vD, tml);
-		AddChild(mapManager);
-
-		//AddChild(line);
-
-
-		//
-		//var holyDict = vD.provincesDictionary;
-		//var cApital = vD.GetCapitals();
-		var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
-		//new section this draws the borders of the provinces
-		//var borderTileImage = ResourceLoader.Load<Texture2D>("res://Images/35%_OpacityBlack.png");
-
-
-		var capitalResources = initCapitalResource();
-		ResourceManager resourceManager = new ResourceManager(capitalResources);
-		
-		tickManager = new TickManager(resourceManager,vD.placedCords, control);
-		//Control control = GetNode<Control>("UIManager");
 	}
+
+
 	/// <summary>
-	/// /////////////////////////////////
+	/// ////////////////Resource System rough outline moved to resource manager
 	/// </summary>
+
 	
-	private Dictionary<Vector2I, ResourceItem> initCapitalResource()
-	{
-		RandomNumberGenerator rng = new RandomNumberGenerator();
-		Dictionary<Vector2I, ResourceItem> capitalsResources = new Dictionary<Vector2I, ResourceItem>();
-		foreach (Vector2I capital in vD.placedCords)
-		{
-			float distro = rng.Randf(); //random number between 0 and 1
-			if (distro < 0.33f)
-			{
-				ResourceItem resourceItem = new ResourceItem(0, "Wood", 1);
-				capitalsResources.Add(capital, resourceItem);
-			}
-			else if (distro < 0.66f)
-			{
-				ResourceItem resourceItem = new ResourceItem(0, "Stone", 1);
-				capitalsResources.Add(capital, resourceItem);
-			}
-			else
-			{
-				ResourceItem resourceItem = new ResourceItem(0, "Grain", 1);
-				capitalsResources.Add(capital, resourceItem);
-			}
-		}
-		return capitalsResources;
-	}
 
 	/// <summary>
 	/// ///////////////// Time and Date System Calls
 	/// </summary>
-	
-	
+
+
 	public override void _Process(double delta)
 	{
-		
 		tickManager.Update((float)delta);
 	}// Update the tick manager with the time since the last frame. Handles time passing
 
-	
 
+	///
+	/// /////////// Save & Load
+	/// 
+   
+public void initializeSave()
+	{
+		//tickManager
+		int ct = tickManager.currentTick;
+		float tickInterval = tickManager.tickInterval;
+		float tickTimer = tickManager.tickTimer;
+		//Main Class items needed to recreate Nht NoiseTexture2D! (seed, frequency and everything else that I make customizeable) Rn it is seed, freq, and noiseType = Perlin
+		FastNoiseLite noise = (FastNoiseLite)Nht.Noise;
+		int seed = noise.Seed;
+		float freq = noise.Frequency;
+		String NoiseType = "Perlin";
+		//ResourceManager Class
+		var capitalResourceDictionary = capitalResources; //Dictionary<Vector2I, ResourceItem> Need to figure out how to save complicated types better
+														  //EVERYTHING I am going to save for now just so that I can test loading it.
 
+		GameData data = new GameData("nerd",ct,tickInterval,tickTimer,MapSizeX,MapSizeY,seed,freq,numProvinces,vD.placedCords, capitalResourceDictionary, NoiseType);
+		Serialization.Save(data);
+}
+public void initializeLoad()
+{
+Serialization serial = new Serialization();
+GameData gamedata = serial.Load();
+//GD.Print("Game Data loaded: " + gamedata);
+//pause game first?
+
+//Main Class
+MapSizeX = gamedata.Width;
+MapSizeY = gamedata.Height;
+FastNoiseLite noise = (FastNoiseLite)Nht.Noise;
+noise.Seed = gamedata.Seed;
+noise.Frequency = gamedata.Frequency;
+numProvinces = gamedata.NumProvinces;
+//TickManager Class
+tickManager.currentTick = gamedata.Tick;
+//Resource Manager class
+}
+
+public override void _Input(InputEvent @event)
+{
+if (Input.IsActionJustPressed("f5"))
+{
+	initializeSave();
+}
+		if (Input.IsActionJustPressed("f9"))
+		{
+			initializeLoad();
+		}
+
+	}
 
 }//EOF

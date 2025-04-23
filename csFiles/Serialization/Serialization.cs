@@ -5,7 +5,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-[Serializable]
+
 public class Serialization
 {
 	/* items to save
@@ -16,14 +16,28 @@ public class Serialization
 	 * world len & height
 	 * seed info
 	 */
-	public static string savePath = "C:\\Users\\lyonp\\Desktop\\kingsofresource\\kingsofresource\\TEST\\save.json";
-
+	public static string savePath = "user://Saves//save.json";
+	private static JsonSerializerOptions GetJsonOptions()
+	{
+		return new JsonSerializerOptions
+		{
+			WriteIndented = true,
+			Converters =
+		{
+			new Vector2IConverter(),
+			new ResourceItemConverter(),
+            new DictionaryVector2I_ResourceItemConverter()
+			 // You'll also want this
+			// Add more custom converters if needed
+		}
+		};
+	}
 	public static void Save(GameData data)
 	{
 		try
 		{
-			String json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-			GD.Print(json);
+			String json = JsonSerializer.Serialize(data, GetJsonOptions());
+			//GD.Print(json);
 			using var file = Godot.FileAccess.Open(savePath, Godot.FileAccess.ModeFlags.Write);
 			file.StoreString(json);
 			GD.Print("Save complete");
@@ -44,7 +58,7 @@ public class Serialization
 
 			string fileName = "C:\\Users\\lyonp\\Desktop\\kingsofresource\\kingsofresource\\TEST\\save.json";
 			string json = File.ReadAllText(fileName);
-			GameData data = JsonSerializer.Deserialize<GameData>(json, new JsonSerializerOptions { WriteIndented = true })!;
+			GameData data = JsonSerializer.Deserialize<GameData>(json, GetJsonOptions())!;
 
 			GD.Print("Game loaded.: " + data);
 			return data;

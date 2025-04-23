@@ -6,9 +6,9 @@ using System.Runtime.Serialization;
 
 public partial class ResourceItem : Resource
 {
-    public int quantity;
-    public string name;
-    public int rateOfAquistion; //rate of aquisition per tick
+    public int quantity { get; set; }
+    public string name { get; set; }
+    public int rateOfAquistion { get; set; } //rate of aquisition per tick
     public ResourceItem(int num, string name, int roa)
     {
         this.quantity = num;

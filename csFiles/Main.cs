@@ -1,4 +1,5 @@
 using Godot;
+
 using Godot.NativeInterop;
 using kingsofresource;
 using System;
@@ -147,11 +148,13 @@ public void initializeSave()
 		int seed = noise.Seed;
 		float freq = noise.Frequency;
 		String NoiseType = "Perlin";
+		//List of capitals
+		List<Vector2I> capitals = vD.placedCords;
 		//ResourceManager Class
 		var capitalResourceDictionary = capitalResources; //Dictionary<Vector2I, ResourceItem> Need to figure out how to save complicated types better
 														  //EVERYTHING I am going to save for now just so that I can test loading it.
-
-		GameData data = new GameData("nerd",ct,tickInterval,tickTimer,MapSizeX,MapSizeY,seed,freq,numProvinces,vD.placedCords, capitalResourceDictionary, NoiseType);
+		
+		GameData data = new GameData("nerd",ct,tickInterval,tickTimer,MapSizeX,MapSizeY,seed,freq,numProvinces,capitals, capitalResourceDictionary, NoiseType);
 		Serialization.Save(data);
 }
 public void initializeLoad()

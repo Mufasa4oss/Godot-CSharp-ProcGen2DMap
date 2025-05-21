@@ -40,10 +40,6 @@ public partial class Main : Node2D
 	public override void _Ready()
 
 	{
-		//
-
-		//
-
 		noise = Nht.Noise; // noise is set the noise parameter of the NoiseTexture2D Nht.
 
 		Nht.Height = MapSizeY;

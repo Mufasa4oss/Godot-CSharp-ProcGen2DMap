@@ -5,18 +5,18 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-
 public class Serialization
 {
 	/* items to save
-	 *
 	 * placed capitals list
 	 * all placed coords again list
 	 * current tick 
 	 * world len & height
 	 * seed info
 	 */
-	public static string savePath = "user://Saves//save.json";
+
+
+	public static string savePath = "user://savegame.json";
 	private static JsonSerializerOptions GetJsonOptions()
 	{
 		return new JsonSerializerOptions
@@ -26,7 +26,7 @@ public class Serialization
 		{
 			new Vector2IConverter(),
 			new ResourceItemConverter(),
-            new DictionaryVector2I_ResourceItemConverter()
+			new DictionaryVector2I_ResourceItemConverter()
 			 // You'll also want this
 			// Add more custom converters if needed
 		}
@@ -40,7 +40,7 @@ public class Serialization
 			//GD.Print(json);
 			using var file = Godot.FileAccess.Open(savePath, Godot.FileAccess.ModeFlags.Write);
 			file.StoreString(json);
-			GD.Print("Save complete");
+			GD.Print("Save complete" + "saved at: " + savePath);
 		}
 		catch (Exception e)
 		{
@@ -53,10 +53,13 @@ public class Serialization
 		try
 		{
 			if (!Godot.FileAccess.FileExists(savePath))
+			{
 				throw new Exception("Save file not found.");
+			}
 
 
-			string fileName = "C:\\Users\\lyonp\\Desktop\\kingsofresource\\kingsofresource\\TEST\\save.json";
+
+			string fileName = savePath;
 			string json = File.ReadAllText(fileName);
 			GameData data = JsonSerializer.Deserialize<GameData>(json, GetJsonOptions())!;
 

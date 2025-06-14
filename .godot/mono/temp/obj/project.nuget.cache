@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "1NByxyZ8kAA=",
+  "dgSpecHash": "FRdbL1/bHl0=",
   "success": true,
-  "projectFilePath": "C:\\Users\\lyonp\\Desktop\\kingsofresource\\kingsofresource\\KingsOfResource.csproj",
+  "projectFilePath": "C:\\Users\\lyonp\\Desktop\\Godot4.4Version\\KingsOfResource\\kingsofresource\\KingsOfResource.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\lyonp\\.nuget\\packages\\godot.sourcegenerators\\4.4.0\\godot.sourcegenerators.4.4.0.nupkg.sha512",
     "C:\\Users\\lyonp\\.nuget\\packages\\godotsharp\\4.4.0\\godotsharp.4.4.0.nupkg.sha512",

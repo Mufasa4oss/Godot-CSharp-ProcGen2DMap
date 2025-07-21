@@ -48,7 +48,7 @@ public partial class Main : Node2D
 		tml = GetNode<TileMapLayer>("0zTileMapLayer");
 		control = GetNode<UIManager>("UIManager");
 		PlaceTiles();
-		CreateObjs();
+		GameContext gameContext = CreateObjs();
 
 		//_Draw();
 	}
@@ -90,7 +90,7 @@ public partial class Main : Node2D
 
 		//var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
 	}
-	private void CreateObjs()
+	private GameContext CreateObjs()
 	{
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
 		//Dictionary<string, Vector2I> atlas = bitmaskObj.atlasDict;
@@ -109,6 +109,8 @@ public partial class Main : Node2D
 
 		var provinceTexture = vD.coloredProMap;
 		MapTextureCreated?.Invoke(provinceTexture);
+		return new GameContext(bitmaskObj, vD, resourceManager, capitalResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY);
+
 	}
 
 

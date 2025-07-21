@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 
 
 
-public partial class ResourceItem : Resource
+public partial class ResourceItem
 {
     public int quantity { get; set; }
     public string name { get; set; }

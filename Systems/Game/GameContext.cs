@@ -14,10 +14,11 @@ public class GameContext
 	public Noise noise { get; }
 	public int mapSizeX {get;}
 	public int mapSizeY { get; }
+	TileMapLayer tml { get; }
 
 
 	public GameContext(Bitmask b, VoronoiDiagram v, ResourceManager rm, Dictionary<Vector2I, ResourceItem> cr, TickManager tm, MapManager mm, Texture2D pt, Noise n
-		, int msx, int msy)
+		, int msx, int msy, TileMapLayer t)
 	{
 		this.bitmask = b;
 		this.voronoiDiagram = v;
@@ -29,5 +30,6 @@ public class GameContext
 		this.noise = n;
 		this.mapSizeX = msx;
 		this.mapSizeY = msy;
+		this.tml = t;
 	}
 }

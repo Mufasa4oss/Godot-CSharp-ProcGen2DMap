@@ -17,6 +17,14 @@ public class Serialization
 
 
 	public static string savePath = "user://savegame.json";
+
+	/*
+	 * Windows: %APPDATA%\Godot\app_userdata\<YourProject>\
+
+Linux: ~/.local/share/godot/app_userdata/<YourProject>/
+
+Mac: ~/Library/Application Support/Godot/app_userdata/<YourProject>/
+	*/
 	private static JsonSerializerOptions GetJsonOptions()
 	{
 		return new JsonSerializerOptions
@@ -40,7 +48,7 @@ public class Serialization
 			//GD.Print(json);
 			using var file = Godot.FileAccess.Open(savePath, Godot.FileAccess.ModeFlags.Write);
 			file.StoreString(json);
-			GD.Print("Save complete" + "saved at: " + savePath);
+			GD.Print("Save complete" + " saved at: " + savePath);
 		}
 		catch (Exception e)
 		{

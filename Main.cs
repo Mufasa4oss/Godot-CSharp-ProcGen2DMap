@@ -32,8 +32,9 @@ public partial class Main : Node2D
 									  //public event Ree Created;
 	UIManager control;
 	public static event Action<Texture2D> MapTextureCreated; //event that is triggered when the property is assigned this is a delgate auto defined returns null one arguement
-	//public static event Action ProvincesSceneInitalized;
+															 //public static event Action ProvincesSceneInitalized;
 	Sprite2D provinceSprite;
+	GameContext gameContext;
 
 	public Main() { }
 
@@ -48,7 +49,7 @@ public partial class Main : Node2D
 		tml = GetNode<TileMapLayer>("0zTileMapLayer");
 		control = GetNode<UIManager>("UIManager");
 		PlaceTiles();
-		GameContext gameContext = CreateObjs();
+		gameContext = CreateObjs();
 
 		//_Draw();
 	}
@@ -86,7 +87,7 @@ public partial class Main : Node2D
 		//metric shitton of object creation warning order matters way too much remade into an objectinstancing method
 
 
-		
+
 
 		//var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
 	}
@@ -109,7 +110,7 @@ public partial class Main : Node2D
 
 		var provinceTexture = vD.coloredProMap;
 		MapTextureCreated?.Invoke(provinceTexture);
-		return new GameContext(bitmaskObj, vD, resourceManager, capitalResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY);
+		return new GameContext(bitmaskObj, vD, resourceManager, capitalResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY, tml); // used to pass dependencies. Easiest thing to do would be to save items that are loaded into this object
 
 	}
 
@@ -118,7 +119,7 @@ public partial class Main : Node2D
 	/// ////////////////Resource System rough outline moved to resource manager
 	/// </summary>
 
-	
+
 
 	/// <summary>
 	/// ///////////////// Time and Date System Calls
@@ -128,63 +129,27 @@ public partial class Main : Node2D
 	public override void _Process(double delta)
 	{
 		tickManager.Update((float)delta);
-	}// Update the tick manager with the time since the last frame. Handles time passing
+	}
+	public override void _Input(InputEvent @event)
+	{
+		if (Input.IsActionJustPressed("f5"))
+		{
+			var obj = new InitSaveAndLoad(gameContext);
+			obj.initializeSave();
+		}
+		if (Input.IsActionJustPressed("f9"))
+		{
+			var obj = new InitSaveAndLoad(gameContext);
+			obj.initializeSave();
+		}
+
+	}
+}
+	
+	// Update the tick manager with the time since the last frame. Handles time passing
 
 
 	///
 	/// /////////// Save & Load
 	/// 
    
-public void initializeSave()
-	{
-		//tickManager
-		int ct = tickManager.currentTick;
-		float tickInterval = tickManager.tickInterval;
-		float tickTimer = tickManager.tickTimer;
-		//Main Class items needed to recreate Nht NoiseTexture2D! (seed, frequency and everything else that I make customizeable) Rn it is seed, freq, and noiseType = Perlin
-		FastNoiseLite noise = (FastNoiseLite)Nht.Noise;
-		int seed = noise.Seed;
-		float freq = noise.Frequency;
-		String NoiseType = "Perlin";
-		//List of capitals
-		List<Vector2I> capitals = vD.placedCords;
-		//ResourceManager Class
-		var capitalResourceDictionary = capitalResources; //Dictionary<Vector2I, ResourceItem> Need to figure out how to save complicated types better
-														  //EVERYTHING I am going to save for now just so that I can test loading it.
-		
-		GameData data = new GameData("nerd",ct,tickInterval,tickTimer,MapSizeX,MapSizeY,seed,freq,numProvinces,capitals, capitalResourceDictionary, NoiseType);
-		Serialization.Save(data);
-}
-public void initializeLoad()
-{
-Serialization serial = new Serialization();
-GameData gamedata = serial.Load();
-//GD.Print("Game Data loaded: " + gamedata);
-//pause game first?
-
-//Main Class
-MapSizeX = gamedata.Width;
-MapSizeY = gamedata.Height;
-FastNoiseLite noise = (FastNoiseLite)Nht.Noise;
-noise.Seed = gamedata.Seed;
-noise.Frequency = gamedata.Frequency;
-numProvinces = gamedata.NumProvinces;
-//TickManager Class
-tickManager.currentTick = gamedata.Tick;
-//Resource Manager class
-}
-
-public override void _Input(InputEvent @event)
-{
-if (Input.IsActionJustPressed("f5"))
-{
-	initializeSave();
-}
-		if (Input.IsActionJustPressed("f9"))
-		{
-			initializeLoad();
-		}
-
-	}
-
-}//EOF

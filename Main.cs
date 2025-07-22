@@ -36,6 +36,9 @@ public partial class Main : Node2D
 	Sprite2D provinceSprite;
 	GameContext gameContext;
 
+	
+	//new
+	//Node2D popupInstance;
 	public Main() { }
 
 	public override void _Ready()
@@ -50,6 +53,7 @@ public partial class Main : Node2D
 		control = GetNode<UIManager>("UIManager");
 		PlaceTiles();
 		gameContext = CreateObjs();
+		PopupSceneLoad();
 
 		//_Draw();
 	}
@@ -110,11 +114,29 @@ public partial class Main : Node2D
 
 		var provinceTexture = vD.coloredProMap;
 		MapTextureCreated?.Invoke(provinceTexture);
+
+		//test
+		
+
 		return new GameContext(bitmaskObj, vD, resourceManager, capitalResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY, tml); // used to pass dependencies. Easiest thing to do would be to save items that are loaded into this object
 
 	}
 
+	// Load the popup scene
+	public void PopupSceneLoad()
+	{
+		var popupScene = ResourceLoader.Load<PackedScene>("res://Scenes/ResourcePopup.tscn").Instantiate();
+		//popupScene
+		AddChild(popupScene);
+	}
+	// Instance it
+	//Node popupSceneInstance = popupScene.Instantiate();
 
+	// Optionally: position it somewhere on the screen
+	// Adjust as needed
+
+	// Add it as a child so it appears in your main scene
+	
 	/// <summary>
 	/// ////////////////Resource System rough outline moved to resource manager
 	/// </summary>

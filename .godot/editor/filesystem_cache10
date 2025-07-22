@@ -1,20 +1,49 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1753126627
-Main.cs::CSharpScript::6274716111018383964::1753126286::0::1::::<>Node2D<><>0<>0<><>::
+::res://::1753199640
+Main.cs::CSharpScript::6274716111018383964::1753199558::0::1::::<>Node2D<><>0<>0<><>::
 MyGlobalClass.cs::CSharpScript/CSharpScript::8945582984655223767::1753124653::0::1::::<><><>0<>0<><>::
 README.md::TextFile/TextFile::-1::1753124653::0::1::::<><><>0<>0<><>::
-::res://Images/::1753125621
+::res://Images/::1753196658
 35%_OpacityBlack.png::CompressedTexture2D/CompressedTexture2D::2359822777159892635::1753124653::1753125621::1::::<><><>0<>0<>18c0dadcb2f6f94468589f7344ee10ed<>res://.godot/imported/35%_OpacityBlack.png-c7ea870733d452573d442aad7882800e.ctex::
 BetterCastle64.png::CompressedTexture2D/CompressedTexture2D::4845450741780248749::1753124653::1753125621::1::::<><><>0<>0<>315e1e8b101f9ebe71331d7f196d47a0<>res://.godot/imported/BetterCastle64.png-d61b238e96a2c205d1eb8788fd1bc20b.ctex::
 BetterCastle.png::CompressedTexture2D/CompressedTexture2D::6417140716889091749::1753124653::1753125621::1::::<><><>0<>0<>6bdb0790536fdfc88b78a305d95f7388<>res://.godot/imported/BetterCastle.png-4a8cace2f906301bfe4cfcc1a2fe25ca.ctex::
 castlePlaceholder64.png::CompressedTexture2D/CompressedTexture2D::754741345185634188::1753124653::1753125621::1::::<><><>0<>0<>aa1a83218545770f74d8a9cf6b43a498<>res://.godot/imported/castlePlaceholder64.png-8459fd4235c5c53a5e62577d568fd5f2.ctex::
 castlePlaceholder.png::CompressedTexture2D/CompressedTexture2D::5493662169990957180::1753124653::1753125621::1::::<><><>0<>0<>bbc30a25a1c069b5a6219d1482e5d9a5<>res://.godot/imported/castlePlaceholder.png-ff5bf3c7df37ce4d30513e6f090c764e.ctex::
 icon.svg::CompressedTexture2D/CompressedTexture2D::7524820621361881682::1753124653::1753125621::1::::<><><>0<>0<>dd05deb779e53d3a338610f355d4db4c<>res://.godot/imported/icon.svg-b7ee14c4fc7622c16acfaa49648fa144.ctex::
+Temp_Item_Icon.png::CompressedTexture2D/CompressedTexture2D::7336380292474548385::1753124653::1753191083::1::::<><><>0<>0<>815ffadb9873469e676f41e93df73121<>res://.godot/imported/Temp_Item_Icon.png-10ea5d40d051db953adec7d496592021.ctex::
 texture13.png::CompressedTexture2D/CompressedTexture2D::7297193074961827034::1753124653::1753125621::1::::<><><>0<>0<>31ec894b903ac2d7289f7e420a212813<>res://.godot/imported/texture13.png-8dcffd99017aaae5cee50012f45eddb1.ctex::
 texture13b.png::CompressedTexture2D/CompressedTexture2D::1499464579753399381::1753124653::1753125621::1::::<><><>0<>0<>7f5e3b250a01d69e457824605ff239ee<>res://.godot/imported/texture13b.png-24940aa33df67f21b259323d9c778df9.ctex::
 texture13c.png::CompressedTexture2D/CompressedTexture2D::6078770114874353803::1753124653::1753125621::1::::<><><>0<>0<>34c298138fe2540dbbb450a654a33999<>res://.godot/imported/texture13c.png-6d202e9b89a55bbac7163234779d5739.ctex::
-::res://Scenes/::1753126527
-main.tscn::PackedScene::1769488404869455309::1753126527::0::1::::<><><>0<>0<><>::uid://cvnrwmgl4fqnk::::res://Main.cs<>uid://dhpknl1krdn23::::res://tilesets/tilesetTest.tres<>uid://o6vvujhl4c1e::::res://Systems/Cameras/Camera.cs<>uid://dx55c1nn6ogax::::res://tilesets/BorderHighlight.tres<>uid://clehyfud31ory::::res://Systems/Map/ColoredProvincesSprite.cs<>uid://dw5qrglxk2coj::::res://UI/UIManager.cs
+::res://Images/Blender & Krita Assets/::1753196658
+::res://Images/Blender & Krita Assets/Blender/::1753197012
+corner.blend::PackedScene/PackedScene::2527895487943456338::1744824684::1753197012::1::::<><><>0<>0<>1c3af05f7442917536972073eb6cc886<>res://.godot/imported/corner.blend-c8a827f6f331800a0096e65f09834dd2.scn::
+Railroad.blend::PackedScene/PackedScene::726815117218261521::1744676792::1753197012::1::::<><><>0<>0<>a9a9df5e30eba6411b15b30fb949a1a0<>res://.godot/imported/Railroad.blend-62180be7e61669ea5fcf453a64317b4c.scn::
+refindedCorner.png::CompressedTexture2D/CompressedTexture2D::7940190421403756315::1744824678::1753197004::1::::<><><>0<>0<>848899e292948ab4c15a27716773875a<>res://.godot/imported/refindedCorner.png-fb71ce82bc35ef972c796db0b2af4fa5.ctex::
+::res://Images/Blender & Krita Assets/Krita/::1753197004
+corner - Copy.png::CompressedTexture2D/CompressedTexture2D::6928732190067991866::1744818584::1753197004::1::::<><><>0<>0<>b07dc7a762e43020780c75c777947ccd<>res://.godot/imported/corner - Copy.png-42c9cad6a5be9c08d45a6a386c18744b.ctex::
+corner.png::CompressedTexture2D/CompressedTexture2D::4276192938910320114::1744818584::1753197004::1::::<><><>0<>0<>09244490e8de92211387fa98913d9e7e<>res://.godot/imported/corner.png-4b3ab89a74befa3c3f0988500f28cc86.ctex::
+Rails less light effects - Copy.png::CompressedTexture2D/CompressedTexture2D::8409215015561560797::1744678034::1753197004::1::::<><><>0<>0<>0461fd5f39d8435609bd224a21269a7f<>res://.godot/imported/Rails less light effects - Copy.png-82ed003a6aaf092dcf3215dbbf78f4e8.ctex::
+Rails less light effects.png::CompressedTexture2D/CompressedTexture2D::1712960941182053456::1744678034::1753197004::1::::<><><>0<>0<>3814fc93069f1148994fa97b53f6d6b0<>res://.godot/imported/Rails less light effects.png-424ab9f5594164f7f3ac583fed2ddcbf.ctex::
+refindedCorner.png::CompressedTexture2D/CompressedTexture2D::4081402948102919362::1744825358::1753197004::1::::<><><>0<>0<>b66e92eda920c213a89f49c736b41c39<>res://.godot/imported/refindedCorner.png-eb4666425da80a758f0b43e260a9e4e3.ctex::
+::res://Images/Blender & Krita Assets/Krita/shadows/::1753197004
+64x64 - Copy.png::CompressedTexture2D/CompressedTexture2D::3206714697439092840::1744676894::1753197004::1::::<><><>0<>0<>37cfdfd9f51da42c086fa86757d3616a<>res://.godot/imported/64x64 - Copy.png-e699e949c27314db7f95169c63333f1c.ctex::
+64x64.png::CompressedTexture2D/CompressedTexture2D::5328213107165600608::1744676894::1753197004::1::::<><><>0<>0<>8f1e610381d7a185430bae60a78cbfb1<>res://.godot/imported/64x64.png-aad614b614beef1cf4e6c3bbe0036a59.ctex::
+FreshRender.png::CompressedTexture2D/CompressedTexture2D::7508550769488339208::1744676772::1753197004::1::::<><><>0<>0<>f4714af25a92c5f58f05e349e6ba6b50<>res://.godot/imported/FreshRender.png-91576f90daffa4f2cadf9a171da5e609.ctex::
+railroad 64x64.png::CompressedTexture2D/CompressedTexture2D::7736923999778095724::1744675726::1753197004::1::::<><><>0<>0<>30562e7aef061eac7cff04062b9cf2e8<>res://.godot/imported/railroad 64x64.png-2b1fdce1b490c821a01e425ecb157287.ctex::
+railroad-trans.png::CompressedTexture2D/CompressedTexture2D::8680370882658641728::1744677160::1753197004::1::::<><><>0<>0<>b617d2ae2dfe276dc04e3114f7cf8dd6<>res://.godot/imported/railroad-trans.png-9ef56b3e11bc075a93ecdac9ef0f45f8.ctex::
+Untitled.png::CompressedTexture2D/CompressedTexture2D::435931319699863597::1744676772::1753197004::1::::<><><>0<>0<>afead442e22cdf1d3a2e3f69a2214178<>res://.godot/imported/Untitled.png-a52d84616d8bc34648063b8a16bbb4dc.ctex::
+::res://Images/Blender & Krita Assets/Rails/::1753197004
+attempt.png::CompressedTexture2D/CompressedTexture2D::2637337576822620515::1744827996::1753197004::1::::<><><>0<>0<>b425f86c036b262cbdf9120174e3e6c3<>res://.godot/imported/attempt.png-1d1013519a1accdf634a3b40f27ea10d.ctex::
+cobo.png::CompressedTexture2D/CompressedTexture2D::9049898042328577253::1744827698::1753197004::1::::<><><>0<>0<>fb05f413ca5167a26dff4fc87990ae6c<>res://.godot/imported/cobo.png-4d828307a868accad85d7e894629cd00.ctex::
+railCornerTopLeft.jpg::CompressedTexture2D/CompressedTexture2D::4036420538042055990::1744832432::1753197004::1::::<><><>0<>0<>c1d8372a6bcd5f0bbbd68793afad4ecd<>res://.godot/imported/railCornerTopLeft.jpg-35326f93ed639881de88e2ec9225184c.ctex::
+RailsHoriz - Copy.png::CompressedTexture2D/CompressedTexture2D::505439015389659913::1744757034::1753197004::1::::<><><>0<>0<>b1dbb12537fb3f3a28092a0c95ee71ec<>res://.godot/imported/RailsHoriz - Copy.png-7a610f7d3e9942a9ebe4387a4bb0f878.ctex::
+RailsHoriz.png::CompressedTexture2D/CompressedTexture2D::508838086354951718::1744757034::1753197004::1::::<><><>0<>0<>42dacc05872023620c602aafeaa9680d<>res://.godot/imported/RailsHoriz.png-a831e5ee7a86411540e30d0ffbfba05d.ctex::
+RailsVert.png::CompressedTexture2D/CompressedTexture2D::4705387714629871973::1744756870::1753197004::1::::<><><>0<>0<>af8ab559f6d619a6867ff035f3c27793<>res://.godot/imported/RailsVert.png-7469a01ead8f167f96924d343e1939e4.ctex::
+refindedCorner.png::CompressedTexture2D/CompressedTexture2D::3101580193666586726::1744827704::1753197004::1::::<><><>0<>0<>ca9571db13c3b52096a95ecb8ddf2f31<>res://.godot/imported/refindedCorner.png-031dbf8326589f4bc56847445d1528f2.ctex::
+theCorner.png::CompressedTexture2D/CompressedTexture2D::2873510753859908687::1744832500::1753197004::1::::<><><>0<>0<>a5663eb4d95d2f628c3d097b409a90d9<>res://.godot/imported/theCorner.png-563dddbe9fb1ce1cca6aacf0175001bb.ctex::
+::res://Scenes/::1753199620
+main.tscn::PackedScene::1769488404869455309::1753199620::0::1::::<><><>0<>0<><>::uid://cvnrwmgl4fqnk::::res://Main.cs<>uid://dhpknl1krdn23::::res://tilesets/tilesetTest.tres<>uid://o6vvujhl4c1e::::res://Systems/Cameras/Camera.cs<>uid://dx55c1nn6ogax::::res://tilesets/BorderHighlight.tres<>uid://clehyfud31ory::::res://Systems/Map/ColoredProvincesSprite.cs<>uid://dw5qrglxk2coj::::res://UI/UIManager.cs
+ResourcePopup.tscn::PackedScene::503569945767427951::1753199620::0::1::::<><><>0<>0<><>::uid://dcr2d17xu4y3b::::res://Images/Temp_Item_Icon.png
 ::res://Shaders/::1753124653
 BorderGlow.gdshader::Shader/Shader::3482288847951074972::1753124653::0::1::::<><><>0<>0<><>::
 BorderGlowEffect.tres::ShaderMaterial/ShaderMaterial::1119422237748574700::1753124653::0::1::::<><><>0<>0<><>::uid://bpu312tpdawwi::::res://Shaders/BorderGlow.gdshader
@@ -22,32 +51,32 @@ tr.gdshader::Shader/Shader::7068240752547759088::1753124653::0::1::::<><><>0<>0<
 ::res://Systems/::1753124653
 ::res://Systems/Cameras/::1753124653
 Camera.cs::CSharpScript::1047953144532538296::1753124653::0::1::::<>Camera2D<><>0<>0<><>::
-::res://Systems/Game/::1753125961
-GameContext.cs::CSharpScript::7403524666300912127::1753125961::0::1::::<><><>0<>0<><>::
+::res://Systems/Game/::1753191706
+GameContext.cs::CSharpScript/CSharpScript::7403524666300912127::1753191706::0::1::::<><><>0<>0<><>::
 ::res://Systems/GameTime/::1753124653
 GameTime.cs::CSharpScript/CSharpScript::433006957790014757::1753124653::0::1::::<><><>0<>0<><>::
 TickManager.cs::CSharpScript/CSharpScript::2300922514838437329::1753124653::0::1::::<><><>0<>0<><>::
-::res://Systems/Map/::1753124653
+::res://Systems/Map/::1753196604
 Bitmask.cs::CSharpScript/CSharpScript::1826779365730846611::1753124653::0::1::::<><><>0<>0<><>::
 Border.cs::CSharpScript::1202428569341034999::1753124653::0::1::::<>Line2D<><>0<>0<><>::
 ColoredProvincesSprite.cs::CSharpScript::5553644330111481602::1753124653::0::1::::<>Sprite2D<><>0<>0<><>::
 MapManager.cs::CSharpScript::3770754589197570227::1753124653::0::1::::<>TileMapLayer<><>0<>0<><>::
 VoronoiDiagram.cs::CSharpScript/CSharpScript::5330299111347198766::1753124653::0::1::::<><><>0<>0<><>::
-::res://Systems/Resources/::1753124653
-ResourceItem.cs::CSharpScript::6029106695310875927::1753124653::0::1::::<>Resource<><>0<>0<><>::
+::res://Systems/Resources/::1753127216
+ResourceItem.cs::CSharpScript/CSharpScript::6029106695310875927::1753127216::0::1::::<><><>0<>0<><>::
 ResourceManager.cs::CSharpScript::3613670434129445465::1753124653::0::1::::<>Node<><>0<>0<><>::
 ::res://Systems/SaveLoad/::1753126527
 GameData.cs::CSharpScript/CSharpScript::3432204477411883715::1753124653::0::1::::<><><>0<>0<><>::
 InitSaveAndLoad.cs::CSharpScript::8279773095889747920::1753126282::0::1::::<>Node<><>0<>0<><>::
-Serialization.cs::CSharpScript::4086493927622224700::1753126527::0::1::::<><><>0<>0<><>::
+Serialization.cs::CSharpScript/CSharpScript::4086493927622224700::1753126527::0::1::::<><><>0<>0<><>::
 ::res://Systems/SaveLoad/JsonConverters/::1753124653
 DictionaryVector2I_ResourceItemConverter.cs::CSharpScript/CSharpScript::1093927881908656241::1753124653::0::1::::<><><>0<>0<><>::
 ResourceItemConverter.cs::CSharpScript/CSharpScript::885042602346596126::1753124653::0::1::::<><><>0<>0<><>::
 Vector2IConverter.cs::CSharpScript/CSharpScript::7622164415831209552::1753124653::0::1::::<><><>0<>0<><>::
 ::res://TEST/::1753126129
-::res://tilesets/::1753125629
-BorderHighlight.tres::TileSet::8837363255068850287::1753125629::0::1::::<><><>0<>0<><>::uid://8vd63o52ag16::::res://Images/35%_OpacityBlack.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres<>uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png
-tilesetTest.tres::TileSet::7682180626503827022::1753125629::0::1::::<><><>0<>0<><>::uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png<>uid://55o842nsqmkq::::res://Tiny Swords (Update 010)/Terrain/Water/Water.png<>uid://cbbf4o36sw7s0::::res://Images/BetterCastle64.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres
+::res://tilesets/::1753197721
+BorderHighlight.tres::TileSet::8837363255068850287::1753197721::0::1::::<><><>0<>0<><>::uid://8vd63o52ag16::::res://Images/35%_OpacityBlack.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres<>uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png
+tilesetTest.tres::TileSet::7682180626503827022::1753197721::0::1::::<><><>0<>0<><>::uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png<>uid://55o842nsqmkq::::res://Tiny Swords (Update 010)/Terrain/Water/Water.png<>uid://cbbf4o36sw7s0::::res://Images/BetterCastle64.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres
 ::res://Tiny Swords (Update 010)/::1753124653
 ::res://Tiny Swords (Update 010)/Deco/::1753124653
 01.png::CompressedTexture2D/CompressedTexture2D::7083981749985603285::1753124653::1753124653::1::::<><><>0<>0<>294fcd09d357597eb404b4ee0d50640d<>res://.godot/imported/01.png-dbfe14c4e6643a68f65115097eb9e4ee.ctex::

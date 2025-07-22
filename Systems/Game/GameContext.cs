@@ -14,7 +14,7 @@ public class GameContext
 	public Noise noise { get; }
 	public int mapSizeX {get;}
 	public int mapSizeY { get; }
-	TileMapLayer tml { get; }
+	public TileMapLayer tml { get; }
 
 
 	public GameContext(Bitmask b, VoronoiDiagram v, ResourceManager rm, Dictionary<Vector2I, ResourceItem> cr, TickManager tm, MapManager mm, Texture2D pt, Noise n

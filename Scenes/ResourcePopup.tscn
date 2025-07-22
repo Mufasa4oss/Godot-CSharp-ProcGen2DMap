@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://hf6yuj4ke4n8"]
+
+[ext_resource type="Texture2D" uid="uid://dcr2d17xu4y3b" path="res://Images/Temp_Item_Icon.png" id="1_dip04"]
+
+[node name="ResourcePopup" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_dip04")

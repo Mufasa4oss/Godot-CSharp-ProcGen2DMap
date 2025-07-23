@@ -1,9 +1,17 @@
-[gd_scene load_steps=2 format=3 uid="uid://hf6yuj4ke4n8"]
+[gd_scene load_steps=5 format=3 uid="uid://hf6yuj4ke4n8"]
 
+[ext_resource type="Shader" uid="uid://dmhaq05waw1yk" path="res://Shaders/ResourcePopup.gdshader" id="1_ac8o0"]
 [ext_resource type="Texture2D" uid="uid://dcr2d17xu4y3b" path="res://Images/Temp_Item_Icon.png" id="1_dip04"]
+[ext_resource type="Script" uid="uid://rpyb2fa3bgjy" path="res://Systems/ResourcePopup/ResourcePopup.cs" id="1_usd6l"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_usd6l"]
+shader = ExtResource("1_ac8o0")
+shader_parameter/fade = 0.0
 
 [node name="ResourcePopup" type="Node2D"]
+script = ExtResource("1_usd6l")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_usd6l")
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("1_dip04")

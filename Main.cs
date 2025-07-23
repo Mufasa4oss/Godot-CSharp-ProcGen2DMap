@@ -126,8 +126,23 @@ public partial class Main : Node2D
 	public void PopupSceneLoad()
 	{
 		var popupScene = ResourceLoader.Load<PackedScene>("res://Scenes/ResourcePopup.tscn").Instantiate();
+		
 		//popupScene
 		AddChild(popupScene);
+
+		//removal
+		Timer timer = new Timer();
+		timer.WaitTime = 5.0f;
+		timer.OneShot = true;
+		AddChild(timer);
+		timer.Start();
+		timer.Timeout += () =>
+		{
+			ResourcePopup rP = (ResourcePopup)popupScene;
+			rP.StartFadeOut(); // Start the fade out effect
+			//popupScene.QueueFree();
+			timer.QueueFree();
+		};
 	}
 	// Instance it
 	//Node popupSceneInstance = popupScene.Instantiate();

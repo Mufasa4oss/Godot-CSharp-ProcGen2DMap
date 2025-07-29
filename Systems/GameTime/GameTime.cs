@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-
+//no dependencies
 public class GameTime
 {
     public float tickToSecond(float tick)

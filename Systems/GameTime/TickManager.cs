@@ -1,6 +1,5 @@
 using Godot;
 using System;
-
 using System.Collections.Generic;
 public class TickManager
 {
@@ -10,7 +9,7 @@ public class TickManager
 	public float tickInterval = 1.0f /30.0f; // Time in seconds between ticks 
 	public float tickTimer = 0.0f; // Timer to track elapsed time
 
-	ResourceManager rm; // passed by reference from the main scene
+	ResourceManager rm; // passed by reference from main
 	UIManager uiManager; // passed by reference from the main.cs
 	List<Vector2I> capitals; // List of capitals to manage resources for
 	GameTime gameTime = new GameTime();

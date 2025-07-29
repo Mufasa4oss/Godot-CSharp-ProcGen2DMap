@@ -9,7 +9,7 @@ public partial class ResourceManager : Node
 	//handles the ResourceItems and changes to those instances. Manages the resource rate of aquisiton
 	//CHANGE EVERYTHING TO PRIVATE AND USE THE INSTANCE IN MAIN
 
-	public Dictionary<Vector2I, ResourceItem> capitalsResources; //capital:resourceItem created in initCapitalResource in Main.cs
+	public Dictionary<Vector2I, ResourceItem> capitalsResources;
 	List<Vector2I> capitals;
 	public ResourceManager(List<Vector2I> capitals)
 	{

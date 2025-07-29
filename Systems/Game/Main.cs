@@ -11,9 +11,7 @@ using System.Linq;
 
 public partial class Main : Node2D
 {
-	const int sID_water = 0;
-	const int sID_sand = 1;
-	const int sID_grass = 2;
+	
 	Vector2I grassAtlas;
 	Vector2I waterAtlas;
 	Vector2I sandAtlas;
@@ -35,8 +33,8 @@ public partial class Main : Node2D
 															 //public static event Action ProvincesSceneInitalized;
 	Sprite2D provinceSprite;
 	GameContext gameContext;
+	//private List<Vector2I> mapCoordsLand;
 
-	
 	//new
 	//Node2D popupInstance;
 	public Main() { }
@@ -51,7 +49,8 @@ public partial class Main : Node2D
 
 		tml = GetNode<TileMapLayer>("0zTileMapLayer");
 		control = GetNode<UIManager>("UIManager");
-		PlaceTiles();
+		//PlaceTiles();
+		
 		gameContext = CreateObjs();
 		PopupSceneLoad();
 
@@ -62,6 +61,9 @@ public partial class Main : Node2D
 	/// ////////////World Generation
 	/// </summary>
 
+
+	//Dependencies of PlaceTiles are //noise, tml, MapSizeX, MapSizeY also mapCoordsLand and const int s for sID_water, sID_sand, sID_grass
+	/*
 	private void PlaceTiles()
 	{
 
@@ -95,8 +97,11 @@ public partial class Main : Node2D
 
 		//var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
 	}
+	*/
 	private GameContext CreateObjs()
 	{
+		Initalize init = new Initalize(tml, noise, MapSizeX, MapSizeY);
+		mapCoordsLand = init.PlaceTiles(); // Place tiles and get the coordinates of land tiles
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
 		//Dictionary<string, Vector2I> atlas = bitmaskObj.atlasDict;
 		bitmaskObj.OrientCells();
@@ -142,6 +147,7 @@ public partial class Main : Node2D
 			rP.StartFadeOut(); // Start the fade out effect
 			//popupScene.QueueFree();
 			timer.QueueFree();
+			//this happends in ResourcePopup.cs -> Remove the popup scene after fading out
 		};
 	}
 	// Instance it

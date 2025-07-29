@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3 uid="uid://0hfhleea62dd"]
 
-[ext_resource type="Script" uid="uid://cvnrwmgl4fqnk" path="res://Main.cs" id="1_jjvhh"]
+[ext_resource type="Script" uid="uid://hkw3gbc4j32n" path="res://Systems/Game/Main.cs" id="1_jjvhh"]
 [ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesets/tilesetTest.tres" id="2_kry3j"]
 [ext_resource type="Script" uid="uid://o6vvujhl4c1e" path="res://Systems/Cameras/Camera.cs" id="3_21xkr"]
 [ext_resource type="TileSet" uid="uid://dx55c1nn6ogax" path="res://tilesets/BorderHighlight.tres" id="3_kry3j"]

@@ -24,7 +24,7 @@ public partial class Main : Node2D
 	//TileMapLayer bhl;
 	TextureRect textureRect;
 	private List<Vector2I> mapCoordsLand = new List<Vector2I>();//coords of all placed tiles not water
-	Dictionary<Vector2I, ResourceItem> capitalResources;
+	Dictionary<Vector2I, ResourceItem> tilesResources;
 	public static int MapSizeX = 512;
 	public static int MapSizeY = 512; //in tiles
 									  //public event Ree Created;
@@ -108,8 +108,8 @@ public partial class Main : Node2D
 		//
 		vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml);
 		//
-		ResourceManager resourceManager = new ResourceManager(vD.placedCords);
-		capitalResources = resourceManager.capitalsResources;
+		ResourceManager resourceManager = new ResourceManager(mapCoordsLand, vD.GetCapitals());
+		tilesResources = resourceManager.tilesResources;
 		//
 		tickManager = new TickManager(resourceManager, vD.placedCords, control);
 		//
@@ -123,7 +123,7 @@ public partial class Main : Node2D
 		//test
 		
 
-		return new GameContext(bitmaskObj, vD, resourceManager, capitalResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY, tml); // used to pass dependencies. Easiest thing to do would be to save items that are loaded into this object
+		return new GameContext(bitmaskObj, vD, resourceManager, tilesResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY, tml); // used to pass dependencies. Easiest thing to do would be to save items that are loaded into this object
 
 	}
 

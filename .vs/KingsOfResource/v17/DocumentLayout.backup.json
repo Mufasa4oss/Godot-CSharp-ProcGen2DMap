@@ -7,6 +7,10 @@
       "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\game\\initialize.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\game\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\game\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\gametime\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\gametime\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -34,8 +38,20 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Main.cs",
+              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Main.cs",
+              "RelativeDocumentMoniker": "Systems\\Game\\Main.cs",
+              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Main.cs",
+              "RelativeToolTip": "Systems\\Game\\Main.cs",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAowGcAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-29T21:58:43.971Z"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -44,14 +60,14 @@
               "RelativeDocumentMoniker": "Systems\\Game\\Initialize.cs",
               "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Initialize.cs",
               "RelativeToolTip": "Systems\\Game\\Initialize.cs",
-              "ViewState": "AgIAABMAAAAAAAAAAAAgwBwAAAA/AAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACIAAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-23T15:35:45.244Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "GameTime.cs",
               "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\GameTime.cs",
               "RelativeDocumentMoniker": "Systems\\GameTime\\GameTime.cs",
@@ -63,7 +79,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "TickManager.cs",
               "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\TickManager.cs",
               "RelativeDocumentMoniker": "Systems\\GameTime\\TickManager.cs",
@@ -75,7 +91,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "UIManager.cs",
               "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\UI\\UIManager.cs",
               "RelativeDocumentMoniker": "UI\\UIManager.cs",
@@ -87,7 +103,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "ResourceManager.cs",
               "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Resources\\ResourceManager.cs",
               "RelativeDocumentMoniker": "Systems\\Resources\\ResourceManager.cs",
@@ -99,7 +115,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "ResourceItem.cs",
               "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Resources\\ResourceItem.cs",
               "RelativeDocumentMoniker": "Systems\\Resources\\ResourceItem.cs",

@@ -3,32 +3,24 @@
   "WorkspaceRootPath": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\game\\initialize.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\game\\initialize.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\game\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\game\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\gametime\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\gametime\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\gametime\\gametime.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\gametime\\gametime.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\ui\\uimanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:ui\\uimanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\resources\\resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\resources\\resourcemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\resources\\resourceitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\resources\\resourceitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\saveload\\initsaveandload.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\saveload\\initsaveandload.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\game\\gamecontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\game\\gamecontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\saveload\\jsonconverters\\resourceitemconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\saveload\\jsonconverters\\resourceitemconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\gametime\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\gametime\\tickmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -38,93 +30,72 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Main.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Main.cs",
-              "RelativeDocumentMoniker": "Systems\\Game\\Main.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Main.cs",
-              "RelativeToolTip": "Systems\\Game\\Main.cs",
-              "ViewState": "AgIAAEEAAAAAAAAAAAAowGcAAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-29T21:58:43.971Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Initialize.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Initialize.cs",
-              "RelativeDocumentMoniker": "Systems\\Game\\Initialize.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Initialize.cs",
-              "RelativeToolTip": "Systems\\Game\\Initialize.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-23T15:35:45.244Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "GameTime.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\GameTime.cs",
-              "RelativeDocumentMoniker": "Systems\\GameTime\\GameTime.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\GameTime.cs",
-              "RelativeToolTip": "Systems\\GameTime\\GameTime.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAARAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-23T15:32:10.728Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "TickManager.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\TickManager.cs",
-              "RelativeDocumentMoniker": "Systems\\GameTime\\TickManager.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\TickManager.cs",
-              "RelativeToolTip": "Systems\\GameTime\\TickManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAkAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-23T15:28:17.563Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "UIManager.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\UI\\UIManager.cs",
-              "RelativeDocumentMoniker": "UI\\UIManager.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\UI\\UIManager.cs",
-              "RelativeToolTip": "UI\\UIManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-23T15:27:30.783Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
               "Title": "ResourceManager.cs",
               "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Resources\\ResourceManager.cs",
               "RelativeDocumentMoniker": "Systems\\Resources\\ResourceManager.cs",
               "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Resources\\ResourceManager.cs",
               "RelativeToolTip": "Systems\\Resources\\ResourceManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAADAAAAAAAAAA==",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAQwB8AAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-23T15:24:13.553Z"
+              "WhenOpened": "2025-07-30T16:27:22.397Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "ResourceItem.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Resources\\ResourceItem.cs",
-              "RelativeDocumentMoniker": "Systems\\Resources\\ResourceItem.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Resources\\ResourceItem.cs",
-              "RelativeToolTip": "Systems\\Resources\\ResourceItem.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAFAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "InitSaveAndLoad.cs",
+              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\SaveLoad\\InitSaveAndLoad.cs",
+              "RelativeDocumentMoniker": "Systems\\SaveLoad\\InitSaveAndLoad.cs",
+              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\SaveLoad\\InitSaveAndLoad.cs",
+              "RelativeToolTip": "Systems\\SaveLoad\\InitSaveAndLoad.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAA8AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-21T19:38:15.333Z"
+              "WhenOpened": "2025-07-30T16:26:40.873Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "GameContext.cs",
+              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\GameContext.cs",
+              "RelativeDocumentMoniker": "Systems\\Game\\GameContext.cs",
+              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\GameContext.cs",
+              "RelativeToolTip": "Systems\\Game\\GameContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-30T16:26:17.061Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ResourceItemConverter.cs",
+              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\SaveLoad\\JsonConverters\\ResourceItemConverter.cs",
+              "RelativeDocumentMoniker": "Systems\\SaveLoad\\JsonConverters\\ResourceItemConverter.cs",
+              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\SaveLoad\\JsonConverters\\ResourceItemConverter.cs",
+              "RelativeToolTip": "Systems\\SaveLoad\\JsonConverters\\ResourceItemConverter.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-30T16:25:39.681Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "TickManager.cs",
+              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\TickManager.cs",
+              "RelativeDocumentMoniker": "Systems\\GameTime\\TickManager.cs",
+              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\GameTime\\TickManager.cs",
+              "RelativeToolTip": "Systems\\GameTime\\TickManager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-30T16:24:23.105Z",
+              "EditorCaption": ""
             }
           ]
         }

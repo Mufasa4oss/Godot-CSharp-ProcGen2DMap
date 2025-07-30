@@ -15,14 +15,14 @@ public class ResourceItemConverter : JsonConverter<ResourceItem>
         int quantity = root.GetProperty("quantity").GetInt32();
         int roa = root.GetProperty("rateOfAquistion").GetInt32();
         string name = root.GetProperty("name").ToString();
-        return new ResourceItem(quantity,name,roa);
+        return new ResourceItem(name);
     }
 
     public override void Write(Utf8JsonWriter writer, ResourceItem ri, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
-        writer.WriteNumber("quantity", ri.quantity);
-        writer.WriteNumber("rateOfAquistion", ri.rateOfAquistion);
+        //writer.WriteNumber("quantity", ri.quantity);
+        //writer.WriteNumber("rateOfAquistion", ri.rateOfAquistion);
         writer.WriteString("name", ri.name);
         writer.WriteEndObject();
     }

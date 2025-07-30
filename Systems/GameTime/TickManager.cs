@@ -30,6 +30,7 @@ public class TickManager
 	public void Update(float delta)
 	{
 		tickTimer += delta; // Increment the timer by the time since the last frame
+		/*
 		if (tickTimer >= tickInterval)
 		{
 			currentTick++; // Increment the tick count
@@ -49,6 +50,7 @@ public class TickManager
 				GD.Print(gameTime.tickToSecond(currentTick));
 			}
 		}
+		*/
 		
 
 

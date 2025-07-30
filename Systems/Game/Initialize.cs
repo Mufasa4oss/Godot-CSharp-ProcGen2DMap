@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Godot;
 
-
+//places the tiles
 
 public partial class Initalize : Node2D
 {

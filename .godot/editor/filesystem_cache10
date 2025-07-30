@@ -1,7 +1,7 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1753826300
+::res://::1753892789
 MyGlobalClass.cs::CSharpScript/CSharpScript::8945582984655223767::1753124653::0::1::::<><><>0<>0<><>::
-README.md::TextFile/TextFile::-1::1753124653::0::1::::<><><>0<>0<><>::
+README.md::TextFile/TextFile::-1::1753828805::0::1::::<><><>0<>0<><>::
 ::res://Images/::1753196658
 35%_OpacityBlack.png::CompressedTexture2D/CompressedTexture2D::2359822777159892635::1753124653::1753125621::1::::<><><>0<>0<>18c0dadcb2f6f94468589f7344ee10ed<>res://.godot/imported/35%_OpacityBlack.png-c7ea870733d452573d442aad7882800e.ctex::
 BetterCastle64.png::CompressedTexture2D/CompressedTexture2D::4845450741780248749::1753124653::1753125621::1::::<><><>0<>0<>315e1e8b101f9ebe71331d7f196d47a0<>res://.godot/imported/BetterCastle64.png-d61b238e96a2c205d1eb8788fd1bc20b.ctex::
@@ -40,47 +40,47 @@ RailsHoriz.png::CompressedTexture2D/CompressedTexture2D::508838086354951718::174
 RailsVert.png::CompressedTexture2D/CompressedTexture2D::4705387714629871973::1744756870::1753197004::1::::<><><>0<>0<>af8ab559f6d619a6867ff035f3c27793<>res://.godot/imported/RailsVert.png-7469a01ead8f167f96924d343e1939e4.ctex::
 refindedCorner.png::CompressedTexture2D/CompressedTexture2D::3101580193666586726::1744827704::1753197004::1::::<><><>0<>0<>ca9571db13c3b52096a95ecb8ddf2f31<>res://.godot/imported/refindedCorner.png-031dbf8326589f4bc56847445d1528f2.ctex::
 theCorner.png::CompressedTexture2D/CompressedTexture2D::2873510753859908687::1744832500::1753197004::1::::<><><>0<>0<>a5663eb4d95d2f628c3d097b409a90d9<>res://.godot/imported/theCorner.png-563dddbe9fb1ce1cca6aacf0175001bb.ctex::
-::res://Scenes/::1753284329
-main.tscn::PackedScene::1769488404869455309::1753284329::0::1::::<><><>0<>0<><>::uid://hkw3gbc4j32n::::res://Systems/Game/Main.cs<>uid://dhpknl1krdn23::::res://tilesets/tilesetTest.tres<>uid://o6vvujhl4c1e::::res://Systems/Cameras/Camera.cs<>uid://dx55c1nn6ogax::::res://tilesets/BorderHighlight.tres<>uid://clehyfud31ory::::res://Systems/Map/ColoredProvincesSprite.cs<>uid://dw5qrglxk2coj::::res://UI/UIManager.cs
-ResourcePopup.tscn::PackedScene::503569945767427951::1753284329::0::1::::<><><>0<>0<><>::uid://dmhaq05waw1yk::::res://Shaders/ResourcePopup.gdshader<>uid://dcr2d17xu4y3b::::res://Images/Temp_Item_Icon.png<>uid://rpyb2fa3bgjy::::res://Systems/ResourcePopup/ResourcePopup.cs
-::res://Shaders/::1753297005
+::res://Scenes/::1753828648
+main.tscn::PackedScene/PackedScene::1769488404869455309::1753828648::0::1::::<><><>0<>0<><>::uid://hkw3gbc4j32n::::res://Systems/Game/Main.cs<>uid://dhpknl1krdn23::::res://tilesets/tilesetTest.tres<>uid://o6vvujhl4c1e::::res://Systems/Cameras/Camera.cs<>uid://dx55c1nn6ogax::::res://tilesets/BorderHighlight.tres<>uid://clehyfud31ory::::res://Systems/Map/ColoredProvincesSprite.cs<>uid://dw5qrglxk2coj::::res://UI/UIManager.cs
+ResourcePopup.tscn::PackedScene/PackedScene::503569945767427951::1753828648::0::1::::<><><>0<>0<><>::uid://dmhaq05waw1yk::::res://Shaders/ResourcePopup.gdshader<>uid://dcr2d17xu4y3b::::res://Images/Temp_Item_Icon.png<>uid://rpyb2fa3bgjy::::res://Systems/ResourcePopup/ResourcePopup.cs
+::res://Shaders/::1753892782
 BorderGlow.gdshader::Shader/Shader::3482288847951074972::1753124653::0::1::::<><><>0<>0<><>::
 BorderGlowEffect.tres::ShaderMaterial/ShaderMaterial::1119422237748574700::1753124653::0::1::::<><><>0<>0<><>::uid://bpu312tpdawwi::::res://Shaders/BorderGlow.gdshader
-ResourcePopup.gdshader::Shader::8016008752144949522::1753297005::0::1::::<><><>0<>0<><>::
+ResourcePopup.gdshader::Shader::8016008752144949522::1753892782::0::1::::<><><>0<>0<><>::
 tr.gdshader::Shader/Shader::7068240752547759088::1753124653::0::1::::<><><>0<>0<><>::
-::res://Systems/::1753281629
+::res://Systems/::1753828614
 ::res://Systems/Cameras/::1753124653
-Camera.cs::CSharpScript::1047953144532538296::1753124653::0::1::::<>Camera2D<><>0<>0<><>::
-::res://Systems/Game/::1753296992
-GameContext.cs::CSharpScript/CSharpScript::7403524666300912127::1753191706::0::1::::<><><>0<>0<><>::
-Initialize.cs::CSharpScript::1441118565897155532::1753285520::0::1::::<><><>0<>0<><>::
-Main.cs::CSharpScript::513351775891940651::1753285676::0::1::::<>Node2D<><>0<>0<><>::
-::res://Systems/GameTime/::1753284779
-GameTime.cs::CSharpScript::433006957790014757::1753284772::0::1::::<><><>0<>0<><>::
-TickManager.cs::CSharpScript::2300922514838437329::1753284779::0::1::::<><><>0<>0<><>::
-::res://Systems/Map/::1753196604
+Camera.cs::CSharpScript/CSharpScript::1047953144532538296::1753124653::0::1::::<>Camera2D<><>0<>0<><>::
+::res://Systems/Game/::1753892620
+GameContext.cs::CSharpScript::7403524666300912127::1753892620::0::1::::<><><>0<>0<><>::
+Initialize.cs::CSharpScript/CSharpScript::1441118565897155532::1753891338::0::1::::<><><>0<>0<><>::
+Main.cs::CSharpScript::513351775891940651::1753892586::0::1::::<>Node2D<><>0<>0<><>::
+::res://Systems/GameTime/::1753892721
+GameTime.cs::CSharpScript/CSharpScript::433006957790014757::1753284772::0::1::::<><><>0<>0<><>::
+TickManager.cs::CSharpScript::2300922514838437329::1753892721::0::1::::<><><>0<>0<><>::
+::res://Systems/Map/::1753891689
 Bitmask.cs::CSharpScript/CSharpScript::1826779365730846611::1753124653::0::1::::<><><>0<>0<><>::
-Border.cs::CSharpScript::1202428569341034999::1753124653::0::1::::<>Line2D<><>0<>0<><>::
-ColoredProvincesSprite.cs::CSharpScript::5553644330111481602::1753124653::0::1::::<>Sprite2D<><>0<>0<><>::
-MapManager.cs::CSharpScript::3770754589197570227::1753124653::0::1::::<>TileMapLayer<><>0<>0<><>::
+Border.cs::CSharpScript/CSharpScript::1202428569341034999::1753124653::0::1::::<>Line2D<><>0<>0<><>::
+ColoredProvincesSprite.cs::CSharpScript/CSharpScript::5553644330111481602::1753124653::0::1::::<>Sprite2D<><>0<>0<><>::
+MapManager.cs::CSharpScript/CSharpScript::3770754589197570227::1753891689::0::1::::<>TileMapLayer<><>0<>0<><>::
 VoronoiDiagram.cs::CSharpScript/CSharpScript::5330299111347198766::1753124653::0::1::::<><><>0<>0<><>::
 ::res://Systems/ResourcePopup/::1753281650
-ResourcePopup.cs::CSharpScript::1225636427669687146::1753281650::0::1::::<>Node2D<><>0<>0<><>::
-::res://Systems/Resources/::1753284431
-ResourceItem.cs::CSharpScript/CSharpScript::6029106695310875927::1753127216::0::1::::<><><>0<>0<><>::
-ResourceManager.cs::CSharpScript::3613670434129445465::1753284431::0::1::::<>Node<><>0<>0<><>::
-::res://Systems/SaveLoad/::1753126527
+ResourcePopup.cs::CSharpScript/CSharpScript::1225636427669687146::1753281650::0::1::::<>Node2D<><>0<>0<><>::
+::res://Systems/Resources/::1753892488
+ResourceItem.cs::CSharpScript/CSharpScript::6029106695310875927::1753892448::0::1::::<><><>0<>0<><>::
+ResourceManager.cs::CSharpScript/CSharpScript::3613670434129445465::1753892488::0::1::::<>Node<><>0<>0<><>::
+::res://Systems/SaveLoad/::1753828644
 GameData.cs::CSharpScript/CSharpScript::3432204477411883715::1753124653::0::1::::<><><>0<>0<><>::
-InitSaveAndLoad.cs::CSharpScript::8279773095889747920::1753126282::0::1::::<>Node<><>0<>0<><>::
+InitSaveAndLoad.cs::CSharpScript/CSharpScript::8279773095889747920::1753828644::0::1::::<>Node<><>0<>0<><>::
 Serialization.cs::CSharpScript/CSharpScript::4086493927622224700::1753126527::0::1::::<><><>0<>0<><>::
-::res://Systems/SaveLoad/JsonConverters/::1753124653
+::res://Systems/SaveLoad/JsonConverters/::1753892765
 DictionaryVector2I_ResourceItemConverter.cs::CSharpScript/CSharpScript::1093927881908656241::1753124653::0::1::::<><><>0<>0<><>::
-ResourceItemConverter.cs::CSharpScript/CSharpScript::885042602346596126::1753124653::0::1::::<><><>0<>0<><>::
+ResourceItemConverter.cs::CSharpScript::885042602346596126::1753892765::0::1::::<><><>0<>0<><>::
 Vector2IConverter.cs::CSharpScript/CSharpScript::7622164415831209552::1753124653::0::1::::<><><>0<>0<><>::
 ::res://TEST/::1753126129
-::res://tilesets/::1753284329
-BorderHighlight.tres::TileSet::8837363255068850287::1753284329::0::1::::<><><>0<>0<><>::uid://8vd63o52ag16::::res://Images/35%_OpacityBlack.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres<>uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png
-tilesetTest.tres::TileSet::7682180626503827022::1753284329::0::1::::<><><>0<>0<><>::uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png<>uid://55o842nsqmkq::::res://Tiny Swords (Update 010)/Terrain/Water/Water.png<>uid://cbbf4o36sw7s0::::res://Images/BetterCastle64.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres
+::res://tilesets/::1753828644
+BorderHighlight.tres::TileSet/TileSet::8837363255068850287::1753828644::0::1::::<><><>0<>0<><>::uid://8vd63o52ag16::::res://Images/35%_OpacityBlack.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres<>uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png
+tilesetTest.tres::TileSet/TileSet::7682180626503827022::1753828644::0::1::::<><><>0<>0<><>::uid://dfuocms8n3amf::::res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png<>uid://55o842nsqmkq::::res://Tiny Swords (Update 010)/Terrain/Water/Water.png<>uid://cbbf4o36sw7s0::::res://Images/BetterCastle64.png<>uid://p7iyrevqqcjs::::res://Shaders/BorderGlowEffect.tres
 ::res://Tiny Swords (Update 010)/::1753124653
 ::res://Tiny Swords (Update 010)/Deco/::1753124653
 01.png::CompressedTexture2D/CompressedTexture2D::7083981749985603285::1753124653::1753124653::1::::<><><>0<>0<>294fcd09d357597eb404b4ee0d50640d<>res://.godot/imported/01.png-dbfe14c4e6643a68f65115097eb9e4ee.ctex::
@@ -346,5 +346,5 @@ Ribbon_Yellow_Connection_Right.png::CompressedTexture2D/CompressedTexture2D::413
 Ribbon_Yellow_Connection_Right_Pressed.png::CompressedTexture2D/CompressedTexture2D::2152006685817379807::1753124653::1753124653::1::::<><><>0<>0<>fbc3ba8ba946e35693020534da35cabf<>res://.godot/imported/Ribbon_Yellow_Connection_Right_Pressed.png-5f5c4745f1dfdf62933ff5334cc457a2.ctex::
 Ribbon_Yellow_Connection_Up.png::CompressedTexture2D/CompressedTexture2D::599928325042743156::1753124653::1753124653::1::::<><><>0<>0<>77fc443a90dbf664e180d9c15a93f121<>res://.godot/imported/Ribbon_Yellow_Connection_Up.png-cfb3f7b43be4fb45126cabcc2cd4927f.ctex::
 Ribbon_Yellow_Connection_Up_Pressed.png::CompressedTexture2D/CompressedTexture2D::5117042353927031885::1753124653::1753124653::1::::<><><>0<>0<>3c856ca08df7340a850574ad38963bc2<>res://.godot/imported/Ribbon_Yellow_Connection_Up_Pressed.png-20fc4ba41c38c2274d453204f66c34ec.ctex::
-::res://UI/::1753124653
-UIManager.cs::CSharpScript::8766350107310847109::1753124653::0::1::::<>Control<><>0<>0<><>::
+::res://UI/::1753828560
+UIManager.cs::CSharpScript/CSharpScript::8766350107310847109::1753828560::0::1::::<>Control<><>0<>0<><>::

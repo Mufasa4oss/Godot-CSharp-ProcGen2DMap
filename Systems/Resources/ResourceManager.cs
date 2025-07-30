@@ -1,4 +1,5 @@
 using Godot;
+using kingsofresource;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,73 +10,83 @@ public partial class ResourceManager : Node
 	//handles the ResourceItems and changes to those instances. Manages the resource rate of aquisiton
 	//CHANGE EVERYTHING TO PRIVATE AND USE THE INSTANCE IN MAIN
 
-	public Dictionary<Vector2I, ResourceItem> capitalsResources;
+	public Dictionary<Vector2I, ResourceItem> tilesResources;
+	List<Vector2I> mapCoordsLand;
 	List<Vector2I> capitals;
-	public ResourceManager(List<Vector2I> capitals)
+
+	private List<string> rawResourceNames = new List<string>
+{
+	"Wood",
+	"Stone",
+	"Iron",
+	"Gold",
+	"Grain",
+	"Livestock",
+	"Coal"
+};
+	public ResourceManager(List<Vector2I> mcl, List<Vector2I> capitals)
 	{
 		// this is the handler for assignment of resource items to the capitals
+		this.mapCoordsLand = mcl;
 		this.capitals = capitals;
-		this.capitalsResources = initCapitalResource();
+		this.tilesResources = initCapitalResource();
 		
 	}
 	private Dictionary<Vector2I, ResourceItem> initCapitalResource() /////creation one time use
 	{
 		RandomNumberGenerator rng = new RandomNumberGenerator();
-		Dictionary<Vector2I, ResourceItem> capitalsResources = new Dictionary<Vector2I, ResourceItem>();
-		foreach (Vector2I capital in capitals)
+		Dictionary<Vector2I, ResourceItem> tilesResources = new Dictionary<Vector2I, ResourceItem>();
+		
+	foreach (Vector2I mcl in mapCoordsLand)
 		{
-			float distro = rng.Randf(); //random number between 0 and 1
-			if (distro < 0.33f)
-			{
-				ResourceItem resourceItem = new ResourceItem(0, "Wood", 1);
-				capitalsResources.Add(capital, resourceItem);
-			}
-			else if (distro < 0.66f)
-			{
-				ResourceItem resourceItem = new ResourceItem(0, "Stone", 1);
-				capitalsResources.Add(capital, resourceItem);
-			}
-			else
-			{
-				ResourceItem resourceItem = new ResourceItem(0, "Grain", 1);
-				capitalsResources.Add(capital, resourceItem);
-			}
+			//assigns a resource item to each tile, not water tile, not capital tile
+			if (capitals.Contains(mcl)) { continue; }
+			int randNum = rng.RandiRange(0, rawResourceNames.Count); //inclusive int
+			if (randNum == rawResourceNames.Count) { continue; } // empty tile
+
+			tilesResources.Add(mcl, new ResourceItem(rawResourceNames[randNum]));
 		}
-		return capitalsResources;
+
+
+		return tilesResources;
 	}
-	public ResourceItem GetResourceItem(Vector2I capital)
+	public ResourceItem GetResourceItem(Vector2I tile)
 	{
-		if (capitalsResources.TryGetValue(capital, out ResourceItem resourceItem))
+		if (tilesResources.TryGetValue(tile, out ResourceItem resourceItem))
 		{
 			return resourceItem;
 		}
 		else
 		{
-			GD.PrintErr($"ResourceItem not found for capital at {capital}");
+			GD.PrintErr($"ResourceItem not found for capital at {tile}");
 			return null;
 		}
 	}
-	public int GetResourceQuantity(Vector2I capital)
+	/*
+	public int GetResourceQuantity(Vector2I tile)
 	{
-		if (capitalsResources.TryGetValue(capital, out ResourceItem resourceItem))
+		if (tilesResources.TryGetValue(tile, out ResourceItem resourceItem))
 		{
 			return resourceItem.quantity;
 		}
 		else
 		{
-			GD.PrintErr($"ResourceItem not found for capital at {capital}");
+			GD.PrintErr($"ResourceItem not found for capital at {tile}");
 			return 0;
 		}
 	}
-	public void UpdateQuantityForCapital(Vector2I capital)
+	*/
+
+	/*
+	public void UpdateQuantityForCapital(Vector2I tile)
 	{
 		
-			capitalsResources.TryGetValue(capital, out ResourceItem resourceItem);
+		tilesResources.TryGetValue(tile, out ResourceItem resourceItem);
 			int rate = resourceItem.rateOfAquistion;
 			resourceItem.quantity += rate;
 			//GD.Print($"Capital: {capital}, Resource: {resourceItem.Name}, Quantity: {resourceItem.quantity}");
 	}
-
+	*/
 
 
 

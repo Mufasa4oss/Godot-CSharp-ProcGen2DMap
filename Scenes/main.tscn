@@ -17,17 +17,23 @@ seamless = true
 noise = SubResource("FastNoiseLite_0xm2m")
 
 [node name="Main" type="Node2D"]
+z_index = 100
 z_as_relative = false
 script = ExtResource("1_jjvhh")
 Nht = SubResource("NoiseTexture2D_h2yge")
 numProvinces = 500
 
 [node name="0zTileMapLayer" type="TileMapLayer" parent="."]
+z_as_relative = false
 tile_set = ExtResource("2_kry3j")
 rendering_quadrant_size = 64
 
 [node name="BordersLayer" type="TileMapLayer" parent="0zTileMapLayer"]
+z_index = 1
 tile_set = ExtResource("3_kry3j")
+
+[node name="RoadLayer" type="TileMapLayer" parent="0zTileMapLayer"]
+z_index = 2
 
 [node name="Camera2D" type="Camera2D" parent="."]
 z_as_relative = false

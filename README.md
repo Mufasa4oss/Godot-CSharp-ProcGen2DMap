@@ -1,5 +1,11 @@
 # KingsOfResource
 
+#Controls
+q: see provinces map mode
+F5: save .json save file
+F9: load .json save file (not implemented)
+WASD: camera control
+
 # GDD
 
 🧱 GAME DESIGN DOCUMENT – ECONOMIC/STRATEGY SIM

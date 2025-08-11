@@ -1,4 +1,4 @@
-# KingsOfResource
+# KingsOfResource (Godot version 4.4 .NET)
 
 #Controls
 q: see provinces map mode

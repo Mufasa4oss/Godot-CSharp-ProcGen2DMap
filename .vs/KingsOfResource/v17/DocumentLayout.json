@@ -1,14 +1,10 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\",
+  "WorkspaceRootPath": "C:\\Users\\test\\Desktop\\GitHub\\KOR\\kingsofresource\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\game\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\desktop\\github\\kor\\kingsofresource\\systems\\game\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\game\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|c:\\users\\test\\documents\\game\\kingsofresource\\systems\\map\\primsalgorithmsimple.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{07717BD6-3E5B-494F-ABA9-9BADD3725BFA}|KingsOfResource.csproj|solutionrelative:systems\\map\\primsalgorithmsimple.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,53 +14,19 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Main.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Main.cs",
+              "DocumentMoniker": "C:\\Users\\test\\Desktop\\GitHub\\KOR\\kingsofresource\\Systems\\Game\\Main.cs",
               "RelativeDocumentMoniker": "Systems\\Game\\Main.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Game\\Main.cs",
+              "ToolTip": "C:\\Users\\test\\Desktop\\GitHub\\KOR\\kingsofresource\\Systems\\Game\\Main.cs",
               "RelativeToolTip": "Systems\\Game\\Main.cs",
-              "ViewState": "AgIAAOkAAAAAAAAAAAAuwAoBAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAABoAAAAAAAAAAAAQwDgAAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-05T17:00:41.352Z",
-              "EditorCaption": ""
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "Orientation": 0,
-      "VerticalTabListWidth": 256,
-      "FloatingWindowState": {
-        "Id": "810adf17-2133-4c81-abfc-958751ff62c0",
-        "Display": 1,
-        "X": 1,
-        "Y": 1,
-        "Width": 1918,
-        "Height": 1030,
-        "WindowState": 0
-      },
-      "DocumentGroups": [
-        {
-          "DockedWidth": 200,
-          "SelectedChildIndex": 0,
-          "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "PrimsAlgorithmSimple.cs",
-              "DocumentMoniker": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Map\\PrimsAlgorithmSimple.cs",
-              "RelativeDocumentMoniker": "Systems\\Map\\PrimsAlgorithmSimple.cs",
-              "ToolTip": "C:\\Users\\test\\Documents\\Game\\KingsOfResource\\Systems\\Map\\PrimsAlgorithmSimple.cs",
-              "RelativeToolTip": "Systems\\Map\\PrimsAlgorithmSimple.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAABkAAAAuAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-05T17:09:51.935Z",
               "EditorCaption": ""
             }
           ]

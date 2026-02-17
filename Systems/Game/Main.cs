@@ -21,6 +21,8 @@ public partial class Main : Node2D
 	[Export] int numProvinces = 1;
 	Noise noise;
 	TileMapLayer tml;
+	int seed;
+
 	VoronoiDiagram vD;
 	//TileMapLayer bhl;
 	TextureRect textureRect;
@@ -44,6 +46,12 @@ public partial class Main : Node2D
 
 	{
 		noise = Nht.Noise; // noise is set the noise parameter of the NoiseTexture2D Nht.
+		
+		FastNoiseLite noiseTexture = noise as FastNoiseLite; // cast the noise to FastNoiseLite to access its properties, (Seed)
+		Random rand = new Random();
+		int num = rand.Next(); // Generate a random seed for the noise
+		noiseTexture.Set("seed", num);
+		GD.Print("Seed: " + num); // Print the seed to the console for reference
 
 		Nht.Height = MapSizeY;
 		Nht.Width = MapSizeX;

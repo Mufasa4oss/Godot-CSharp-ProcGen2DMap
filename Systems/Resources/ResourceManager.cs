@@ -1,5 +1,5 @@
 using Godot;
-using kingsofresource;
+using ProceduralMapGenerator;
 using System;
 using System.Collections.Generic;
 using System.Linq;

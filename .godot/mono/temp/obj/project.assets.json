@@ -94,11 +94,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\test\\Desktop\\GitHub\\KOR\\kingsofresource\\KingsOfResource.csproj",
-      "projectName": "KingsOfResource",
-      "projectPath": "C:\\Users\\test\\Desktop\\GitHub\\KOR\\kingsofresource\\KingsOfResource.csproj",
+      "projectUniqueName": "C:\\Users\\test\\Desktop\\GitHub\\ProceduralMapGenerator\\ProceduralMapGenerator\\ProceduralMapGenerator.csproj",
+      "projectName": "ProceduralMapGenerator",
+      "projectPath": "C:\\Users\\test\\Desktop\\GitHub\\ProceduralMapGenerator\\ProceduralMapGenerator\\ProceduralMapGenerator.csproj",
       "packagesPath": "C:\\Users\\test\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\test\\Desktop\\GitHub\\KOR\\kingsofresource\\.godot\\mono\\temp\\obj\\",
+      "outputPath": "C:\\Users\\test\\Desktop\\GitHub\\ProceduralMapGenerator\\ProceduralMapGenerator\\.godot\\mono\\temp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

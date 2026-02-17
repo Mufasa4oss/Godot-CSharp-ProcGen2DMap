@@ -10,14 +10,14 @@ config_version=5
 
 [application]
 
-config/name="KingsOfResource"
+config/name="ProceduralMapGeneratorC#"
 run/main_scene="uid://0hfhleea62dd"
 config/features=PackedStringArray("4.4", "C#", "Forward Plus")
 config/icon="res://Images/icon.svg"
 
 [dotnet]
 
-project/assembly_name="KingsOfResource"
+project/assembly_name="ProceduralMapGenerator"
 
 [input]
 

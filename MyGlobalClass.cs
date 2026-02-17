@@ -5,7 +5,7 @@ using System.Linq;
 
 
 
-namespace kingsofresource;
+namespace ProceduralMapGenerator;
 
 public static class MyGlobalClass
 {

@@ -1,7 +1,7 @@
 using Godot;
 
 using Godot.NativeInterop;
-using kingsofresource;
+using ProceduralMapGenerator;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

@@ -1,153 +1,79 @@
 using Godot;
-
-using Godot.NativeInterop;
-using ProceduralMapGenerator;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-/*Map and ModeView Mode Generation*/
-
 
 public partial class Main : Node2D
 {
-
-	Vector2I grassAtlas;
-	Vector2I waterAtlas;
-	Vector2I sandAtlas;
-	TickManager tickManager;
+	// --- Godot exports & scene node refs ---
 	[Export] NoiseTexture2D Nht;
 	[Export] int numProvinces = 1;
 	Noise noise;
 	TileMapLayer tml;
-	int seed;
-
-	VoronoiDiagram vD;
-	//TileMapLayer bhl;
-	TextureRect textureRect;
-	private List<Vector2I> mapCoordsLand = new List<Vector2I>();//coords of all placed tiles not water
-	Dictionary<Vector2I, ResourceItem> tilesResources;
-	public static int MapSizeX = 512;
-	public static int MapSizeY = 512; //in tiles
-									  //public event Ree Created;
 	UIManager control;
-	public static event Action<Texture2D> MapTextureCreated; //event that is triggered when the property is assigned this is a delgate auto defined returns null one arguement
-															 //public static event Action ProvincesSceneInitalized;
-	Sprite2D provinceSprite;
+
+	// --- Game state ---
 	GameContext gameContext;
-	//private List<Vector2I> mapCoordsLand;
 	List<PrimsAlgorithmSimple.Edge> mst;
-	//new
-	//Node2D popupInstance;
+
+	// --- Map config ---
+	public static int MapSizeX = 512;
+	public static int MapSizeY = 512;
+	public static event Action<Texture2D> MapTextureCreated;
+
 	public Main() { }
 
 	public override void _Ready()
-
 	{
-		noise = Nht.Noise; // noise is set the noise parameter of the NoiseTexture2D Nht.
-		
-		FastNoiseLite noiseTexture = noise as FastNoiseLite; // cast the noise to FastNoiseLite to access its properties, (Seed)
-		Random rand = new Random();
-		int num = rand.Next(); // Generate a random seed for the noise
+		noise = Nht.Noise;
+		FastNoiseLite noiseTexture = noise as FastNoiseLite;
+		int num = new Random().Next();
 		noiseTexture.Set("seed", num);
-		GD.Print("Seed: " + num); // Print the seed to the console for reference
+		GD.Print("Seed: " + num);
 
 		Nht.Height = MapSizeY;
 		Nht.Width = MapSizeX;
 
-		tml = GetNode<TileMapLayer>("0zTileMapLayer");
+		tml     = GetNode<TileMapLayer>("0zTileMapLayer");
 		control = GetNode<UIManager>("UIManager");
-		//PlaceTiles();
 
 		gameContext = CreateObjs();
 		PopupSceneLoad();
 		mst = run();
-		//GD.Print(mst.Count);
-		QueueRedraw(); // This will call _Draw() at the end of the frame to draw the roads
 
-		//_Draw();
+		DrawMSTLines();
+
+		TradeNetworkVisualizer tradeVisualizer = new TradeNetworkVisualizer();
+		AddChild(tradeVisualizer);
+		tradeVisualizer.Initialize(mst, gameContext.voronoiDiagram.GetCapitals(), tml);
 	}
 
-	/// <summary>
-	/// ////////////World Generation
-	/// </summary>
-
-
-	//Dependencies of PlaceTiles are //noise, tml, MapSizeX, MapSizeY also mapCoordsLand and const int s for sID_water, sID_sand, sID_grass
-	/*
-	private void PlaceTiles()
-	{
-
-		Vector2I StartingAtlasVector = new Vector2I(0, 0);
-		//rewrite first overlay with default tile, then correct tile orientation
-		for (int y = 0; y < MapSizeX; y++)
-		{
-			for (int x = 0; x < MapSizeY; x++)
-			{
-				Vector2I currentTile = new Vector2I(x, y);
-				float nV = noise.GetNoise2D(x, y);
-				//noiseMap[x,y] = nV;
-				//we have all elevations for the map so now depending on the elevation we determine water, sand, or grass
-				if (nV > 0f)//grass
-				{
-					tml.SetCell(currentTile, sID_grass, new Vector2I(3, 3)); //default is set to island
-					mapCoordsLand.Add(currentTile);
-				}
-				else
-				{
-					tml.SetCell(new Vector2I(x, y), sID_water, new Vector2I(0, 0));
-					//tiles.Append<Vector2I>(currentTile);
-				}
-			}
-		}
-
-		//metric shitton of object creation warning order matters way too much remade into an objectinstancing method
-
-
-
-
-		//var borderLayer = GetNode<TileMapLayer>("0zTileMapLayer/BordersLayer");
-	}
-	*/
 	private GameContext CreateObjs()
 	{
-		Initalize init = new Initalize(tml, noise, MapSizeX, MapSizeY);
-		mapCoordsLand = init.PlaceTiles(); // Place tiles and get the coordinates of land tiles
+		List<Vector2I> mapCoordsLand = new Initalize(tml, noise, MapSizeX, MapSizeY).PlaceTiles();
+
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
-		//Dictionary<string, Vector2I> atlas = bitmaskObj.atlasDict;
 		bitmaskObj.OrientCells();
-		//
-		vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml);
-		//
+
+		VoronoiDiagram vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml);
+
 		ResourceManager resourceManager = new ResourceManager(mapCoordsLand, vD.GetCapitals());
-		tilesResources = resourceManager.tilesResources;
-		//
-		tickManager = new TickManager(resourceManager, vD.placedCords, control);
-		//
+
+		TickManager tickManager = new TickManager(resourceManager, vD.placedCords, control);
+
 		MapManager mapManager = new MapManager(vD, tml, Nht, numProvinces, tickManager);
 		AddChild(mapManager);
-		//end object creation
 
 		var provinceTexture = vD.coloredProMap;
 		MapTextureCreated?.Invoke(provinceTexture);
 
-		//test
-
-
-		return new GameContext(bitmaskObj, vD, resourceManager, tilesResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY, tml); // used to pass dependencies. Easiest thing to do would be to save items that are loaded into this object
-
+		return new GameContext(bitmaskObj, vD, resourceManager, resourceManager.tilesResources, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY, tml);
 	}
 
-	// Load the popup scene
 	public void PopupSceneLoad()
 	{
 		var popupScene = ResourceLoader.Load<PackedScene>("res://Scenes/ResourcePopup.tscn").Instantiate();
-
-		//popupScene
 		AddChild(popupScene);
 
-		//removal
 		Timer timer = new Timer();
 		timer.WaitTime = 5.0f;
 		timer.OneShot = true;
@@ -155,133 +81,93 @@ public partial class Main : Node2D
 		timer.Start();
 		timer.Timeout += () =>
 		{
-			ResourcePopup rP = (ResourcePopup)popupScene;
-			rP.StartFadeOut(); // Start the fade out effect
-							   //popupScene.QueueFree();
+			((ResourcePopup)popupScene).StartFadeOut();
 			timer.QueueFree();
-			//this happends in ResourcePopup.cs -> Remove the popup scene after fading out
 		};
 	}
+
 	public List<PrimsAlgorithmSimple.Edge> run()
 	{
-		Example e = new Example(gameContext);
-		return (e.Main());
-
+		return new Example(gameContext).Main();
 	}
 
-	//Prims algo
 	public class Example
 	{
-
-		int capitalCount; // Capital Count
+		int capitalCount;
 		List<Vector2I> capitals;
+
 		public Example(GameContext gc)
 		{
-			capitals = gc.voronoiDiagram.GetCapitals();
+			capitals     = gc.voronoiDiagram.GetCapitals();
 			capitalCount = capitals.Count;
 		}
+
 		public List<PrimsAlgorithmSimple.Edge> Main()
 		{
-			List<PrimsAlgorithmSimple.Edge> mst;
-			//Godot Implemenation
-			//needs capitals list and count
-
-			// Example number of capitals, replace with actual count
-
-			// Create a graph with num capitals vertices
 			PrimsAlgorithmSimple prim = new PrimsAlgorithmSimple(capitalCount);
 
-			/* Add some edges
-			prim.AddEdge(0, 1, 2.0);  // Edge 0-1 with weight 2
-			prim.AddEdge(0, 2, 4.0);  // Edge 0-2 with weight 4
-			prim.AddEdge(1, 2, 1.0);  // Edge 1-2 with weight 1
-			prim.AddEdge(1, 3, 3.0);  // Edge 1-3 with weight 3
-			prim.AddEdge(2, 3, 5.0);  // Edge 2-3 with weight 5
-			*/
 			for (int i = 0; i < capitalCount; i++)
-			{
 				for (int j = i + 1; j < capitalCount; j++)
-				{
-					double weight = (capitals[i] - capitals[j]).Length(); // weight based on distance // Godot overrides the - operator for Vector2I this creates a new Vector2I that is the difference between the two vectors
-					prim.AddEdge(i, j, weight);
-				}
-			}
+					prim.AddEdge(i, j, (capitals[i] - capitals[j]).Length());
 
-			// Find and print the MST
-			//GD.Print(capitalCount + "capCount");
-			mst = prim.FindMST();
-
-			return mst;
-
+			return prim.FindMST();
 		}
-
 	}
-
-
-
-
-
-	// Instance it
-	//Node popupSceneInstance = popupScene.Instantiate();
-
-	// Optionally: position it somewhere on the screen
-	// Adjust as needed
-
-	// Add it as a child so it appears in your main scene
-
-	/// <summary>
-	/// ////////////////Resource System rough outline moved to resource manager
-	/// </summary>
-
-
-
-	/// <summary>
-	/// ///////////////// Time and Date System Calls
-	/// </summary>
-
 
 	public override void _Process(double delta)
 	{
-		tickManager.Update((float)delta);
+		gameContext.tickManager.Update((float)delta);
 	}
+
 	public override void _Input(InputEvent @event)
 	{
-		if (Input.IsActionJustPressed("f5"))
+		if (Input.IsActionJustPressed("f5") || Input.IsActionJustPressed("f9"))
 		{
-			//QueueRedraw();
-			var obj = new InitSaveAndLoad(gameContext);
-			obj.initializeSave();
+			new InitSaveAndLoad(gameContext).initializeSave();
 		}
-		if (Input.IsActionJustPressed("f9"))
-		{
-			var obj = new InitSaveAndLoad(gameContext);
-			obj.initializeSave();
-		}
-
 	}
 
-	//used for drawing roads only at this point eventually going to be moved to a more conscise and logical location
-	public override void _Draw()
+	private void DrawMSTLines()
 	{
-		var capitals = gameContext.voronoiDiagram.GetCapitals();
-		//Z-level in Godot is temporalily set to 100 for this class make sure to change this when the roads are implemented into the road tilemaplayer
-		Color Brown = new Color(0.545f, 0f, 0.075f); // Brown color for roads
-		foreach(var edge in mst)
+		var capitals   = gameContext.voronoiDiagram.GetCapitals();
+		var capitalSet = new HashSet<Vector2I>(capitals);
+		TileMapLayer roadLayer = tml.GetNode<TileMapLayer>("RoadLayer");
+		HashSet<Vector2I> roadTiles = new HashSet<Vector2I>();
+
+		foreach (var edge in mst)
+			foreach (Vector2I tile in GetTilesAlongLine(capitals[edge.From], capitals[edge.To]))
+				if (!capitalSet.Contains(tile))
+					roadTiles.Add(tile);
+
+		foreach (Vector2I tile in roadTiles)
+			roadLayer.SetCell(tile, 0, Vector2I.Zero);
+
+		new RoadBitmask().OrientRoadCells(roadLayer, roadTiles, capitalSet);
+	}
+
+	private List<Vector2I> GetTilesAlongLine(Vector2I from, Vector2I to)
+	{
+		var tiles = new List<Vector2I>();
+		int dx = Math.Abs(to.X - from.X);
+		int dy = Math.Abs(to.Y - from.Y);
+		int sx = from.X < to.X ? 1 : -1;
+		int sy = from.Y < to.Y ? 1 : -1;
+		int err = dx - dy;
+		int x = from.X, y = from.Y;
+
+		while (true)
 		{
-			Vector2I from = capitals[edge.From];
-			Vector2I to = capitals[edge.To];
-
-			var worldFrom = tml.MapToLocal(from);
-			var worldTo = tml.MapToLocal(to);
-
-			DrawLine(worldFrom, worldTo, Brown, 10.0f); // Draw the road line with a width of 2 pixels
+			tiles.Add(new Vector2I(x, y));
+			if (x == to.X && y == to.Y) break;
+			int e2 = 2 * err;
+			bool stepX = e2 > -dy;
+			bool stepY = e2 < dx;
+			if (stepX && stepY)
+				tiles.Add(new Vector2I(x + sx, y));
+			if (stepX) { err -= dy; x += sx; }
+			if (stepY) { err += dx; y += sy; }
 		}
 
+		return tiles;
 	}
 }
-// Update the tick manager with the time since the last frame. Handles time passing
-
-
-///
-/// /////////// Save & Load
-/// 

@@ -1,40 +1,38 @@
-[gd_scene load_steps=9 format=3 uid="uid://0hfhleea62dd"]
+[gd_scene format=3 uid="uid://0hfhleea62dd"]
 
 [ext_resource type="Script" uid="uid://hkw3gbc4j32n" path="res://Systems/Game/Main.cs" id="1_jjvhh"]
 [ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesets/tilesetTest.tres" id="2_kry3j"]
 [ext_resource type="Script" uid="uid://o6vvujhl4c1e" path="res://Systems/Cameras/Camera.cs" id="3_21xkr"]
 [ext_resource type="TileSet" uid="uid://dx55c1nn6ogax" path="res://tilesets/BorderHighlight.tres" id="3_kry3j"]
 [ext_resource type="Script" uid="uid://clehyfud31ory" path="res://Systems/Map/ColoredProvincesSprite.cs" id="4_6bp64"]
+[ext_resource type="TileSet" uid="uid://0cior3rfmbg7" path="res://tilesets/road.tres" id="4_344ge"]
 [ext_resource type="Script" uid="uid://dw5qrglxk2coj" path="res://UI/UIManager.cs" id="6_21xkr"]
+[ext_resource type="Texture2D" uid="uid://hiqqvhkimd63" path="res://Images/Blender & Krita Assets/Rails/RailsHoriz.png" id="7_6bp64"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3
 frequency = 0.0022
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_h2yge"]
-seamless = true
 noise = SubResource("FastNoiseLite_0xm2m")
+seamless = true
 
-[node name="Main" type="Node2D"]
-z_index = 100
-z_as_relative = false
+[node name="Main" type="Node2D" unique_id=401272265]
 script = ExtResource("1_jjvhh")
 Nht = SubResource("NoiseTexture2D_h2yge")
 numProvinces = 500
 
-[node name="0zTileMapLayer" type="TileMapLayer" parent="."]
-z_as_relative = false
+[node name="0zTileMapLayer" type="TileMapLayer" parent="." unique_id=643109037]
 tile_set = ExtResource("2_kry3j")
 rendering_quadrant_size = 64
 
-[node name="BordersLayer" type="TileMapLayer" parent="0zTileMapLayer"]
-z_index = 1
+[node name="BordersLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=182775386]
 tile_set = ExtResource("3_kry3j")
 
-[node name="RoadLayer" type="TileMapLayer" parent="0zTileMapLayer"]
-z_index = 2
+[node name="RoadLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=915398877]
+tile_set = ExtResource("4_344ge")
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=536846053]
 z_as_relative = false
 scale = Vector2(0.999742, 1)
 zoom = Vector2(0.1, 0.1)
@@ -42,32 +40,40 @@ position_smoothing_enabled = true
 script = ExtResource("3_21xkr")
 ZoomLimits = Vector2(0.1, 3)
 
-[node name="Provinces" type="Sprite2D" parent="."]
+[node name="Provinces" type="Sprite2D" parent="." unique_id=394796974]
 visible = false
-z_index = 1
 script = ExtResource("4_6bp64")
 
-[node name="UIManager" type="Control" parent="."]
+[node name="UIManager" type="Control" parent="." unique_id=1941409794]
+z_index = 1
+z_as_relative = false
 layout_mode = 3
 anchors_preset = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-mouse_filter = 2
 script = ExtResource("6_21xkr")
 
-[node name="PanelContainer" type="PanelContainer" parent="UIManager"]
+[node name="PanelContainer" type="PanelContainer" parent="UIManager" unique_id=2028285405]
 layout_mode = 0
-offset_right = 152.0
-offset_bottom = 123.0
+offset_right = 1000.0
+offset_bottom = 1000.0
 
-[node name="VBox" type="VBoxContainer" parent="UIManager/PanelContainer"]
+[node name="VBox" type="VBoxContainer" parent="UIManager/PanelContainer" unique_id=1034808013]
+layout_mode = 2
+mouse_filter = 0
+
+[node name="WoodLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1025436104]
 layout_mode = 2
 
-[node name="WoodLabel" type="Label" parent="UIManager/PanelContainer/VBox"]
+[node name="StoneLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=855809429]
 layout_mode = 2
 
-[node name="StoneLabel" type="Label" parent="UIManager/PanelContainer/VBox"]
+[node name="GrainLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1756451296]
 layout_mode = 2
 
-[node name="GrainLabel" type="Label" parent="UIManager/PanelContainer/VBox"]
+[node name="Button" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746071]
 layout_mode = 2
+toggle_mode = true
+keep_pressed_outside = true
+text = "Build Road"
+icon = ExtResource("7_6bp64")

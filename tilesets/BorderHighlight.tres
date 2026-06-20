@@ -1,4 +1,4 @@
-[gd_resource type="TileSet" load_steps=6 format=3 uid="uid://dx55c1nn6ogax"]
+[gd_resource type="TileSet" format=3 uid="uid://dx55c1nn6ogax"]
 
 [ext_resource type="Texture2D" uid="uid://8vd63o52ag16" path="res://Images/35%_OpacityBlack.png" id="1_qowjo"]
 [ext_resource type="Material" uid="uid://p7iyrevqqcjs" path="res://Shaders/BorderGlowEffect.tres" id="2_uqsly"]

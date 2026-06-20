@@ -1,4 +1,4 @@
-[gd_resource type="TileSet" load_steps=10 format=3 uid="uid://dhpknl1krdn23"]
+[gd_resource type="TileSet" format=3 uid="uid://dhpknl1krdn23"]
 
 [ext_resource type="Texture2D" uid="uid://dfuocms8n3amf" path="res://Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png" id="1_pt23m"]
 [ext_resource type="Texture2D" uid="uid://55o842nsqmkq" path="res://Tiny Swords (Update 010)/Terrain/Water/Water.png" id="2_wqc0e"]

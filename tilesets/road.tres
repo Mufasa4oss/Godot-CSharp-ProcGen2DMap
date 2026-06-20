@@ -1,0 +1,18 @@
+[gd_resource type="TileSet" format=3 uid="uid://0cior3rfmbg7"]
+
+[ext_resource type="Texture2D" uid="uid://it1w7kunicfi" path="res://Images/Blender & Krita Assets/Rails/topRightrefindedCorner-imageonline.co-merged.png" id="1_wf0x3"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4n2ey"]
+texture = ExtResource("1_wf0x3")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+
+[resource]
+resource_name = "road"
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetAtlasSource_4n2ey")

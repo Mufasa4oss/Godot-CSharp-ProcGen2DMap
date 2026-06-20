@@ -13,6 +13,8 @@ public partial class MapManager : TileMapLayer
 	private TickManager tickManager;
 	private int numProvinces;
 	private NoiseTexture2D noiseTexture;
+	private UIManager _uiManager;
+	private TileMapLayer _roadLayer;
 
 
 
@@ -27,8 +29,9 @@ public partial class MapManager : TileMapLayer
 	}
 	public override void _Ready()
 	{
-		//Main.ProvincesSceneInitalized += EventMethod;
 		provinces = GetNode<Sprite2D>("../Provinces");
+		_uiManager = GetNode<UIManager>("../UIManager");
+		_roadLayer = GetNode<TileMapLayer>("../0zTileMapLayer/RoadLayer");
 	}
 	private void Initialize()
 	{
@@ -37,15 +40,22 @@ public partial class MapManager : TileMapLayer
 		//Main.ProvincesSceneInitalized -= EventMethod;
 
 	}
-	public override void _Input(InputEvent @event)
+	public override void _UnhandledInput(InputEvent @event)
 	{
 
-		// Prevent input handling if not yet initialized
 		if (Input.IsActionJustPressed("LeftClick"))
 		{
+			Vector2 mousePosition = tml.GetLocalMousePosition();
+			Vector2I tileCoords = tml.LocalToMap(tml.ToLocal(mousePosition));
+
+			if (_uiManager.IsRoadBuildMode)
+			{
+				_roadLayer.SetCell(tileCoords, 0, Vector2I.Zero);
+				return;
+			}
+
 			if (previousTiles != null)
 			{
-				//GD.Print(previousTiles.Count);
 				foreach (Vector2I tile in previousTiles)
 				{
 					var atlasCoords = tml.GetCellAtlasCoords(tile);
@@ -53,12 +63,9 @@ public partial class MapManager : TileMapLayer
 				}
 			}
 			Vector2I capital;
-			Vector2 mousePosition = tml.GetLocalMousePosition();
-			Dictionary<Vector2I, Vector2I> provincesDictionary = vD.provincesDictionary; //key is any coord and the value is the (coords of) closest province center
-			Vector2I tileCoords = tml.LocalToMap(tml.ToLocal(mousePosition));
+			Dictionary<Vector2I, Vector2I> provincesDictionary = vD.provincesDictionary;
 			provincesDictionary.TryGetValue(tileCoords, out capital);
-			Dictionary<Vector2I, HashSet<Vector2I>> allCoords = MyGlobalClass.AllCoordsWithCapital(capital, provincesDictionary); //capital:[allcordswithcapital]
-																																  //Material material = ResourceLoader.Load<ShaderMaterial>("res://Shaders/BorderGlowEffect.tres");
+			Dictionary<Vector2I, HashSet<Vector2I>> allCoords = MyGlobalClass.AllCoordsWithCapital(capital, provincesDictionary);
 
 			foreach (Vector2I tile in allCoords[capital])
 			{

@@ -32,7 +32,7 @@ public partial class TradeNetworkVisualizer : Node2D
 
     private Random rng = new Random();
 
-    // Colors match ResourceManager.rawResourceNames order
+    //CHANGES 23-Jun-26// (was: colors matched ResourceManager.rawResourceNames) decorative palette until M5 drives real flows
     private static readonly Color[] ResourceColors =
     {
         new Color(0.55f, 0.27f, 0.07f), // Wood      - brown

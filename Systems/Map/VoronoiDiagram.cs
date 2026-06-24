@@ -12,6 +12,7 @@ public partial class VoronoiDiagram
 	private TileMapLayer tml;
 	private int mapSizeX;
 	private int mapSizeY;
+	private int worldSeed; // one canonical seed so the same world reproduces (save/load determinism)
 	public Texture2D coloredProMap;
 	public Dictionary<Vector2I, Vector2I> provincesDictionary; //key is any coord and the value is the (coords of) closest province center
 
@@ -25,14 +26,15 @@ public partial class VoronoiDiagram
 	{
 		return placedCords;
 	}
-	public VoronoiDiagram(int mapsizex, int mapsizey, int numCapitals, List<Vector2I> mapCoords, TileMapLayer tilemaplayer)
+	public VoronoiDiagram(int mapsizex, int mapsizey, int numCapitals, List<Vector2I> mapCoords, TileMapLayer tilemaplayer, int worldSeed)
 	{
-		
+
 		this.desiredPointCount = numCapitals;
 		this.allPossibleCoords = mapCoords;
 		this.tml = tilemaplayer;
 		this.mapSizeX = mapsizex;
 		this.mapSizeY = mapsizey; //tiles
+		this.worldSeed = worldSeed;
 		GeneratePoints();
 		this.coloredProMap = CreateProvinceMap();
 		
@@ -44,7 +46,8 @@ public partial class VoronoiDiagram
 	private void GeneratePoints() // placesCityCenters
 	{
 		List<int> indices = new List<int>();
-		Random rng = new Random();
+		// Seeded from the one world seed so capital placement is reproducible per seed.
+		System.Random rng = new System.Random(worldSeed);
 		for (int i = 0; i < allPossibleCoords.Count; i++)
 		{
 			indices.Add(i);
@@ -59,39 +62,21 @@ public partial class VoronoiDiagram
 			//places the desired point count up to desiredPointCount indicies
 			Vector2I coord = allPossibleCoords[indices[i]];
 			placedCords.Add(coord);
-			tml.SetCell(coord, 3, new Vector2I(0, 0));
+			tml.SetCell(coord, TerrainTiles.Capital, new Vector2I(0, 0));
 		}
 	}
 
 
 	private Dictionary<Vector2I, Vector2I> CreateDictionaryOfTilesCapitals() //Currently a brute-force voronoi diagram generation
 	{
-		Dictionary<Vector2I, Vector2I> coordsProvinceCenter = new Dictionary<Vector2I, Vector2I>(); //key is any coord and the value is the (coords of) closest province center
-
+		// Skip any water cells (defensive — allPossibleCoords is land), then run the pure
+		// nearest-capital assignment (VoronoiAssignment, Core) which holds the actual math.
+		var landTiles = new List<Vector2I>();
 		foreach (var coord in allPossibleCoords)
-		{
-			if (tml.GetCellSourceId(coord) == 0) //if water continue
-			{
-				continue;
-			}
+			if (tml.GetCellSourceId(coord) != TerrainTiles.Water)
+				landTiles.Add(coord);
 
-			Vector2I closestProvinceCenter = placedCords[0];
-			float minDistance = float.MaxValue; //biggest possible float value
-
-			foreach (var provinceCenter in placedCords)
-			{
-				float distance = coord.DistanceTo(provinceCenter);
-				if (distance < minDistance)
-				{
-					minDistance = distance;
-					closestProvinceCenter = provinceCenter;
-				}
-			}
-			//need to store results
-			coordsProvinceCenter[coord] = closestProvinceCenter;
-
-		}
-		return (coordsProvinceCenter);
+		return VoronoiAssignment.AssignNearest(landTiles, placedCords);
 	}
 
 
@@ -100,11 +85,19 @@ public partial class VoronoiDiagram
 
 	//need to make a texture2d of the provinces with unique colors
 
+	// Mix the world seed into a distinct deterministic seed for color generation so colors are
+	// reproducible from the one seed without sharing a stream with capital placement.
+	private static int DeriveColorSeed(int worldSeed)
+	{
+		unchecked { return worldSeed * (int)0x9E3779B1 + 0x632BE5AB; }
+	}
+
 	private HashSet<Color> CreateUniqueColorSet()
 	{
 		int numProvinces = placedCords.Count;
 		Color lastColor = new Color(0, 0, 0);
-		var random = new RandomNumberGenerator();
+		// Derived sub-seed so province colors are deterministic but not correlated with capital placement.
+		var random = new System.Random(DeriveColorSeed(worldSeed));
 
 		HashSet<Color> colorSet = new HashSet<Color>();
 		for (int i = 0; i < numProvinces; i++)
@@ -112,7 +105,7 @@ public partial class VoronoiDiagram
 			Color color;
 			do
 			{
-				float hue = ((float)i / numProvinces) + (random.Randf() * 0.05f);
+				float hue = ((float)i / numProvinces) + ((float)random.NextDouble() * 0.05f);
 				hue = hue % 1.0f;
 				color = Color.FromHsv(hue, 1f, 1f, 1f);
 
@@ -125,7 +118,7 @@ public partial class VoronoiDiagram
 	private Texture2D CreateProvinceMap()
 	{
 		int pixelSizeX = mapSizeX;
-		int pixelSizeY = mapSizeX;
+		int pixelSizeY = mapSizeY;
 		HashSet<Color> colorSet = CreateUniqueColorSet();
 		Image image = Image.CreateEmpty(pixelSizeX, pixelSizeY, false, Image.Format.Rgba8);
 		Dictionary<Vector2I, Vector2I> provinceMap = CreateDictionaryOfTilesCapitals();

@@ -1,6 +1,7 @@
 [gd_resource type="TileSet" format=3 uid="uid://0cior3rfmbg7"]
 
-[ext_resource type="Texture2D" uid="uid://it1w7kunicfi" path="res://Images/Blender & Krita Assets/Rails/topRightrefindedCorner-imageonline.co-merged.png" id="1_wf0x3"]
+[ext_resource type="Texture2D" uid="uid://d3mqepga68uej" path="res://Images/Blender & Krita Assets/Rails/rails_narrow.png" id="1_wf0x3"]
+[ext_resource type="Texture2D" uid="uid://euqfkif153ud" path="res://Images/Blender & Krita Assets/Rails/dirt_road.png" id="2_dirt"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4n2ey"]
 texture = ExtResource("1_wf0x3")
@@ -11,8 +12,41 @@ texture_region_size = Vector2i(64, 64)
 3:0/0 = 0
 4:0/0 = 0
 5:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+4:1/0 = 0
+5:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+3:2/0 = 0
+4:2/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dirt"]
+texture = ExtResource("2_dirt")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+4:1/0 = 0
+5:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+3:2/0 = 0
+4:2/0 = 0
 
 [resource]
 resource_name = "road"
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_4n2ey")
+sources/1 = SubResource("TileSetAtlasSource_dirt")

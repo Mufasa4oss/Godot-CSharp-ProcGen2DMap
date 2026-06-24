@@ -47,7 +47,7 @@ public class Bitmask
 		for (int i = 0; i < surrTiles.Length; i++)//order topLeft->top->topRight->Left etc.
 		{
 			int sid = tml.GetCellSourceId(surrTiles[i]);
-			if (sid == 0 || sid == -1) //Continues if the tile is water or null
+			if (sid == TerrainTiles.Water || sid == -1) //Continues if the tile is water or null
 			{
 				continue;
 			}
@@ -90,30 +90,6 @@ public class Bitmask
 		this.atlasDict.Add("island", new Vector2I(3, 3));
 	}
 
-	private string DetermineTileType(int bitmask)
-	{
-		if ((bitmask & 0b01011010) == 0) { return "island"; }
-		if ((bitmask & 0b01011000) == 0) { return "botSpecial"; }
-		if ((bitmask & 0b00011010) == 0) { return "topSpecial"; }
-		if ((bitmask & 0b01001010) == 0) { return "leftSpecial"; }
-		if ((bitmask & 0b01010010) == 0) { return "rightSpecial"; }
-		if ((bitmask & 0b00011000) == 0) { return "midSpecialVert"; }
-		if ((bitmask & 0b01000010) == 0) { return "midSpecialHoriz"; }
-		if ((bitmask & 0b01011000) == 0) { return "botSpecial"; }
-		if ((bitmask & 0b01001000) == 0) { return "botLeft"; }
-		if ((bitmask & 0b01010000) == 0) { return "botRight"; }
-		if ((bitmask & 0b01011010) == 0b01011010) { return "surrounded"; }
-		if ((bitmask & 0b1010) == 0) { return "topLeft"; }
-		if ((bitmask & 0b00010010) == 0) { return "topRight"; }
-		if ((bitmask & 0b0010) == 0) { return "top"; }
-		if ((bitmask & 0b00010000) == 0) { return "right"; }
-		if ((bitmask & 0b1000) == 0) { return "left"; }
-		if ((bitmask & 0b01000000) == 0) { return "bot"; }
-
-
-		return null; // No matching tile type
-	}
-
 	public void OrientCells()
 	{
 		for (int x = 0; x < width; x++)
@@ -124,13 +100,13 @@ public class Bitmask
 				Vector2I current = new Vector2I(x, y);
 				int bitmask = GetBitmaskAllSurroundingTiles(current);
 				int sid = tml.GetCellSourceId(current);
-				if (sid == 0)
+				if (sid == TerrainTiles.Water)
 				{
 					continue;
 				}
 				else // not water
 				{
-					string s = DetermineTileType(bitmask);
+					string s = TileResolver.Resolve(bitmask);
 					switch (s)
 					{
 						case ("surrounded"): tml.SetCell(current, sid, atlasDict["surrounded"]); break;

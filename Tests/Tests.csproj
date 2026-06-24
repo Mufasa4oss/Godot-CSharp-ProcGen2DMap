@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Plain .NET SDK (deliberately NOT Godot.NET.Sdk). This project compiles ONLY the pure Core code by
+    linking it in, plus the test files in this folder. It references the GodotSharp managed assembly
+    just for the Vector2I struct (no native runtime needed). If anything in Core ever pulls in a Godot
+    Node or engine call, this project will fail to compile — which keeps Core honestly Godot-free.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Link the pure Core sources (compiled into this test assembly, not the game's). -->
+    <Compile Include="..\Systems\Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GodotSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>

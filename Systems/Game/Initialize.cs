@@ -7,18 +7,15 @@ using Godot;
 
 //places the tiles
 
-public partial class Initalize : Node2D
+public partial class Initialize : Node2D
 {
 
 	private  TileMapLayer tml;
 	Noise noise;
 	int msx;
 	int msy;
-	const int sID_water = 0;
-	const int sID_sand = 1;
-	const int sID_grass = 2;
 	private List<Vector2I> mapCoordsLand = new List<Vector2I>();
-	public Initalize(TileMapLayer t, Noise n, int x, int y)
+	public Initialize(TileMapLayer t, Noise n, int x, int y)
 	{
 		// Constructor
 		// Initialize any variables or state here if needed
@@ -34,22 +31,24 @@ public partial class Initalize : Node2D
 
 		Vector2I StartingAtlasVector = new Vector2I(0, 0);
 		//rewrite first overlay with default tile, then correct tile orientation
-		for (int y = 0; y < msx; y++)
+		// msx = width (X), msy = height (Y). Loop y over height and x over width so a
+		// non-square map (e.g. 256x128) isn't transposed/clipped.
+		for (int y = 0; y < msy; y++)
 		{
-			for (int x = 0; x < msy; x++)
+			for (int x = 0; x < msx; x++)
 			{
 				Vector2I currentTile = new Vector2I(x, y);
 				float nV = noise.GetNoise2D(x, y);
 				//noiseMap[x,y] = nV;
 				//we have all elevations for the map so now depending on the elevation we determine water, sand, or grass
-				if (nV > 0f)//grass
+				if (nV > 0.1f)//grass
 				{
-					tml.SetCell(currentTile, sID_grass, new Vector2I(3, 3)); //default is set to island
+					tml.SetCell(currentTile, TerrainTiles.Grass, new Vector2I(3, 3)); //default is set to island
 					mapCoordsLand.Add(currentTile);
 				}
 				else
 				{
-					tml.SetCell(new Vector2I(x, y), sID_water, new Vector2I(0, 0));
+					tml.SetCell(new Vector2I(x, y), TerrainTiles.Water, new Vector2I(0, 0));
 					//tiles.Append<Vector2I>(currentTile);
 				}
 			}

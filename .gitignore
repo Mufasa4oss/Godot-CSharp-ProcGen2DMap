@@ -3,3 +3,13 @@
 /android/
 .vs/
 *.old
+
+# .NET build artifacts
+bin/
+obj/
+
+# Local Godot tooling (machine-specific launcher + path file)
+claude/
+
+# Save files
+*.json.save

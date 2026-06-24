@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Godot;
 
 /// <summary>
 /// Simple implementation of Prim's algorithm for Minimum Spanning Tree
@@ -97,25 +95,4 @@ public class PrimsAlgorithmSimple
 		
 		return mst;
 	}
-	
-	/// <summary>
-	/// Prints the MST edges and total weight
-	/// </summary>
-	public void PrintMST(List<Edge> mst)
-	{
-		GD.Print("Minimum Spanning Tree:");
-		double totalWeight = 0;
-		
-		foreach (Edge edge in mst)
-		{
-			GD.Print($"  {edge.From} -> {edge.To} (weight: {edge.Weight})");
-			totalWeight += edge.Weight;
-		}
-
-		GD.Print($"Total weight: {totalWeight}");
-	}
 }
-
-/// <summary>
-/// Example usage
-/// </summary>

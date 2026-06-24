@@ -13,7 +13,9 @@ public partial class ColoredProvincesSprite : Sprite2D
 		Texture = texture;
 
 		Vector2 textureSize = new Vector2(texture.GetWidth(), texture.GetHeight());
-		Vector2 targetSize = new Vector2(512 * 64, 512 * 64); // Match your TileMap size
+		// Match the TileMap size in pixels (tiles * 64). Derived from the map dims so a
+		// non-square map scales correctly instead of being stretched to a square.
+		Vector2 targetSize = new Vector2(Main.MapSizeX * 64, Main.MapSizeY * 64);
 
 		Scale = targetSize / textureSize; // Scale to fit the map
 		Position = targetSize / 2; // Center it
@@ -23,7 +25,7 @@ public partial class ColoredProvincesSprite : Sprite2D
 		shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
 		Material = shade;
 		shade.SetShaderParameter("province_map", Texture);
-		shade.SetShaderParameter("screen_texture_size", new Vector2(512, 512));
+		shade.SetShaderParameter("screen_texture_size", new Vector2(Main.MapSizeX, Main.MapSizeY));
 		Main.MapTextureCreated -= MainEventMethod;
 		//ProvincesSceneInitalized?.Invoke();
 	}

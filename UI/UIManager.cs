@@ -6,7 +6,7 @@ public partial class UIManager : Control
 	private Label WoodLabel;
 	public Label StoneLabel;
 	public Label GrainLabel;
-	ResourceManager rm;
+	//CHANGES 23-Jun-26// removed unused ResourceManager rm field //END CHANGES 23-Jun-26//
 	private Button _buildRoadButton;
 	public bool IsRoadBuildMode { get; private set; } = false;
 

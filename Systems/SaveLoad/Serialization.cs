@@ -1,7 +1,6 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -32,10 +31,8 @@ Mac: ~/Library/Application Support/Godot/app_userdata/<YourProject>/
 			WriteIndented = true,
 			Converters =
 		{
-			new Vector2IConverter(),
-			new ResourceItemConverter(),
-			new DictionaryVector2I_ResourceItemConverter()
-			 // You'll also want this
+			new Vector2IConverter()
+			//CHANGES 23-Jun-26// removed ResourceItem converters — 7-resource system deleted //END CHANGES 23-Jun-26//
 			// Add more custom converters if needed
 		}
 		};
@@ -56,7 +53,9 @@ Mac: ~/Library/Application Support/Godot/app_userdata/<YourProject>/
 		}
 	}
 
-	public GameData Load()
+	// Static to match Save(). Reads through Godot's FileAccess so the `user://` virtual path resolves
+	// (System.IO can't). Returns null when there's no save file; callers null-check.
+	public static GameData Load()
 	{
 		try
 		{
@@ -65,19 +64,17 @@ Mac: ~/Library/Application Support/Godot/app_userdata/<YourProject>/
 				throw new Exception("Save file not found.");
 			}
 
-
-
-			string fileName = savePath;
-			string json = File.ReadAllText(fileName);
+			using var file = Godot.FileAccess.Open(savePath, Godot.FileAccess.ModeFlags.Read);
+			string json = file.GetAsText();
 			GameData data = JsonSerializer.Deserialize<GameData>(json, GetJsonOptions())!;
 
-			GD.Print("Game loaded.: " + data);
+			GD.Print("Game loaded.");
 			return data;
 		}
 		catch (Exception e)
 		{
 			GD.PrintErr($"Load failed: {e.Message}");
-			return default;
+			return null;
 		}
 	}
 }

@@ -13,7 +13,7 @@ public partial class InitSaveAndLoad : Node
 		public void initializeSave()
 	{
 		//tickManager
-		int ct = gameContext.tickManager.currentTick;
+		long ct = gameContext.tickManager.currentTick;
 		float tickInterval = gameContext.tickManager.tickInterval;
 		float tickTimer = gameContext.tickManager.tickTimer;
 		//Main Class items needed to recreate Nht NoiseTexture2D! (seed, frequency and everything else that I make customizeable) Rn it is seed, freq, and noiseType = Perlin
@@ -21,19 +21,11 @@ public partial class InitSaveAndLoad : Node
 		int seed = noise.Seed;
 		float freq = noise.Frequency;
 		String NoiseType = "Perlin";
-		//List of capitals
-		List<Vector2I> capitals = gameContext.voronoiDiagram.placedCords;
-		//ResourceManager Class
-		var capitalResourceDictionary = gameContext.tilesResources; //Dictionary<Vector2I, ResourceItem> Need to figure out how to save complicated types better
-														  //EVERYTHING I am going to save for now just so that I can test loading it.
-
-		GameData data = new GameData("nerd", ct, tickInterval, tickTimer, gameContext.mapSizeY, gameContext.mapSizeY, seed, freq, gameContext.voronoiDiagram.placedCords.Count, capitals, capitalResourceDictionary, NoiseType);
+		// Capitals are not saved — they regenerate from the seed (see GameData).
+		GameData data = new GameData("nerd", ct, tickInterval, tickTimer, gameContext.mapSizeX, gameContext.mapSizeY, seed, freq, gameContext.voronoiDiagram.placedCords.Count, NoiseType);
 		Serialization.Save(data);
 	}
-	public void initializeLoad()
-	{
-	}
 
-	
+
 
 }//EOF

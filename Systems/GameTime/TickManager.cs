@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 public class TickManager
@@ -26,7 +27,16 @@ public class TickManager
 			tickTimer -= tickInterval;
 			currentTick++;
 			economy.OnTick();
-			GD.Print($"tick {currentTick} | provinces={economy.Provinces.Count}");
+
+			// Alive-check heartbeat: global stockpile totals climb each tick as extractors produce.
+			float grain = 0f, ore = 0f, tools = 0f;
+			foreach (var nation in economy.Nations.Values)
+			{
+				grain += nation.Stockpile.GetValueOrDefault(Good.Grain);
+				ore   += nation.Stockpile.GetValueOrDefault(Good.Ore);
+				tools += nation.Stockpile.GetValueOrDefault(Good.Tools);
+			}
+			GD.Print($"tick {currentTick} | nations={economy.Nations.Count} | grain={grain:0} ore={ore:0} tools={tools:0}");
 		}
 		//END CHANGES 23-Jun-26//
 	}

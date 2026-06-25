@@ -22,8 +22,8 @@ public class EconomyDepositTests
         var land = SquareLand(10, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, 42);
 
-        Assert.True(economy.Provinces.ContainsKey(capital));
-        Assert.Equal(100, economy.Provinces[capital].Tiles.Count);
+        Assert.True(economy.Nations.ContainsKey(capital));
+        Assert.Equal(100, economy.Nations[capital].Tiles.Count);
     }
 
     [Fact]

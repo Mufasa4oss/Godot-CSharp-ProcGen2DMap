@@ -24,6 +24,15 @@ public class GameData
 	// Capitals are NOT stored: they regenerate deterministically from Seed. Persisting derived state
 	// would risk a saved-vs-regenerated drift bug.
 
+	// Accumulated economy state. Unlike the world (regenerated from Seed), these change as the game is
+	// played, so they must be persisted. DepositReserves is parallel to Economy.Deposits order
+	// (deterministic from Seed). NationStocks is keyed by nation Capital (a value, not a dict key, so the
+	// Vector2IConverter handles it) and carries treasury + stockpile. Workshops are the player-built
+	// tiles (not seed-derived → must be saved); owners are recomputed from capital order, not saved.
+	public List<float> DepositReserves { get; set; } = new();
+	public List<NationStock> NationStocks { get; set; } = new();
+	public List<Vector2I> Workshops { get; set; } = new();
+
 	public GameData() { } //Required only for deserialization (Serialization.Load). DO NOT USE OTHERWISE.
 	public GameData(string name, long tick, float tickInterval, float tickTimer, int x, int y, int seed, float frequency, int numProvinces,
 		String NoiseType)

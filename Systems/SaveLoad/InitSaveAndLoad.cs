@@ -23,6 +23,23 @@ public partial class InitSaveAndLoad : Node
 		String NoiseType = "Perlin";
 		// Capitals are not saved — they regenerate from the seed (see GameData).
 		GameData data = new GameData("nerd", ct, tickInterval, tickTimer, gameContext.mapSizeX, gameContext.mapSizeY, seed, freq, gameContext.voronoiDiagram.placedCords.Count, NoiseType);
+
+		// Accumulated state: deposit reserves (parallel to Deposits order), per-nation treasury +
+		// stockpile, and the player-built workshop tiles.
+		Economy economy = gameContext.economy;
+		foreach (Deposit dep in economy.Deposits)
+			data.DepositReserves.Add(dep.Reserve);
+		foreach (Nation nation in economy.Nations.Values)
+			data.NationStocks.Add(new NationStock(
+				nation.Capital,
+				nation.Treasury,
+				nation.Stockpile.GetValueOrDefault(Good.Grain),
+				nation.Stockpile.GetValueOrDefault(Good.Ore),
+				nation.Stockpile.GetValueOrDefault(Good.Tools)));
+		foreach (var (tile, building) in economy.TileBuildings)
+			if (building.Type == BuildingType.Workshop)
+				data.Workshops.Add(tile);
+
 		Serialization.Save(data);
 	}
 

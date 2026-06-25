@@ -18,6 +18,7 @@ public partial class Main : Node2D
 	GameContext gameContext;
 	List<PrimsAlgorithmSimple.Edge> mst;
 	Controls controls; // input hub
+	WorkshopSprites workshopSprites; // animated sprites for player-built workshops
 
 	// Carries a loaded save across ReloadCurrentScene(): static lives on the type, so it survives the
 	// scene teardown; _Ready reads it to start worldgen from the saved seed, then clears it.
@@ -68,13 +69,22 @@ public partial class Main : Node2D
 
 		gameContext = CreateObjs();
 
+		// Hand the UI the economy so it can show the player nation's treasury + stockpile + flows.
+		control.SetEconomy(gameContext.economy);
+
 		// Restore tick state on load, now that the TickManager exists.
 		if (loaded != null)
 		{
 			gameContext.tickManager.currentTick  = loaded.Tick;
 			gameContext.tickManager.tickInterval = loaded.tickInterval;
 			gameContext.tickManager.tickTimer    = loaded.tickTimer;
+			// Worldgen rebuilt deposits (full reserves) + nations (empty stockpiles) from the seed;
+			// overwrite that accumulated state with the saved values (incl. re-placing player workshops).
+			gameContext.economy.ApplySavedState(loaded.DepositReserves, loaded.NationStocks, loaded.Workshops);
 		}
+
+		// Spawn sprites for any workshops now in the economy (loaded games; none on a new game).
+		workshopSprites.Initialize();
 
 		PopupSceneLoad();
 		mst = BuildMst();
@@ -90,6 +100,11 @@ public partial class Main : Node2D
 		AddChild(depositOverlay);
 		depositOverlay.Initialize(gameContext.economy, tml);
 		//END CHANGES 23-Jun-26 tiles//
+
+		// Red outline around the player nation's territory.
+		TerritoryOutline territoryOutline = new TerritoryOutline();
+		AddChild(territoryOutline);
+		territoryOutline.Initialize(gameContext.economy, tml);
 	}
 
 	private GameContext CreateObjs()
@@ -104,11 +119,11 @@ public partial class Main : Node2D
 		//CHANGES 23-Jun-26 tiles// build economy with the single worldSeed; add land cross-check + deposits summary
 		Economy economy = new Economy(vD.provincesDictionary, vD.GetCapitals(), worldSeed);
 
-		int sumProvinceTiles = 0;
-		foreach (var prov in economy.Provinces.Values) sumProvinceTiles += prov.Tiles.Count;
-		string tilesOk = sumProvinceTiles == mapCoordsLand.Count ? "OK" : "MISMATCH";
-		GD.Print($"Economy: {economy.Provinces.Count} provinces, {mapCoordsLand.Count} land tiles");
-		GD.Print($"tiles check: sum(province tiles)={sumProvinceTiles} ({tilesOk})");
+		int sumNationTiles = 0;
+		foreach (var nation in economy.Nations.Values) sumNationTiles += nation.Tiles.Count;
+		string tilesOk = sumNationTiles == mapCoordsLand.Count ? "OK" : "MISMATCH";
+		GD.Print($"Economy: {economy.Nations.Count} nations, {mapCoordsLand.Count} land tiles");
+		GD.Print($"tiles check: sum(nation tiles)={sumNationTiles} ({tilesOk})");
 
 		int oreDeposits = 0, grainDeposits = 0, depositTiles = 0;
 		foreach (var dep in economy.Deposits)
@@ -120,7 +135,12 @@ public partial class Main : Node2D
 
 		TickManager tickManager = new TickManager(economy);
 
-		MapManager mapManager = new MapManager(vD, tml, Nht, numProvinces, tickManager, economy, controls);
+		// Animated workshop sprites (created before MapManager so a successful build can spawn one).
+		workshopSprites = new WorkshopSprites();
+		AddChild(workshopSprites);
+		workshopSprites.SetContext(economy, tml);
+
+		MapManager mapManager = new MapManager(vD, tml, Nht, numProvinces, tickManager, economy, controls, workshopSprites);
 		AddChild(mapManager);
 		//END CHANGES 23-Jun-26 tiles//
 

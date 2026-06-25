@@ -10,6 +10,13 @@ obj/
 
 # Local Godot tooling (machine-specific launcher + path file)
 claude/
+Godot_v4.7-stable_mono_win64_console.exe
+PathToGodotForClaudeCode.txt
+
+# Heavy temp art assets — full-res workshop animation frames (~67MB).
+# Loaded by Systems/Map/WorkshopSprites.cs; to be replaced by a downscaled sheet. Kept out of git
+# history for now (see the M4 build-history note); a clone won't have the workshop animation until then.
+Images/Blender & Krita Assets/Blender/SpriteFrames/
 
 # Save files
 *.json.save

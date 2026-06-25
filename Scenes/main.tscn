@@ -61,13 +61,19 @@ offset_bottom = 1000.0
 layout_mode = 2
 mouse_filter = 0
 
-[node name="WoodLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1025436104]
+[node name="TreasuryLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1025436104]
 layout_mode = 2
 
-[node name="StoneLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=855809429]
+[node name="IncomeLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1025436105]
 layout_mode = 2
 
 [node name="GrainLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1756451296]
+layout_mode = 2
+
+[node name="OreLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=855809429]
+layout_mode = 2
+
+[node name="ToolsLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1756451297]
 layout_mode = 2
 
 [node name="Button" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746071]
@@ -76,3 +82,21 @@ toggle_mode = true
 keep_pressed_outside = true
 text = "Build Road"
 icon = ExtResource("7_6bp64")
+
+[node name="WorkshopButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746072]
+layout_mode = 2
+toggle_mode = true
+keep_pressed_outside = true
+text = "Build Workshop"
+
+[node name="SellGrainButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746073]
+layout_mode = 2
+text = "Sell Grain"
+
+[node name="SellOreButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746074]
+layout_mode = 2
+text = "Sell Ore"
+
+[node name="SellToolsButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746075]
+layout_mode = 2
+text = "Sell Tools"

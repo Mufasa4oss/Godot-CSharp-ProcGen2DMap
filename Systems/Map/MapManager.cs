@@ -17,8 +17,9 @@ public partial class MapManager : TileMapLayer
 	private Economy _economy;
 	//END CHANGES 23-Jun-26//
 	private Controls _controls; // input hub: map-click + provinces-toggle signals
+	private WorkshopSprites _workshopSprites; // spawns a sprite when the player builds a workshop
 
-	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numProvince, TickManager tm, Economy economy, Controls controls)
+	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numProvince, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites)
 	{
 		this.vD = vD;
 		this.tml = tml;
@@ -27,6 +28,7 @@ public partial class MapManager : TileMapLayer
 		this.noiseTexture = nht;
 		this._economy = economy;
 		this._controls = controls;
+		this._workshopSprites = workshopSprites;
 	}
 	public override void _Ready()
 	{
@@ -50,6 +52,21 @@ public partial class MapManager : TileMapLayer
 		Vector2 mousePosition = tml.GetLocalMousePosition();
 		Vector2I tileCoords = tml.LocalToMap(tml.ToLocal(mousePosition));
 
+		// Build modes take precedence over inspect/highlight. Workshop first.
+		if (_uiManager.IsWorkshopBuildMode)
+		{
+			if (_economy != null && _economy.TryBuildWorkshop(tileCoords))
+			{
+				_workshopSprites.AddWorkshop(tileCoords);
+				GD.Print($"Built workshop at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
+			}
+			else
+			{
+				GD.Print($"Can't build workshop at {tileCoords} (must be your own empty land tile, and affordable)");
+			}
+			return;
+		}
+
 		if (_uiManager.IsRoadBuildMode)
 		{
 			_roadLayer.SetCell(tileCoords, RoadTiles.Rails, Vector2I.Zero);
@@ -70,9 +87,9 @@ public partial class MapManager : TileMapLayer
 		//CHANGES 23-Jun-26 tiles// tile-based click-inspect: deposit + building on the clicked tile, plus owner
 		if (_economy != null)
 		{
-			string owner = _economy.Provinces.TryGetValue(capital, out Province province)
-				? $"owner={province.Owner} provinceTiles={province.Tiles.Count}"
-				: "no province";
+			string owner = _economy.Nations.TryGetValue(capital, out Nation nation)
+				? $"owner={nation.Owner} nationTiles={nation.Tiles.Count}"
+				: "no nation";
 
 			if (_economy.TileDeposits.TryGetValue(tileCoords, out Deposit dep))
 			{
@@ -87,18 +104,18 @@ public partial class MapManager : TileMapLayer
 		//END CHANGES 23-Jun-26 tiles//
 		// Reuse the province's precomputed tile set instead of LINQ-scanning all land tiles per
 		// click (Tell-Don't-Ask: ask the Economy that owns the data).
-		HashSet<Vector2I> provinceTiles =
-			_economy != null && _economy.Provinces.TryGetValue(capital, out Province clicked)
+		HashSet<Vector2I> nationTiles =
+			_economy != null && _economy.Nations.TryGetValue(capital, out Nation clicked)
 				? clicked.Tiles
 				: new HashSet<Vector2I>();
-		foreach (Vector2I tile in provinceTiles)
+		foreach (Vector2I tile in nationTiles)
 		{
 			if (tile == capital) continue; // don't recolor the capital/castle tile (TerrainTiles.Capital)
 			var atlasCoords = tml.GetCellAtlasCoords(tile);
 			tml.SetCell(tile, TerrainTiles.Highlight, atlasCoords);
 		}
 		// Track highlighted tiles for restore, but never the capital so the castle survives.
-		previousTiles = new HashSet<Vector2I>(provinceTiles);
+		previousTiles = new HashSet<Vector2I>(nationTiles);
 		previousTiles.Remove(capital);
 	}
 

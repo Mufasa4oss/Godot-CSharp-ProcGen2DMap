@@ -3,7 +3,7 @@
 // Replaces the old Bitmask.DetermineTileType, which was an order-dependent list of overlapping
 // (mask & X) == 0 checks (and had a dead, duplicated branch). A grass tile's graphic depends ONLY on
 // which of its 4 cardinal neighbours are land (diagonals were always ignored), so there are exactly
-// 2^4 = 16 cases — one per atlas tile. This is a direct lookup, mirroring RoadBitmask's table style.
+// 2^4 = 16 cases — one per atlas tile. This is a direct lookup, mirroring RailroadBitmask's table style.
 public static class TileResolver
 {
     // Cardinal bits used by the 16-entry table.

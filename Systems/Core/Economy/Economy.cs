@@ -16,6 +16,10 @@ public class Economy
     // nation that owns its tile without scanning every nation's Tiles set.
     public Dictionary<Vector2I, Nation> TileNation { get; } = new();
 
+    // Player-built railroad tiles (paid for, not part of the deterministic MST backbone). Persisted so the
+    // track you bought survives save/load, and used to dedupe so you're never charged twice for a tile.
+    public HashSet<Vector2I> Railroads { get; } = new();
+
     // The player's nation (Owner 0 = the first placed capital). Cached; ownership doesn't change in L1.
     public Nation PlayerNation { get; private set; }
 
@@ -23,6 +27,11 @@ public class Economy
     // "+produced / -consumed". Recomputed each OnTick.
     public Dictionary<Good, float> PlayerProducedLastTick { get; } = new();
     public Dictionary<Good, float> PlayerConsumedLastTick { get; } = new();
+
+    // Per-tick production events (tile, good, amount) so the Godot view can flash a fading "+N" on the
+    // source building (M4.5 sub-rung 4 — see where & why a gain happened). Core stays engine-free: this
+    // is plain data (Vector2I only, no signals) that the view drains after each OnTick. Recomputed each tick.
+    public readonly List<(Vector2I Tile, Good Good, float Amount)> ProducedThisTick = new();
 
     // --- tunables (deposit placement) ---
     private const int DepositCountTarget = 300;
@@ -33,7 +42,11 @@ public class Economy
     private const float RatePerTile = 1f;
 
     // --- tunables (economy) ---
-    private const float StartingTreasury = 500f;
+    // M4.5 sub-rung 3: exactly one extractor's worth, so the first build is a real choice (can't afford
+    // two raws at once) and a Workshop is only reachable after selling. Placeholder — tuned in M7.
+    private const float StartingTreasury = Building.ExtractorCost;
+    // M4.5: laying one railroad tile costs treasury too, so track is a real economic spend (placeholder).
+    private const float RailroadCost = 10f;
 
     // M4: each good's sale value. A static price table for now — supply/demand response arrives at M5.
     // Tools is worth more than the Ore a Workshop consumes to make it (1 Ore → 1 Tools), so refining
@@ -129,10 +142,8 @@ public class Economy
                 used.Add(t);
                 TileDeposits[t] = deposit;
             }
-
-            // Extractor sits on the deposit: Mine for ore, Farm for grain. Workshop is player-built (M3).
-            BuildingType extractor = good == Good.Ore ? BuildingType.Mine : BuildingType.Farm;
-            TileBuildings[start] = Building.Of(extractor);
+            // M4.5: no auto-placed extractor. Raw extraction is build-gated — the player must build a
+            // Mine/Farm on the deposit (TryBuildExtractor) before it produces.
         }
     }
 
@@ -168,19 +179,44 @@ public class Economy
         unchecked { return worldSeed * (int)0x9E3779B1 + 0x7F4A7C15; }
     }
 
-    // Player builds a Workshop on a tile. Valid only on a land tile the player's nation owns that has no
-    // building yet, and only if the player can afford it. Returns false (no-op) otherwise.
-    public bool TryBuildWorkshop(Vector2I tile)
+    // Player builds a Workshop (refines Ore→Tools) on any owned, empty land tile they can afford.
+    public bool TryBuildWorkshop(Vector2I tile) => TryBuild(tile, Building.Of(BuildingType.Workshop));
+
+    // M4.5: lay one railroad tile for RailroadCost — charges the player's treasury and records the tile,
+    // so track is a real spend like the gathering buildings. No-op (false) if the tile is already track or
+    // the player can't afford it. Track may cross any territory (it connects nations), so no ownership check.
+    public bool TryBuildRailroad(Vector2I tile)
+    {
+        if (PlayerNation == null) return false;
+        if (Railroads.Contains(tile)) return false;            // already track — don't double-charge
+        if (PlayerNation.Treasury < RailroadCost) return false; // can't afford
+
+        PlayerNation.Treasury -= RailroadCost;
+        Railroads.Add(tile);
+        return true;
+    }
+
+    // M4.5 sub-rung 2: player builds the matching extractor on a deposit tile — Mine on Ore, Farm on
+    // Grain. Raw goods are build-gated: no extractor on the deposit → no output. The type is auto-picked
+    // from the deposit so the UI needs no Mine-vs-Farm choice. No-op (false) if the tile has no deposit.
+    public bool TryBuildExtractor(Vector2I tile)
+    {
+        if (!TileDeposits.TryGetValue(tile, out Deposit deposit)) return false; // extractors need a deposit
+        BuildingType type = deposit.Good == Good.Ore ? BuildingType.Mine : BuildingType.Farm;
+        return TryBuild(tile, Building.Of(type));
+    }
+
+    // Shared build path: valid only on a land tile the player's nation owns that has no building yet, and
+    // only if the player can afford it. Charges the treasury and places the building. False (no-op) otherwise.
+    private bool TryBuild(Vector2I tile, Building building)
     {
         if (!TileNation.TryGetValue(tile, out Nation nation)) return false; // not land / not owned
         if (!nation.IsPlayer) return false;                                 // only your own territory
         if (TileBuildings.ContainsKey(tile)) return false;                  // tile already has a building
+        if (nation.Treasury < building.Cost) return false;                  // can't afford
 
-        Building workshop = Building.Of(BuildingType.Workshop);
-        if (nation.Treasury < workshop.Cost) return false;                  // can't afford
-
-        nation.Treasury -= workshop.Cost;
-        TileBuildings[tile] = workshop;
+        nation.Treasury -= building.Cost;
+        TileBuildings[tile] = building;
         return true;
     }
 
@@ -209,21 +245,26 @@ public class Economy
         tickCount++;
         PlayerProducedLastTick.Clear();
         PlayerConsumedLastTick.Clear();
+        ProducedThisTick.Clear();
 
-        // Pass 1 — extractors (no inputs): pull min(Deposit.Rate, Reserve) into the owning nation,
-        // depleting the deposit. The deposit governs throughput + reserve; Building.Rate is for
-        // input-consuming buildings instead.
+        // Pass 1 — raw extractors (no inputs): build-gated (only a player-built Mine/Farm produces) and
+        // throttled to keep raw goods scarce (M4.5 sub-rung 3) — a flat 1 unit, and only on alternating
+        // ticks — so a deposit isn't effectively free and the one build choice bites. The deposit's
+        // reserve still depletes by what's pulled; its Rate is intentionally bypassed for raws.
+        bool rawTickActive = tickCount % 2 == 0;
         foreach (var (tile, building) in TileBuildings)
         {
             if (building.Inputs.Length != 0) continue;
+            if (!rawTickActive) continue;
             if (!TileDeposits.TryGetValue(tile, out Deposit deposit)) continue;
             if (deposit.Reserve <= 0f) continue;
 
-            float amount = System.Math.Min(deposit.Rate, deposit.Reserve);
+            float amount = System.Math.Min(1f, deposit.Reserve);
             deposit.Reserve -= amount;
             Nation nation = TileNation[tile];
             Good good = building.Outputs[0];
             nation.AddGood(good, amount);
+            ProducedThisTick.Add((tile, good, amount));
             if (nation.IsPlayer) AddFlow(PlayerProducedLastTick, good, amount);
         }
 
@@ -250,6 +291,7 @@ public class Economy
             foreach (Good output in building.Outputs)
             {
                 nation.AddGood(output, building.Rate);
+                ProducedThisTick.Add((tile, output, building.Rate));
                 if (nation.IsPlayer) AddFlow(PlayerProducedLastTick, output, building.Rate);
             }
         }
@@ -263,9 +305,10 @@ public class Economy
     }
 
     // Overwrite the freshly-regenerated economy with saved state on load: deposit reserves (by index,
-    // deterministic order), each nation's treasury + stockpile (by capital), and the player-built
-    // workshops (which aren't seed-derived, so they must be re-placed).
-    public void ApplySavedState(List<float> reserves, List<NationStock> nationStocks, List<Vector2I> workshops)
+    // deterministic order), each nation's treasury + stockpile (by capital), the player-built buildings —
+    // extractors and workshops (M4.5: none are seed-derived, so they must be re-placed) — and the
+    // player-built railroad tiles (also paid-for, not seed-derived).
+    public void ApplySavedState(List<float> reserves, List<NationStock> nationStocks, List<TileBuilding> buildings, List<Vector2I> railroads)
     {
         if (reserves != null)
         {
@@ -287,8 +330,14 @@ public class Economy
                     nation.Stockpile[Good.Tools] = ns.Tools;
                 }
 
-        if (workshops != null)
-            foreach (Vector2I tile in workshops)
-                TileBuildings[tile] = Building.Of(BuildingType.Workshop);
+        if (buildings != null)
+            foreach (TileBuilding b in buildings)
+                TileBuildings[b.Tile] = Building.Of(b.Type);
+
+        if (railroads != null)
+        {
+            Railroads.Clear();
+            foreach (Vector2I tile in railroads) Railroads.Add(tile);
+        }
     }
 }

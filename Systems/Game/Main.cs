@@ -19,6 +19,7 @@ public partial class Main : Node2D
 	List<PrimsAlgorithmSimple.Edge> mst;
 	Controls controls; // input hub
 	WorkshopSprites workshopSprites; // animated sprites for player-built workshops
+	GainFeedback gainFeedback; // fading "+N" flashes over producing buildings (M4.5 sub-rung 4)
 
 	// Carries a loaded save across ReloadCurrentScene(): static lives on the type, so it survives the
 	// scene teardown; _Ready reads it to start worldgen from the saved seed, then clears it.
@@ -43,7 +44,7 @@ public partial class Main : Node2D
 		controls.LoadRequested += OnLoadRequested;
 
 		// New game = fresh random seed. Loaded game = re-run worldgen from the saved seed so the whole
-		// world (terrain, provinces, deposits, MST roads) regenerates identically.
+		// world (terrain, provinces, deposits, MST railroads) regenerates identically.
 		GameData loaded = PendingLoad;
 		PendingLoad = null;
 		if (loaded != null)
@@ -79,12 +80,22 @@ public partial class Main : Node2D
 			gameContext.tickManager.tickInterval = loaded.tickInterval;
 			gameContext.tickManager.tickTimer    = loaded.tickTimer;
 			// Worldgen rebuilt deposits (full reserves) + nations (empty stockpiles) from the seed;
-			// overwrite that accumulated state with the saved values (incl. re-placing player workshops).
-			gameContext.economy.ApplySavedState(loaded.DepositReserves, loaded.NationStocks, loaded.Workshops);
+			// overwrite that accumulated state with the saved values (incl. re-placing player buildings).
+			gameContext.economy.ApplySavedState(loaded.DepositReserves, loaded.NationStocks, loaded.Buildings, loaded.Railroads);
 		}
 
 		// Spawn sprites for any workshops now in the economy (loaded games; none on a new game).
 		workshopSprites.Initialize();
+
+		// "+N" gain flashes: after each tick, drain the economy's production events onto their tiles.
+		gainFeedback = new GainFeedback();
+		AddChild(gainFeedback);
+		gainFeedback.SetContext(tml);
+		gameContext.tickManager.TickProcessed += () =>
+		{
+			foreach (var (tile, good, amount) in gameContext.economy.ProducedThisTick)
+				gainFeedback.Flash(tile, good, amount);
+		};
 
 		PopupSceneLoad();
 		mst = BuildMst();
@@ -175,7 +186,7 @@ public partial class Main : Node2D
 	}
 
 	// Builds a fully-connected graph of capitals weighted by straight-line distance, then returns
-	// its minimum spanning tree (the backbone the roads are drawn along).
+	// its minimum spanning tree (the backbone the railroads are drawn along).
 	public class MstBuilder
 	{
 		int capitalCount;
@@ -226,18 +237,23 @@ public partial class Main : Node2D
 	{
 		var capitals   = gameContext.voronoiDiagram.GetCapitals();
 		var capitalSet = new HashSet<Vector2I>(capitals);
-		TileMapLayer roadLayer = tml.GetNode<TileMapLayer>("RoadLayer");
-		HashSet<Vector2I> roadTiles = new HashSet<Vector2I>();
+		TileMapLayer railroadLayer = tml.GetNode<TileMapLayer>("RailroadLayer");
+		HashSet<Vector2I> railroadTiles = new HashSet<Vector2I>();
 
 		foreach (var edge in mst)
 			foreach (Vector2I tile in GetTilesAlongLine(capitals[edge.From], capitals[edge.To]))
 				if (!capitalSet.Contains(tile))
-					roadTiles.Add(tile);
+					railroadTiles.Add(tile);
 
-		foreach (Vector2I tile in roadTiles)
-			roadLayer.SetCell(tile, RoadTiles.Rails, Vector2I.Zero);
+		foreach (Vector2I tile in railroadTiles)
+			railroadLayer.SetCell(tile, RailroadTiles.Rails, Vector2I.Zero);
 
-		new RoadBitmask().OrientRoadCells(roadLayer, roadTiles, capitalSet, tml);
+		new RailroadBitmask().OrientRailroadCells(railroadLayer, railroadTiles, capitalSet, tml);
+
+		// Re-draw the player's paid-for railroads (a loaded game; none on a new game). Plain cells, matching
+		// the live placement in MapManager — these aren't part of the deterministic MST backbone.
+		foreach (Vector2I tile in gameContext.economy.Railroads)
+			railroadLayer.SetCell(tile, RailroadTiles.Rails, Vector2I.Zero);
 	}
 
 	private List<Vector2I> GetTilesAlongLine(Vector2I from, Vector2I to)

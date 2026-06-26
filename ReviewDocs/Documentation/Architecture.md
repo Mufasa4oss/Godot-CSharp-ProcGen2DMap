@@ -12,7 +12,7 @@ Every file lives on one side of a hard line:
 - **`Systems/Core/`** — plain C# with **no Godot `Node` dependency**. The economy
   (`Economy`/`Nation`/`Deposit`/`Building`/`Good`/`NationStock`), pathfinding
   (`PrimsAlgorithmSimple`), Voronoi assignment (`VoronoiAssignment`), and the tile/bitmask resolver
-  (`TileId`/`TerrainTiles`/`RoadTiles`/`TileResolver`), plus `MyGlobalClass` helpers. It references only
+  (`TileId`/`TerrainTiles`/`RailroadTiles`/`TileResolver`), plus `MyGlobalClass` helpers. It references only
   the `Vector2I` struct from GodotSharp — nothing that needs the engine to be running.
 - **`Systems/` (everything else)** — the **Godot adapter layer**: `Main`, `MapManager`, `Camera`,
   `Controls`, `VoronoiDiagram`, `Bitmask`, the overlays, save/load, UI. These subclass `Node`/`Node2D`
@@ -44,8 +44,8 @@ takes input, sits in a scene, emits signals, or reads files → the adapter laye
 5. **`gameContext = CreateObjs();`** — builds the world and all systems (below).
 6. **Restore tick + economy state** if this is a load (sets `currentTick`, calls
    `economy.ApplySavedState(...)`).
-7. **Roads & overlays:** popup, build the MST (`BuildMst()`), draw road tiles, add the
-   `TradeNetworkVisualizer` and the `DepositOverlay`.
+7. **Railroads & overlays:** popup, build the MST (`BuildMst()`), draw railroad tiles, add the
+   `TradeNetworkVisualizer`, the `DepositOverlay`, and the `GainFeedback` "+N" node.
 
 ### `CreateObjs()` — the composition step
 
@@ -86,7 +86,7 @@ if (loaded != null) {
 ```
 
 Loading a game does **not** deserialize the map. It re-runs worldgen from the saved seed, which
-reproduces terrain, provinces, deposits, and roads identically, then overlays the small saved deltas
+reproduces terrain, provinces, deposits, and railroads identically, then overlays the small saved deltas
 (tick, deposit reserves, stockpiles). This is why saves are tiny. The mechanics of carrying the save
 across the scene reload (`PendingLoad` static + `CallDeferred(ReloadCurrentScene)`) are covered in
 [SaveLoad.md](SaveLoad.md) and the reload note in [GodotNodeLifecycle.md](GodotNodeLifecycle.md).
@@ -124,7 +124,7 @@ Law-of-Demeter reach-throughs like `gameContext.voronoiDiagram.placedCords.Count
 |------|-------|
 | Bootstrap / composition | `Systems/Game/Main.cs`, `Systems/Game/GameContext.cs`, `Systems/Game/Initialize.cs` |
 | Input | `Systems/Controls/Controls.cs`, `Systems/Cameras/Camera.cs` |
-| Worldgen | `Systems/Map/VoronoiDiagram.cs`, `Systems/Map/Bitmask.cs`, `Systems/Map/RoadBitmask.cs`, `Systems/Core/Map/*`, `Systems/Core/Pathfinding/PrimsAlgorithmSimple.cs` |
+| Worldgen | `Systems/Map/VoronoiDiagram.cs`, `Systems/Map/Bitmask.cs`, `Systems/Map/RailroadBitmask.cs`, `Systems/Core/Map/*`, `Systems/Core/Pathfinding/PrimsAlgorithmSimple.cs` |
 | Economy (Core) | `Systems/Core/Economy/*` |
 | Clock | `Systems/GameTime/TickManager.cs` |
 | Save/load | `Systems/SaveLoad/*` |

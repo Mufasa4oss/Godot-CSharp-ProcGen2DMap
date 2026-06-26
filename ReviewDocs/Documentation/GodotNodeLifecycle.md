@@ -71,9 +71,9 @@ Fires **once**, after the node and all its children are in the tree and the chil
 
 Examples in this codebase:
 - `Main._Ready()` — the whole bootstrap: reads the seed (or a pending save), builds the world via
-  `CreateObjs()`, wires input signals, draws roads. See [Architecture.md](Architecture.md).
+  `CreateObjs()`, wires input signals, draws railroads. See [Architecture.md](Architecture.md).
 - `MapManager._Ready()` ([`../../Systems/Map/MapManager.cs`](../../Systems/Map/MapManager.cs)) —
-  `GetNode`s its sibling nodes (`../Provinces`, `../UIManager`, the road layer) and connects to the
+  `GetNode`s its sibling nodes (`../Provinces`, `../UIManager`, the railroad layer) and connects to the
   `Controls` signals. None of that could happen in the constructor — the siblings don't exist yet there.
 - `ColoredProvincesSprite._Ready()`
   ([`../../Systems/Map/ColoredProvincesSprite.cs`](../../Systems/Map/ColoredProvincesSprite.cs)) —

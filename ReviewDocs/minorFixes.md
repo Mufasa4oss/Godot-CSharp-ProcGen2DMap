@@ -37,12 +37,13 @@ File refs are `file:line` at time of writing (may drift).
 - [ ] **`MyGlobalClass.ArrayConvertToWorldCoords` + `ConvertToWorldCoords` are unused**
   ([Systems/Core/MyGlobalClass.cs](../Systems/Core/MyGlobalClass.cs)) — and `ArrayConvertToWorldCoords`
   has an O(n²) `ElementAt`-in-loop (moot since nothing calls it). Delete both.
-- [ ] **`UIManager` is vestigial from the old 7-resource system** ([UI/UIManager.cs](../UI/UIManager.cs)):
-  empty `UpdateWoodDisplay/Stone/Grain`; Wood/Stone labels don't match current goods (Ore/Grain/Tools).
-  Real rework belongs at M7 (inspector) — flagged so it doesn't mislead.
+- [x] ~~**`UIManager` is vestigial from the old 7-resource system**~~ — **resolved (M3/M4).** `UIManager`
+  was rewritten for the nation economy (Treasury + Grain/Ore/Tools flows, sell buttons, build toggles,
+  all-nations panel). The old Wood/Stone stubs are gone.
 - [ ] Minor: unused `using System.Runtime.CompilerServices;` + stale `//GD.Print(size);` comment in
   Camera; unused `lastColor` in VoronoiDiagram; `TickManager` `GD.Print` every tick (gate before ship).
-- [ ] **`Economy.OnTick`** loops over every province doing nothing each tick — harmless; it's the M2 hook.
+- [x] ~~**`Economy.OnTick`** loops over every province doing nothing~~ — **resolved (M2+).** `OnTick` now
+  runs two-pass production (build-gated/throttled extractors → workshops) and records gain events.
 
 ## 🟡 Fragility worth knowing
 

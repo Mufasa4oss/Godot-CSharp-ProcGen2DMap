@@ -23,6 +23,22 @@ case**: small props rendered to 2D images that sit on the map tiles (the Factori
   fighting you, the 2D route (see [AssetPipeline.md](AssetPipeline.md)) gets readable placeholders much
   faster. Pick one and move on — art polish is an M7 problem, not now.
 
+### The art convention (deliberate, not a one-off)
+
+This is the "Factorio compromise" — the authoritative version lives in the M4.5 blockquote of
+[`../M-Doc/L1-Milestone-Roadmap.md`](../M-Doc/L1-Milestone-Roadmap.md); the Blender-side gist:
+
+- **Animation state = economic state.** A Mine with no deposit worked = idle frame; actively
+  extracting = running loop; depleted reserve = sputter/stop. That makes M4.5's "where & why am
+  I gaining resources" legible *without text* — the building itself tells you.
+- **Fixed dimetric render angle for every building** (Factorio's ~off-top-down). Pick the angle
+  once, bake everything to it, so all buildings share a light direction and read as one set.
+- **Budget: cheap to fake, expensive to over-do.** 60 frames × 10 building types is a lot of
+  renders. For MVP a short 8–16-frame loop per building is plenty; reserve the long smooth
+  animations for hero buildings.
+- **Pairs with M4.5 sub-rung 4** (the fading `+1` shader on resource gain): the building animates
+  *and* spits a number. That combination is most of Factorio's game-feel, in pure 2D.
+
 ---
 
 ## 1. Moving around (the part that feels impossible at first)

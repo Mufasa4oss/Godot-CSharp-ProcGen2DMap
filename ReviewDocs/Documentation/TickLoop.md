@@ -65,9 +65,11 @@ catch up multiple ticks at once.
 ## The heartbeat print (dev visibility, gate before ship)
 
 The per-tick `GD.Print` is the current "alive check" — it shows the tick climbing and the global
-grain/ore stockpile totals rising as extractors produce. It's intentional dev visibility for now;
-[`../minorFixes.md`](../minorFixes.md) flags gating it before shipping (a real UI panel replaces it
-around M7).
+grain/ore stockpile totals. Since M4.5 build-gated extraction, those totals stay **0 until the player
+builds an extractor** (no auto-placement), then climb ~1 unit per 2 ticks (the throttle). It's intentional
+dev visibility for now; [`../minorFixes.md`](../minorFixes.md) flags gating it before shipping (a real UI
+panel replaces it around M7). `TickManager` also fires a `TickProcessed` event each tick that the Godot
+view uses to drain `Economy.ProducedThisTick` for the "+N" gain flash.
 
 ---
 

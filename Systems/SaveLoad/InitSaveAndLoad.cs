@@ -25,7 +25,7 @@ public partial class InitSaveAndLoad : Node
 		GameData data = new GameData("nerd", ct, tickInterval, tickTimer, gameContext.mapSizeX, gameContext.mapSizeY, seed, freq, gameContext.voronoiDiagram.placedCords.Count, NoiseType);
 
 		// Accumulated state: deposit reserves (parallel to Deposits order), per-nation treasury +
-		// stockpile, and the player-built workshop tiles.
+		// stockpile, and every player-built building (extractors + workshops) with its tile + type.
 		Economy economy = gameContext.economy;
 		foreach (Deposit dep in economy.Deposits)
 			data.DepositReserves.Add(dep.Reserve);
@@ -37,8 +37,9 @@ public partial class InitSaveAndLoad : Node
 				nation.Stockpile.GetValueOrDefault(Good.Ore),
 				nation.Stockpile.GetValueOrDefault(Good.Tools)));
 		foreach (var (tile, building) in economy.TileBuildings)
-			if (building.Type == BuildingType.Workshop)
-				data.Workshops.Add(tile);
+			data.Buildings.Add(new TileBuilding(tile, building.Type));
+		foreach (Vector2I tile in economy.Railroads)
+			data.Railroads.Add(tile);
 
 		Serialization.Save(data);
 	}

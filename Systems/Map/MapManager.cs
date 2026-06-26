@@ -12,7 +12,7 @@ public partial class MapManager : TileMapLayer
 	private int numProvinces;
 	private NoiseTexture2D noiseTexture;
 	private UIManager _uiManager;
-	private TileMapLayer _roadLayer;
+	private TileMapLayer _railroadLayer;
 	//CHANGES 23-Jun-26// economy ref for click-inspect
 	private Economy _economy;
 	//END CHANGES 23-Jun-26//
@@ -34,7 +34,7 @@ public partial class MapManager : TileMapLayer
 	{
 		provinces = GetNode<Sprite2D>("../Provinces");
 		_uiManager = GetNode<UIManager>("../UIManager");
-		_roadLayer = GetNode<TileMapLayer>("../0zTileMapLayer/RoadLayer");
+		_railroadLayer = GetNode<TileMapLayer>("../0zTileMapLayer/RailroadLayer");
 		// Connections drop automatically when this node frees (e.g. on load's scene reload).
 		_controls.MapClickRequested += OnMapClick;
 		_controls.ProvincesToggleRequested += OnToggleProvinces;
@@ -46,7 +46,7 @@ public partial class MapManager : TileMapLayer
 		//Main.ProvincesSceneInitalized -= EventMethod;
 
 	}
-	// Left-click: in road-build mode lay track; otherwise inspect + highlight the clicked province.
+	// Left-click: in railroad-build mode lay track; otherwise inspect + highlight the clicked province.
 	private void OnMapClick()
 	{
 		Vector2 mousePosition = tml.GetLocalMousePosition();
@@ -67,9 +67,34 @@ public partial class MapManager : TileMapLayer
 			return;
 		}
 
-		if (_uiManager.IsRoadBuildMode)
+		// M4.5: build the matching Mine/Farm on a deposit tile to start raw extraction.
+		if (_uiManager.IsExtractorBuildMode)
 		{
-			_roadLayer.SetCell(tileCoords, RoadTiles.Rails, Vector2I.Zero);
+			if (_economy != null && _economy.TryBuildExtractor(tileCoords))
+			{
+				Building b = _economy.TileBuildings[tileCoords];
+				GD.Print($"Built {b.Type} at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
+			}
+			else
+			{
+				GD.Print($"Can't build extractor at {tileCoords} (must be your own empty deposit tile, and affordable)");
+			}
+			return;
+		}
+
+		// M4.5: laying railroad now costs treasury (TryBuildRailroad charges + dedupes), making track a
+		// real economic spend like the gathering buildings.
+		if (_uiManager.IsRailroadBuildMode)
+		{
+			if (_economy != null && _economy.TryBuildRailroad(tileCoords))
+			{
+				_railroadLayer.SetCell(tileCoords, RailroadTiles.Rails, Vector2I.Zero);
+				GD.Print($"Built railroad at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
+			}
+			else
+			{
+				GD.Print($"Can't build railroad at {tileCoords} (already track, or can't afford)");
+			}
 			return;
 		}
 

@@ -4,9 +4,11 @@
 together, how production runs each tick, and how the player builds. All of this lives in
 `Systems/Core/Economy/` as **plain C# (no Godot Node)**, so it's unit-tested and engine-free.
 
-> Status: **M3 (agency + economy UI).** Extractors (Mine/Farm) produce into the owning **nation's**
-> stockpile and deplete deposit reserves; the player spends a **treasury** to build **Workshops**
-> (Ore→Tools). Each capital is one of 10 nations (1 player, 9 passive AI). See
+> Status: **M4.5 (clarity + raw/refined split).** Goods are split **raw** (Grain/Ore) vs **refined**
+> (Tools). Raw extraction is **build-gated** — the player builds a Mine/Farm on a deposit (no
+> auto-placement) — and **throttled** (a flat 1 unit every other tick). The player spends a **treasury**
+> to build extractors, Workshops (Ore→Tools), and railroads, and **sells** goods for income (M4). Each
+> capital is one of 10 nations (1 player, 9 passive AI — no AI behaviour yet). See
 > [`../M-Doc/L1-Milestone-Roadmap.md`](../M-Doc/L1-Milestone-Roadmap.md) for what's next.
 
 ---
@@ -14,7 +16,9 @@ together, how production runs each tick, and how the player builds. All of this 
 ## The types
 
 ### `Good` — [`../../Systems/Core/Economy/Good.cs`](../../Systems/Core/Economy/Good.cs)
-The three L1 goods: `Grain`, `Ore`, `Tools`. (More arrive in later layers.)
+The three L1 goods: `Grain`, `Ore`, `Tools`. (More arrive in later layers.) Each reports a
+**`GoodCategory`** via the `good.Category()` extension (M4.5): `Grain`/`Ore` = **Raw** (extraction-gated —
+flow only from a built Mine/Farm), `Tools` = **Refined** (build-gated — produced by a Workshop).
 
 ### `Deposit` — [`../../Systems/Core/Economy/Deposit.cs`](../../Systems/Core/Economy/Deposit.cs)
 A resource node bound to one or more tiles.
@@ -28,12 +32,14 @@ table is `Building.Of(type)`:
 
 | Type | Inputs | Outputs | Rate | Cost |
 |------|--------|---------|------|------|
-| `Farm` | — | Grain | 2 | 0 |
-| `Mine` | — | Ore | 2 | 0 |
-| `Workshop` | Ore | Tools | 1 | 100 |
+| `Farm` | — | Grain | 2 | `ExtractorCost` (50) |
+| `Mine` | — | Ore | 2 | `ExtractorCost` (50) |
+| `Workshop` | Ore | Tools | 1 | `WorkshopCost` (100) |
 
-Farm/Mine are **extractors** (no inputs — they pull from a deposit; auto-placed, cost 0). Workshop is the
-**input-consumer** the player builds (M3). Rates/costs are placeholders to balance at M7.
+Farm/Mine are **extractors** (no inputs — they pull from a deposit). Workshop is the **input-consumer**.
+**All three are player-built (M4.5)** — there's no auto-placement; extractors cost `ExtractorCost`, the
+Workshop `WorkshopCost`. (Note: for raw extractors the deposit governs the pull and the M4.5 throttle
+overrides `Building.Rate` — see Production below.) Rates/costs are placeholders to balance at M7.
 
 ### `Nation` — [`../../Systems/Core/Economy/Nation.cs`](../../Systems/Core/Economy/Nation.cs)
 A government: one capital, the tiles it owns, its treasury, and its stockpile. (10 nations in L1; the
@@ -61,22 +67,34 @@ Built once from the Voronoi `provincesDictionary` (tile→capital) + the world s
 | `TileDeposits` | `Dictionary<Vector2I, Deposit>` | tile → the deposit on it |
 | `TileBuildings` | `Dictionary<Vector2I, Building>` | tile → the building on it |
 | `TileNation` | `Dictionary<Vector2I, Nation>` | tile → its owning nation (routes output) |
+| `Railroads` | `HashSet<Vector2I>` | player-built railroad tiles (paid-for; persisted) |
 | `PlayerProducedLastTick` / `PlayerConsumedLastTick` | `Dictionary<Good,float>` | the player's per-good flow last tick (for the UI) |
+| `ProducedThisTick` | `List<(Vector2I,Good,float)>` | per-tick production events for the Godot "+N" gain flash (M4.5); engine-free data, no signals |
 
 **Construction:** the constructor inverts tile→capital into nations (filling `Nation.Tiles` and
 `TileNation`), assigns owners by capital placement order (`capitals[0]` → `Owner 0` = player; rest AI),
-gives each a starting treasury, then `PlaceDeposits` flood-grows deposit clusters and seats an extractor
-on each (see [WorldgenPipeline.md](WorldgenPipeline.md) §5).
+gives each a starting treasury, then `PlaceDeposits` flood-grows deposit clusters (see
+[WorldgenPipeline.md](WorldgenPipeline.md) §5). **M4.5: no extractor is auto-placed** — `TileBuildings`
+starts empty and the player builds extractors themselves.
 
 ---
 
-## Building a workshop — `TryBuildWorkshop(tile)`
+## Player building — `TryBuild*`
 
-The player's M3 agency. Returns `true` (and mutates) only if the tile is a land tile the **player's**
-nation owns, has **no** building yet, and the player can **afford** the workshop; otherwise it's a no-op
-returning `false`. On success it deducts `Building.Of(Workshop).Cost` from `PlayerNation.Treasury` and
-adds the workshop to `TileBuildings`. (The Godot side — [MapManager](EventSystem.md) build mode — calls
-this on a click and spawns the sprite on success.)
+The player's agency. All build paths share a private `TryBuild(tile, building)` that validates the tile is
+a land tile the **player's** nation owns, has **no** building yet, and is **affordable**, then charges the
+treasury and places the building (no-op `false` otherwise):
+
+- **`TryBuildWorkshop(tile)`** — a Workshop (refines Ore→Tools) on any owned, empty tile.
+- **`TryBuildExtractor(tile)`** (M4.5) — the matching extractor on a **deposit** tile: `Mine` on Ore,
+  `Farm` on Grain (auto-picked from `TileDeposits[tile].Good`, so the UI needs no type picker). No-op if
+  the tile has no deposit.
+- **`TryBuildRailroad(tile)`** (M4.5) — lays one railroad tile for `RailroadCost`, recording it in
+  `Railroads`. Dedupes (no double-charge on an existing tile) and skips the ownership check, since track
+  may cross any territory to connect nations.
+
+(The Godot side — [MapManager](EventSystem.md) build modes, mutually exclusive — calls these on a click;
+a successful Workshop build also spawns its animated sprite, and each gain flashes a "+N" — see below.)
 
 ---
 
@@ -85,19 +103,23 @@ this on a click and spawns the sprite on success.)
 Called once per game-second by the [TickLoop](TickLoop.md). Two passes so a workshop can consume what an
 extractor produced the **same** tick:
 
-1. **Extractors** (`Inputs.Length == 0`): pull `min(Deposit.Rate, Reserve)` into the owning nation
-   (`TileNation[tile].AddGood(output, amount)`), deplete the reserve.
+1. **Extractors** (`Inputs.Length == 0`): **build-gated + throttled (M4.5)** — only a player-built
+   Mine/Farm produces, and only on **alternating ticks** (`tickCount % 2 == 0`), pulling a flat
+   `min(1, Reserve)` into the owning nation and depleting the reserve. The throttle deliberately bypasses
+   `Deposit.Rate` so raw goods stay scarce (1 unit per 2 ticks).
 2. **Workshops** (`Inputs.Length != 0`): if the owning nation's stockpile has every input at the full
    `Building.Rate`, consume the inputs and add the outputs (Workshop: −1 Ore, +1 Tools per tick). No
    partial runs.
 
 Each tick also records the **player** nation's produced/consumed amounts per good into
-`PlayerProducedLastTick` / `PlayerConsumedLastTick` (reset each tick) so the UI can show `+prod / −cons`.
+`PlayerProducedLastTick` / `PlayerConsumedLastTick` (reset each tick) so the UI can show `+prod / −cons`,
+and appends every production to **`ProducedThisTick`** (tile, good, amount) — engine-free data the Godot
+view drains after the tick to flash a fading **"+N"** on the source building (M4.5 sub-rung 4).
 
 Design rules worth knowing:
-- **Deposit governs extractor throughput + reserve; `Building.Rate` governs input-consumers** (the
-  Workshop). Avoids two competing rates on one extractor.
-- **`min(Rate, Reserve)`** caps the final partial tick so a deposit can't over-produce past its reserve.
+- **M4.5 throttle:** raw extractors yield a flat 1 unit on alternating ticks; `Deposit.Rate` is bypassed
+  for raws (kept only for the reserve cap). `Building.Rate` still governs input-consumers (the Workshop).
+- **`min(1, Reserve)`** caps the final partial tick so a deposit can't over-produce past its reserve.
 - **Two passes** make same-tick supply deterministic (extractors before workshops); within a pass, order
   doesn't matter (each building touches only its own nation/deposit).
 - **No RNG in `OnTick`** → production is fully deterministic given the seed and tick count. This is what
@@ -117,14 +139,16 @@ The alive-check heartbeat (global grain/ore/tools totals) is printed by the [Tic
   `economy.Nations[cap]`, `economy.TileDeposits[tile]`). `MapManager`'s click-inspect is the worked
   example of reading deposit + building + owner for a clicked tile.
 - **Persist new state:** anything that accumulates over ticks (not derivable from the seed — treasury,
-  stockpiles, player-built workshops) must be added to `GameData` + `ApplySavedState`
-  ([SaveLoad.md](SaveLoad.md)). Owners are recomputed from capital order, so they aren't saved.
+  stockpiles, player-built buildings via `TileBuilding`, railroad tiles) must be added to `GameData` +
+  `ApplySavedState` ([SaveLoad.md](SaveLoad.md)). Owners are recomputed from capital order, so they aren't
+  saved.
 
 ---
 
 ## Tunables
 
 Deposit placement: `DepositCountTarget=300`, `MinSize=1`, `MaxSize=5`, `OreShare=0.5`,
-`ReservePerTile=100`, `RatePerTile=1` (a 1-tile deposit holds 100 and mines 1/tick → ~100 ticks; size
-scales both rate and reserve). Economy: `StartingTreasury=500` per nation; Workshop `Cost=100` (in the
-recipe table). Tune for density/longevity/affordability.
+`ReservePerTile=100`, `RatePerTile=1` (`Rate` is now only the reserve seed — the M4.5 throttle pulls a flat
+1/2-ticks regardless). Economy (M4.5 placeholders, tuned at M7): `Building.ExtractorCost=50`,
+`Building.WorkshopCost=100`, `Economy.RailroadCost=10`, and `StartingTreasury = ExtractorCost` (50) — sized
+so the first build is a real choice (one extractor, not two). Tune for density/longevity/affordability/pacing.

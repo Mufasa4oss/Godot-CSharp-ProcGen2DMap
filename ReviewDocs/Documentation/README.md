@@ -20,8 +20,9 @@ If you're new to the codebase, read in this order:
 3. **[EventSystem.md](EventSystem.md)** — the three ways parts of the game talk to each other (Godot
    signals, static C# events, the tick call-loop) and when to use each.
 4. **[WorldgenPipeline.md](WorldgenPipeline.md)** — how one seed becomes a whole world (terrain →
-   provinces → roads → deposits).
-5. **[Economy.md](Economy.md)** — the economic model (goods, deposits, buildings, production).
+   provinces → railroads → deposits).
+5. **[Economy.md](Economy.md)** — the economic model (raw/refined goods, deposits, build-gated
+   extraction, production).
 6. **[TickLoop.md](TickLoop.md)** — the heartbeat that drives the simulation.
 7. **[SaveLoad.md](SaveLoad.md)** — how a game is saved and restored from a seed plus deltas.
 

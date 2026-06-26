@@ -8,9 +8,16 @@ public enum BuildingType
 }
 
 // A transformation node: consumes Inputs and produces Outputs at Rate per tick.
-// Cost is the treasury price to build it (0 for seed-placed extractors; the Workshop is player-built).
+// Cost is the treasury price to build it. M4.5: raw extractors (Farm/Mine) are player-built too now
+// (no auto-placement), so they cost ExtractorCost; the Workshop stays the pricier refined-good builder.
 public class Building
 {
+    // Placeholder build costs — balanced for real in M7. Economy.StartingTreasury is sized to exactly
+    // one extractor (M4.5 sub-rung 3) so the first build is a real choice, and a Workshop is only
+    // reachable after selling raws.
+    public const float ExtractorCost = 50f;
+    public const float WorkshopCost  = 100f;
+
     public BuildingType Type { get; }
     public Good[] Inputs { get; }
     public Good[] Outputs { get; }
@@ -26,13 +33,13 @@ public class Building
         Cost = cost;
     }
 
-    // Recipe table. Rates/costs are placeholders to be balanced later (M7). Farm/Mine are auto-placed
-    // on deposits (cost 0); the Workshop is the player-built one (M3).
+    // Recipe table. Rates/costs are placeholders to be balanced later (M7). All three are player-built
+    // (M4.5): Mine/Farm gate raw extraction on a deposit; the Workshop refines Ore→Tools.
     public static Building Of(BuildingType type) => type switch
     {
-        BuildingType.Farm     => new Building(type, Array.Empty<Good>(),     new[] { Good.Grain }, 2f, 0f),
-        BuildingType.Mine     => new Building(type, Array.Empty<Good>(),     new[] { Good.Ore },   2f, 0f),
-        BuildingType.Workshop => new Building(type, new[] { Good.Ore },      new[] { Good.Tools }, 1f, 100f),
+        BuildingType.Farm     => new Building(type, Array.Empty<Good>(),     new[] { Good.Grain }, 2f, ExtractorCost),
+        BuildingType.Mine     => new Building(type, Array.Empty<Good>(),     new[] { Good.Ore },   2f, ExtractorCost),
+        BuildingType.Workshop => new Building(type, new[] { Good.Ore },      new[] { Good.Tools }, 1f, WorkshopCost),
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
     };
 }

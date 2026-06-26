@@ -23,6 +23,7 @@ and `//CHANGES 23-Jun-26 tiles//` (tile refactor).
 7. [2026-06-25 — Docs detour (consolidation + Documentation/ + roadmap re-scope)](#2026-06-25--docs-detour)
 8. [2026-06-25 — M3 agency + economy UI](#2026-06-25--m3-agency--economy-ui)
 9. [2026-06-25 — M4 value / prices](#2026-06-25--m4-value--prices)
+10. [2026-06-26 — M4.5 clarity + raw/refined split (gate)](#2026-06-26--m45-clarity--rawrefined-split-gate)
 
 ---
 
@@ -332,3 +333,87 @@ mined, so refined-Tools income is negligible against raw-Ore volume despite refi
 (workshop throughput) is mis-scaled vs ore output (a M7 tuning knob; M5 demand may also lower raw-ore
 value). Prices are static, so there's no downside to over-producing yet — M5's demand sink is what makes
 allocation a real choice.
+
+---
+
+## 2026-06-26 — M4.5 clarity + raw/refined split (GATE)
+
+A gate before M5/M6: split **raw vs refined** goods and make *where & why* the player gains resources
+legible, so the build choice actually bites (the M4 balance note proved it didn't — ~113 ore/tick made
+ore effectively free). Five ordered sub-rungs, each with its own alive check.
+
+**Decisions (with the user):** **whole-world build-gating** (no auto-placed extractors anywhere; the 9 AI
+nations have *zero* behaviour implemented, so their deposits stay idle); throttle = a flat **1 unit, every
+other tick**; economy numbers are placeholders tuned for real in M7 (`Building.ExtractorCost = 50`,
+`WorkshopCost = 100`, `StartingTreasury = ExtractorCost`).
+
+**Done:**
+- *Sub-rung 1 — raw/refined type:* `GoodCategory { Raw, Refined }` + `Good.Category()` extension
+  (Grain/Ore = Raw, Tools = Refined). `Tests/EconomyGoodCategoryTests.cs`.
+- *Sub-rung 2 — build-gated extraction:* removed the auto-placement in `Economy.PlaceDeposits`; raw goods
+  now need a player-built Mine/Farm on the deposit. `Economy.TryBuildExtractor(tile)` auto-picks the type
+  from the deposit; `TryBuildWorkshop`/`TryBuildExtractor` now share a private `TryBuild` helper. New
+  **Build Extractor** toggle in `UIManager` + `main.tscn`, wired through `MapManager.OnMapClick`.
+- *Sub-rung 3 — throttle + small treasury:* `OnTick` Pass 1 produces a flat **1 unit** and only on
+  alternating ticks (deposit `Rate` bypassed for raws); `StartingTreasury` shrunk to one extractor's cost,
+  so the first build is a real choice and a Workshop is only reachable after selling.
+- *Sub-rung 4 — per-gain feedback:* `Economy.ProducedThisTick` (engine-free `(tile, good, amount)` list,
+  cleared+filled each tick) → new `TickManager.TickProcessed` event → `Main` drains it onto
+  `Systems/Map/GainFeedback.cs`, a fading upward-drifting **"+N"** `Label` per producing tile. No Godot
+  signals in Core.
+- *Sub-rung 5 — all-nations panel:* `UIManager` builds one stockpile row per nation (player first, row
+  tinted), updated each frame from `Economy.Nations`. AI rows read 0 until AI behaviour exists.
+- *Persistence (required by sub-rung 2):* extractors are no longer seed-derived, so every built building
+  must be saved. New Core `TileBuilding { Tile, Type }`; `GameData.Workshops (List<Vector2I>)` →
+  `Buildings (List<TileBuilding>)`; `InitSaveAndLoad` saves all tiles+types; `Economy.ApplySavedState`
+  re-places them via `Building.Of(b.Type)`.
+- *Tests:* new `Tests/EconomyBuildGateTests.cs` (unbuilt deposit produces nothing; `TryBuildExtractor`
+  places the matching type + charges + starts the flow; fails with no deposit; starting treasury affords
+  exactly one extractor; a producing tick records a gain event). Rewrote the four extractor tests in
+  `EconomyProductionTests.cs` for the build-gated + throttled model and updated the workshop/persistence
+  tests for the smaller treasury + `TileBuilding` save shape.
+
+**Verified:** `dotnet build` (game + tests) → **0 warnings / 0 errors**; `dotnet test` → **59 passed**
+(was 51 + the M4.5-1 category test + 5 build-gate). **Headless smoke** (Godot 4.7,
+[[godot-engine-available]]): scene instantiates, all `GetNode` paths resolve (incl. the new
+`ExtractorButton`), economy ticks, and the heartbeat now holds at `grain=0 ore=0 tools=0` — the visible
+proof that nothing produces until the player builds (sub-rung 2).
+
+**Pending:** sub-rungs 4 (the `+1` flash) and 5 (the all-nations panel) are code-complete and
+headless-clean but their *on-screen* alive checks need a **windowed** run with clicks — best driven on the
+user's display (HUD is tiny in downsampled screenshots; real legibility is M7). Same for a windowed
+save/load round-trip of built buildings.
+
+**Notes:** with `StartingTreasury = 50` and **1 ore / 2 ticks**, the early game is intentionally tight (a
+long grind to the first Workshop) — that's a placeholder; real pacing is M7. The `+1` label font and the
+nations panel are deliberately minimal — clarity over polish for the gate.
+
+### Follow-ups (same day, after the user's windowed review)
+
+The user verified M4.5 in-engine ("looks wonderful") and asked for polish + a rename:
+
+- *HUD polish (`UIManager.cs`):* the three build toggles (Railroad/Workshop/Extractor) are now **mutually
+  exclusive** (`OnBuildToggled` turns the others off); the panel is **draggable** (press falls through the
+  container/labels — set to `MouseFilter.Ignore` — to the `PanelContainer`, which follows the cursor) and
+  **clamped on-screen** (`ClampToViewport`, via the inverse canvas transform since the HUD sits under the
+  Camera2D); and the **font size is doubled** (a `Theme { DefaultFontSize = 32 }` on the UIManager).
+- *Road → railroad rename (the track was always rail):* renamed across the code — `RoadTiles`→
+  `RailroadTiles`, `RoadBitmask`→`RailroadBitmask` (files + classes), `OrientRoadCells`→
+  `OrientRailroadCells`, `IsRoadBuildMode`→`IsRailroadBuildMode`, the `RoadLayer` scene node →
+  `RailroadLayer`, the "Build Road" button → "Build Railroad". The `road.tres` tileset asset keeps its
+  filename (referenced by uid).
+- *Railroads cost treasury (a real economic spend):* new `Economy.RailroadCost` (placeholder 10) +
+  `Economy.Railroads` set + `Economy.TryBuildRailroad(tile)` (charges, dedupes, no ownership check since
+  track crosses territory). `MapManager` gates laying track on it. Persisted: `GameData.Railroads`,
+  saved in `InitSaveAndLoad`, restored in `ApplySavedState` (now 4-arg) and re-drawn in
+  `Main.DrawMSTLines`. New test `TryBuildRailroad_charges_treasury_once_per_tile_and_respects_affordability`
+  + railroad coverage in the persistence test.
+
+**Verified:** `dotnet build` → 0/0; `dotnet test` → **60 passed**; headless smoke clean (renamed
+`RailroadLayer`/`RailroadButton` nodes resolve). Interactive polish (drag/clamp, exclusive toggles, font,
+railroad cost) confirmed on the user's display.
+
+**Docs:** consolidated this session — folded the redundant `2026-06-25_Session-Summary.md` into this
+history (deleted), refreshed the `Documentation/` system docs (Economy, SaveLoad, WorldgenPipeline,
+Architecture, TickLoop, GodotNodeLifecycle, README) to M4.5 + the railroad rename, and ticked the
+resolved items in `minorFixes.md`.

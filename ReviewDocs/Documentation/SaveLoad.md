@@ -15,13 +15,16 @@ Controls: **F5** saves, **F9** loads (routed through the [Controls signal hub](E
 `GameContext` — that's the live composition root; see [Architecture.md](Architecture.md)):
 
 - **World identity:** `Seed`, `Width`, `Height`, `NumProvinces`, `Frequency`, `NoiseType`. These let
-  `_Ready` regenerate the entire world (terrain, provinces, deposits, roads) identically.
+  `_Ready` regenerate the entire world (terrain, provinces, deposits, MST railroads) identically.
 - **Clock:** `Tick` (`long`), `tickInterval`, `tickTimer` ([TickLoop.md](TickLoop.md)).
 - **Accumulated economy state (deltas):**
   - `DepositReserves` — `List<float>` parallel to `Economy.Deposits` order (deterministic from the seed),
     so reserves restore by index.
   - `NationStocks` — `List<NationStock>` (one per nation; Capital + Treasury + flat Grain/Ore/Tools).
-  - `Workshops` — `List<Vector2I>`, the player-built workshop tiles (not seed-derived → must be saved).
+  - `Buildings` — `List<TileBuilding>` (M4.5), every player-built building as a `(Tile, Type)` pair.
+    Extractors are no longer seed-derived (no auto-placement), so all buildings — not just workshops —
+    must be saved and re-placed.
+  - `Railroads` — `List<Vector2I>`, the player's paid-for railroad tiles (also not seed-derived).
 
 **Not saved:** capitals, the tile→capital map, the deposits' layout, and nation **owners** — all
 regenerated/recomputed from `Seed` + capital order (saving derived state would risk a drift bug).
@@ -32,7 +35,9 @@ regenerated/recomputed from `Seed` + capital order (saving derived state would r
 - nation stocks are a **list** of `NationStock` (Capital as a *value* via the `Vector2IConverter`,
   treasury + goods as flat fields), not a `Dictionary<Vector2I, …>`;
 - `NationStock` ([`../../Systems/Core/Economy/NationStock.cs`](../../Systems/Core/Economy/NationStock.cs))
-  lives in **Core** so `Economy.ApplySavedState` can take it and still be unit-tested.
+  and `TileBuilding` ([`../../Systems/Core/Economy/TileBuilding.cs`](../../Systems/Core/Economy/TileBuilding.cs))
+  live in **Core** so `Economy.ApplySavedState` can take them and still be unit-tested. (`TileBuilding`'s
+  `BuildingType` round-trips through JSON as an int; its `Vector2I` via the `Vector2IConverter`.)
 
 ---
 
@@ -51,7 +56,8 @@ regenerated/recomputed from `Seed` + capital order (saving derived state would r
 
 The save side, [`../../Systems/SaveLoad/InitSaveAndLoad.cs`](../../Systems/SaveLoad/InitSaveAndLoad.cs),
 reads the live systems into a `GameData` (looping `economy.Deposits` for reserves, `economy.Nations` for
-treasury + stockpiles, and the Workshop entries in `economy.TileBuildings`) and calls `Serialization.Save`.
+treasury + stockpiles, every entry in `economy.TileBuildings` as a `TileBuilding`, and `economy.Railroads`)
+and calls `Serialization.Save`.
 
 ---
 
@@ -77,7 +83,8 @@ Then the fresh `Main._Ready()`:
    whole world from that seed (see [Architecture.md](Architecture.md));
 2. restores the clock (`currentTick`, `tickInterval`, `tickTimer`);
 3. **restores the economy deltas:**
-   `economy.ApplySavedState(loaded.DepositReserves, loaded.NationStocks, loaded.Workshops)`.
+   `economy.ApplySavedState(loaded.DepositReserves, loaded.NationStocks, loaded.Buildings, loaded.Railroads)`
+   (then `Main.DrawMSTLines` re-draws the player's railroad tiles onto the layer).
 
 ### `Economy.ApplySavedState`
 
@@ -87,7 +94,9 @@ Then the fresh `Main._Ready()`:
   counts differ (e.g. the placement algorithm changed between builds), it skips the restore and logs to
   `Console.Error` (not `GD`, to keep Core Godot-free).
 - Each nation's treasury + stockpile restore by **capital lookup** (`Nations.TryGetValue(ns.Capital, …)`).
-- Player-built **workshops** are re-added to `TileBuildings` (the Godot side then respawns their sprites).
+- Player-built **buildings** (extractors + workshops) are re-placed into `TileBuildings` via
+  `Building.Of(b.Type)`; **railroad** tiles are restored into `Railroads`. (The Godot side then respawns
+  workshop sprites and re-draws the railroad tiles.)
 
 Worldgen has already rebuilt deposits at *full* reserve and nations with *empty* stockpiles; this
 overwrites those with the saved values.

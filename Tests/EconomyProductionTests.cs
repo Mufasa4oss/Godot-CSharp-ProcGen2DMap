@@ -31,9 +31,6 @@ public class EconomyProductionTests
         return land;
     }
 
-    private static float TotalGoods(Economy e) =>
-        e.Nations.Values.Sum(n => n.Stockpile.Values.Sum());
-
     private static Vector2I FirstEmptyTile(Economy e, IEnumerable<Vector2I> tiles)
     {
         foreach (var t in tiles)
@@ -41,57 +38,72 @@ public class EconomyProductionTests
         throw new InvalidOperationException("no empty tile available");
     }
 
-    // ---- Production (extractors) ----
+    // M4.5: extraction is build-gated, so production tests must build an extractor first. Picks the
+    // lowest-coordinate player-owned deposit tile (deterministic from the seed) and builds the matching
+    // Mine/Farm; bumps treasury so cost never blocks the test. Returns the tile and the good it yields.
+    private static (Vector2I tile, Good good) BuildPlayerExtractor(Economy e)
+    {
+        e.PlayerNation.Treasury += Building.ExtractorCost;
+        foreach (Vector2I tile in e.TileDeposits.Keys.OrderBy(t => t.X).ThenBy(t => t.Y))
+            if (e.TileNation.TryGetValue(tile, out Nation n) && n.IsPlayer && !e.TileBuildings.ContainsKey(tile))
+            {
+                Assert.True(e.TryBuildExtractor(tile));
+                return (tile, e.TileDeposits[tile].Good);
+            }
+        throw new InvalidOperationException("no player-owned deposit tile available");
+    }
+
+    // ---- Production (build-gated extractors, M4.5) ----
 
     [Fact]
-    public void Worked_tiles_output_climbs_each_tick()
+    public void Built_extractor_output_climbs_every_other_tick()
     {
         var land = SquareLand(12, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, 99);
         Assert.NotEmpty(economy.Deposits);
 
-        // Reserve = 100/tile, Rate = 1/tile → every deposit lasts 100 ticks, so for small N nothing
-        // depletes and each tick adds exactly the sum of deposit rates. No workshops auto-placed.
-        float perTick = economy.Deposits.Sum(d => d.Rate);
+        var (_, good) = BuildPlayerExtractor(economy);
 
+        // M4.5 throttle: a flat 1 unit, only on alternating ticks — nothing on the first tick, +1 on the
+        // second, so the deposit isn't effectively free.
         economy.OnTick();
-        Assert.Equal(perTick, TotalGoods(economy), 3);
+        Assert.Equal(0f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
         economy.OnTick();
-        Assert.Equal(2 * perTick, TotalGoods(economy), 3);
+        Assert.Equal(1f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
+        economy.OnTick();
+        economy.OnTick();
+        Assert.Equal(2f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
     }
 
     [Fact]
-    public void Reserve_depletes_and_caps_total_output()
+    public void Reserve_depletes_and_caps_extractor_output()
     {
         var land = SquareLand(12, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, 7);
-        float initialReserve = economy.Deposits.Sum(d => d.Reserve);
 
-        for (int i = 0; i < 200; i++) economy.OnTick();
+        var (tile, good) = BuildPlayerExtractor(economy);
+        float reserve = economy.TileDeposits[tile].Reserve;
 
-        Assert.All(economy.Deposits, d => Assert.Equal(0f, d.Reserve, 3));
-        Assert.Equal(initialReserve, TotalGoods(economy), 3);
+        // 1 unit every other tick → the deposit empties in ~2*reserve ticks; a margin guarantees it.
+        for (int i = 0; i < (int)(2 * reserve) + 4; i++) economy.OnTick();
+
+        Assert.Equal(0f, economy.TileDeposits[tile].Reserve, 3);
+        Assert.Equal(reserve, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
     }
 
     [Fact]
-    public void Output_lands_in_the_owning_nation()
+    public void Output_lands_in_the_player_nation()
     {
         var land = TwoNationLand(16, out var capA, out var capB);
         var economy = new Economy(land, new List<Vector2I> { capA, capB }, 2024);
         Assert.NotEmpty(economy.Deposits);
 
-        for (int i = 0; i < 5; i++) economy.OnTick();
+        var (_, good) = BuildPlayerExtractor(economy);
+        for (int i = 0; i < 6; i++) economy.OnTick(); // 3 producing ticks → 3 units
 
-        var expected = new Dictionary<Vector2I, float>();
-        foreach (var (tile, building) in economy.TileBuildings)
-        {
-            Vector2I cap = economy.TileNation[tile].Capital;
-            expected.TryGetValue(cap, out float cur);
-            expected[cap] = cur + economy.TileDeposits[tile].Rate * 5; // 5 ticks, no depletion
-        }
-
-        foreach (var nation in economy.Nations.Values)
-            Assert.Equal(expected.GetValueOrDefault(nation.Capital), nation.Stockpile.Values.Sum(), 3);
+        Assert.Equal(3f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
+        // Whole-world build-gating: the AI nation can't build, so it produces nothing.
+        Assert.Equal(0f, economy.Nations[capB].Stockpile.Values.Sum(), 3);
     }
 
     [Fact]
@@ -101,6 +113,9 @@ public class EconomyProductionTests
         var landB = SquareLand(12, out var capB);
         var a = new Economy(landA, new List<Vector2I> { capA }, 2024);
         var b = new Economy(landB, new List<Vector2I> { capB }, 2024);
+
+        BuildPlayerExtractor(a); // same seed → same deposit layout → same tile chosen
+        BuildPlayerExtractor(b);
 
         for (int i = 0; i < 30; i++) { a.OnTick(); b.OnTick(); }
 
@@ -129,6 +144,7 @@ public class EconomyProductionTests
     {
         var land = SquareLand(12, out var cap);
         var economy = new Economy(land, new List<Vector2I> { cap }, 99);
+        economy.PlayerNation.Treasury = 1000f; // M4.5: starting treasury only affords one extractor
         float before = economy.PlayerNation.Treasury;
         Vector2I tile = FirstEmptyTile(economy, economy.PlayerNation.Tiles);
 
@@ -191,14 +207,19 @@ public class EconomyProductionTests
     // ---- M3: persistence ----
 
     [Fact]
-    public void ApplySavedState_restores_treasury_stockpiles_and_workshops()
+    public void ApplySavedState_restores_treasury_stockpiles_and_buildings()
     {
         var land = SquareLand(12, out var cap);
         var played = new Economy(land, new List<Vector2I> { cap }, 7);
-        for (int i = 0; i < 10; i++) played.OnTick();
+        played.PlayerNation.Treasury = 1000f;
 
+        // A player-built extractor (raw) and a workshop (refined) — M4.5 persists both, not just workshops.
+        var (mine, _) = BuildPlayerExtractor(played);
         Vector2I ws = FirstEmptyTile(played, played.PlayerNation.Tiles);
         played.TryBuildWorkshop(ws);
+        var rail = new Vector2I(3, 4);
+        played.TryBuildRailroad(rail); // paid-for railroad also persists
+        for (int i = 0; i < 10; i++) played.OnTick(); // deplete reserve + accumulate stockpile
 
         var reserves = played.Deposits.Select(d => d.Reserve).ToList();
         Nation p = played.PlayerNation;
@@ -209,17 +230,24 @@ public class EconomyProductionTests
                 p.Stockpile.GetValueOrDefault(Good.Ore),
                 p.Stockpile.GetValueOrDefault(Good.Tools))
         };
-        var workshops = new List<Vector2I> { ws };
+        var buildings = new List<TileBuilding>
+        {
+            new TileBuilding(mine, played.TileBuildings[mine].Type),
+            new TileBuilding(ws, BuildingType.Workshop),
+        };
+        var railroads = played.Railroads.ToList();
 
         var land2 = SquareLand(12, out var cap2);
         var loaded = new Economy(land2, new List<Vector2I> { cap2 }, 7);
-        loaded.ApplySavedState(reserves, stocks, workshops);
+        loaded.ApplySavedState(reserves, stocks, buildings, railroads);
 
         Assert.Equal(reserves, loaded.Deposits.Select(d => d.Reserve).ToList());
         Assert.Equal(p.Treasury, loaded.PlayerNation.Treasury, 3);
         Assert.Equal(p.Stockpile.GetValueOrDefault(Good.Ore),
                      loaded.PlayerNation.Stockpile.GetValueOrDefault(Good.Ore), 3);
         Assert.Equal(BuildingType.Workshop, loaded.TileBuildings[ws].Type);
+        Assert.Equal(played.TileBuildings[mine].Type, loaded.TileBuildings[mine].Type);
+        Assert.Contains(rail, loaded.Railroads);
     }
 
     [Fact]
@@ -229,7 +257,7 @@ public class EconomyProductionTests
         var economy = new Economy(land, new List<Vector2I> { cap }, 7);
         var before = economy.Deposits.Select(d => d.Reserve).ToList();
 
-        economy.ApplySavedState(new List<float> { 1f, 2f }, null, null); // wrong length → no-op, no throw
+        economy.ApplySavedState(new List<float> { 1f, 2f }, null, null, null); // wrong length → no-op, no throw
 
         Assert.Equal(before, economy.Deposits.Select(d => d.Reserve).ToList());
     }

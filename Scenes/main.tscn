@@ -28,7 +28,7 @@ rendering_quadrant_size = 64
 [node name="BordersLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=182775386]
 tile_set = ExtResource("3_kry3j")
 
-[node name="RoadLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=915398877]
+[node name="RailroadLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=915398877]
 tile_set = ExtResource("4_344ge")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=536846053]
@@ -76,11 +76,11 @@ layout_mode = 2
 [node name="ToolsLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1756451297]
 layout_mode = 2
 
-[node name="Button" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746071]
+[node name="RailroadButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746071]
 layout_mode = 2
 toggle_mode = true
 keep_pressed_outside = true
-text = "Build Road"
+text = "Build Railroad"
 icon = ExtResource("7_6bp64")
 
 [node name="WorkshopButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746072]
@@ -88,6 +88,12 @@ layout_mode = 2
 toggle_mode = true
 keep_pressed_outside = true
 text = "Build Workshop"
+
+[node name="ExtractorButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746076]
+layout_mode = 2
+toggle_mode = true
+keep_pressed_outside = true
+text = "Build Extractor"
 
 [node name="SellGrainButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746073]
 layout_mode = 2

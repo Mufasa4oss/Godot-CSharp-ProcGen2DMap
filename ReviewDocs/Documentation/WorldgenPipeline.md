@@ -1,13 +1,13 @@
 # Worldgen Pipeline
 
 **Purpose:** how a single integer seed becomes a complete, reproducible world — terrain, provinces,
-roads, and resource deposits. Everything below is deterministic from `Main.worldSeed`; the same seed
+railroads, and resource deposits. Everything below is deterministic from `Main.worldSeed`; the same seed
 always produces the same world, which is what makes save/load tiny (see [SaveLoad.md](SaveLoad.md)).
 
 The chain runs inside `Main.CreateObjs()` (see [Architecture.md](Architecture.md)):
 
 ```
-seed ─► terrain (noise)  ─► autotiling ─► provinces (Voronoi) ─► roads (MST) ─► deposits (Economy)
+seed ─► terrain (noise)  ─► autotiling ─► provinces (Voronoi) ─► railroads (MST) ─► deposits (Economy)
 ```
 
 ---
@@ -72,7 +72,7 @@ duplicate branch). The 16-case table is exhaustive, order-independent, and unit-
 **Tile registry** (`Systems/Core/Map/`): magic source IDs are gone — tiles are named constants.
 - `TileId` — a `(SourceId, …)` value type identifying a tileset entry.
 - `TerrainTiles` — `Water`, `Sand`, `Grass`, `Capital`, `Highlight`.
-- `RoadTiles` — `Rails` and the road-orientation variants.
+- `RailroadTiles` — `Rails` and the railroad-orientation variants.
 
 Use these constants (e.g. `tml.SetCell(tile, TerrainTiles.Grass, atlas)`) — never raw source ints.
 
@@ -96,18 +96,19 @@ Use these constants (e.g. `tml.SetCell(tile, TerrainTiles.Grass, atlas)`) — ne
 
 ---
 
-## 4. Roads — the MST backbone
+## 4. Railroads — the MST backbone
 
-Roads follow the **minimum spanning tree** connecting all capitals (the "permanent highway network" in
+Railroads follow the **minimum spanning tree** connecting all capitals (the "permanent highway network" in
 the design notes). In `Main`:
 
 1. `MstBuilder` builds a fully-connected graph of capitals weighted by straight-line distance and runs
    Prim's: [`../../Systems/Core/Pathfinding/PrimsAlgorithmSimple.cs`](../../Systems/Core/Pathfinding/PrimsAlgorithmSimple.cs).
    `FindMST()` repeatedly takes the smallest edge joining a visited to an unvisited vertex.
 2. `DrawMSTLines()` walks each MST edge as a railroad-style L-path (one straight run, a single 90° corner,
-   another straight run — avoids diagonal stair-stepping), paints `RoadTiles.Rails`, and
-   [`../../Systems/Map/RoadBitmask.cs`](../../Systems/Map/RoadBitmask.cs) `OrientRoadCells()` autotiles
-   the rails into straights/corners/junctions/bridges.
+   another straight run — avoids diagonal stair-stepping), paints `RailroadTiles.Rails`, and
+   [`../../Systems/Map/RailroadBitmask.cs`](../../Systems/Map/RailroadBitmask.cs) `OrientRailroadCells()`
+   autotiles the rails into straights/corners/junctions/bridges. It then re-draws any player-built
+   railroad tiles (`Economy.Railroads`, restored on load — see [SaveLoad.md](SaveLoad.md)).
 
 > Perf note: the current Prim's is brute-force **O(V³)** (rescans all V² edges each of V steps). At high
 > province counts this dominates startup; the dense O(V²) rewrite is in [`../minorFixes.md`](../minorFixes.md).
@@ -123,7 +124,8 @@ Finally [`../../Systems/Core/Economy/Economy.cs`](../../Systems/Core/Economy/Eco
 - Pick a random land tile, **flood-grow** an 8-neighbour cluster of unused land up to a random size
   (1–5), tag it Ore or Grain (`OreShare` split), and create a `Deposit` whose `Reserve` and `Rate` scale
   with cluster size. Repeat to `DepositCountTarget`.
-- Auto-place an extractor on each deposit's start tile: a **Mine** on ore, a **Farm** on grain.
+- **M4.5: no extractor is auto-placed** — deposits are inert until the player builds a Mine/Farm on one
+  (`TryBuildExtractor`, see [Economy.md](Economy.md)).
 
 `DepositOverlay` then draws a gray dot on ore tiles and a neon-yellow dot on grain tiles.
 

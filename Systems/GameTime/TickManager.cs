@@ -12,6 +12,10 @@ public class TickManager
 	//CHANGES 23-Jun-26// TickManager now drives the Economy; dropped ResourceManager/capitals/UIManager
 	private Economy economy;
 
+	// Fires right after each Economy.OnTick(). The view subscribes to drain per-tick data (e.g.
+	// Economy.ProducedThisTick → the "+1" gain flash) exactly when a tick runs (M4.5 sub-rung 4).
+	public event System.Action TickProcessed;
+
 	public TickManager(Economy economy)
 	{
 		this.economy = economy;
@@ -27,6 +31,7 @@ public class TickManager
 			tickTimer -= tickInterval;
 			currentTick++;
 			economy.OnTick();
+			TickProcessed?.Invoke();
 
 			// Alive-check heartbeat: global stockpile totals climb each tick as extractors produce.
 			float grain = 0f, ore = 0f, tools = 0f;

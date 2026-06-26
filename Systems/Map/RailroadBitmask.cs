@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-public class RoadBitmask
+public class RailroadBitmask
 {
     // Row 0 = base track, Row 1 = water-bridge variant (same column), Row 2 = junctions/overpass.
     private static readonly Dictionary<int, Vector2I> Atlas = new Dictionary<int, Vector2I>
@@ -23,29 +23,29 @@ public class RoadBitmask
     private static readonly Vector2I FallbackHoriz = new Vector2I(2, 0);
     private static readonly Vector2I FallbackVert  = new Vector2I(3, 0);
 
-    public void OrientRoadCells(TileMapLayer roadLayer, HashSet<Vector2I> roadTiles, HashSet<Vector2I> capitalSet, TileMapLayer terrainLayer)
+    public void OrientRailroadCells(TileMapLayer railroadLayer, HashSet<Vector2I> railroadTiles, HashSet<Vector2I> capitalSet, TileMapLayer terrainLayer)
     {
-        foreach (Vector2I tile in roadTiles)
+        foreach (Vector2I tile in railroadTiles)
         {
-            int mask = GetCardinalMask(tile, roadTiles, capitalSet);
-            roadLayer.SetCell(tile, RoadTiles.Rails, ResolveAtlas(mask, tile, terrainLayer));
+            int mask = GetCardinalMask(tile, railroadTiles, capitalSet);
+            railroadLayer.SetCell(tile, RailroadTiles.Rails, ResolveAtlas(mask, tile, terrainLayer));
         }
     }
 
-    private int GetCardinalMask(Vector2I tile, HashSet<Vector2I> roadTiles, HashSet<Vector2I> capitalSet)
+    private int GetCardinalMask(Vector2I tile, HashSet<Vector2I> railroadTiles, HashSet<Vector2I> capitalSet)
     {
         int mask = 0;
-        if (IsRoadOrCapital(tile.X,     tile.Y - 1, roadTiles, capitalSet)) mask |= 0b0001; // up
-        if (IsRoadOrCapital(tile.X,     tile.Y + 1, roadTiles, capitalSet)) mask |= 0b0010; // down
-        if (IsRoadOrCapital(tile.X - 1, tile.Y,     roadTiles, capitalSet)) mask |= 0b0100; // left
-        if (IsRoadOrCapital(tile.X + 1, tile.Y,     roadTiles, capitalSet)) mask |= 0b1000; // right
+        if (IsRailroadOrCapital(tile.X,     tile.Y - 1, railroadTiles, capitalSet)) mask |= 0b0001; // up
+        if (IsRailroadOrCapital(tile.X,     tile.Y + 1, railroadTiles, capitalSet)) mask |= 0b0010; // down
+        if (IsRailroadOrCapital(tile.X - 1, tile.Y,     railroadTiles, capitalSet)) mask |= 0b0100; // left
+        if (IsRailroadOrCapital(tile.X + 1, tile.Y,     railroadTiles, capitalSet)) mask |= 0b1000; // right
         return mask;
     }
 
-    private bool IsRoadOrCapital(int x, int y, HashSet<Vector2I> roadTiles, HashSet<Vector2I> capitalSet)
+    private bool IsRailroadOrCapital(int x, int y, HashSet<Vector2I> railroadTiles, HashSet<Vector2I> capitalSet)
     {
         var pos = new Vector2I(x, y);
-        return roadTiles.Contains(pos) || capitalSet.Contains(pos);
+        return railroadTiles.Contains(pos) || capitalSet.Contains(pos);
     }
 
     private Vector2I ResolveAtlas(int mask, Vector2I tile, TileMapLayer terrainLayer)

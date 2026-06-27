@@ -50,6 +50,7 @@ public class EconomyBuildGateTests
     {
         var economy = PlayerEconomy(out _);
         economy.PlayerNation.Treasury = 1000f;
+        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
         Vector2I tile = FirstDepositTile(economy);
         Good good = economy.TileDeposits[tile].Good;
         float before = economy.PlayerNation.Treasury;

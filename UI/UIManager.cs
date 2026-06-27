@@ -7,7 +7,7 @@ using System.Linq;
 // per tick, so this is cheap).
 public partial class UIManager : Control
 {
-	private Label _treasuryLabel, _incomeLabel, _grainLabel, _oreLabel, _toolsLabel;
+	private Label _treasuryLabel, _incomeLabel, _popLabel, _grainLabel, _oreLabel, _toolsLabel;
 	private Button _buildRailroadButton, _buildWorkshopButton, _buildExtractorButton;
 	private Button[] _buildButtons;                              // the mutually-exclusive build toggles
 	private Button _sellGrainButton, _sellOreButton, _sellToolsButton;
@@ -40,6 +40,7 @@ public partial class UIManager : Control
 		_vbox = GetNode<VBoxContainer>("PanelContainer/VBox");
 		_treasuryLabel = GetNode<Label>("PanelContainer/VBox/TreasuryLabel");
 		_incomeLabel   = GetNode<Label>("PanelContainer/VBox/IncomeLabel");
+		_popLabel      = GetNode<Label>("PanelContainer/VBox/PopLabel");
 		_grainLabel    = GetNode<Label>("PanelContainer/VBox/GrainLabel");
 		_oreLabel      = GetNode<Label>("PanelContainer/VBox/OreLabel");
 		_toolsLabel    = GetNode<Label>("PanelContainer/VBox/ToolsLabel");
@@ -49,13 +50,18 @@ public partial class UIManager : Control
 		// capturing their own clicks, so dragging never starts on a button.
 		_panel.GuiInput += OnPanelGuiInput;
 		_vbox.MouseFilter = MouseFilterEnum.Ignore;
-		foreach (Label l in new[] { _treasuryLabel, _incomeLabel, _grainLabel, _oreLabel, _toolsLabel })
+		foreach (Label l in new[] { _treasuryLabel, _incomeLabel, _popLabel, _grainLabel, _oreLabel, _toolsLabel })
 			l.MouseFilter = MouseFilterEnum.Ignore;
 
 		_buildRailroadButton = GetNode<Button>("PanelContainer/VBox/RailroadButton");
 		_buildWorkshopButton = GetNode<Button>("PanelContainer/VBox/WorkshopButton");
 		_buildExtractorButton = GetNode<Button>("PanelContainer/VBox/ExtractorButton");
 		_buildButtons = new[] { _buildRailroadButton, _buildWorkshopButton, _buildExtractorButton };
+		// Label each build action with its treasury cost, sourced from the cost constants so the caption can
+		// never drift from what TryBuild actually charges (the queued "show the cost on every buildable").
+		_buildRailroadButton.Text  = $"Build Railroad ({Economy.RailroadCost:0})";
+		_buildWorkshopButton.Text  = $"Build Workshop ({Building.WorkshopCost:0})";
+		_buildExtractorButton.Text = $"Build Extractor ({Building.ExtractorCost:0})";
 		foreach (Button b in _buildButtons)
 		{
 			Button self = b; // capture per-iteration for the closure
@@ -125,6 +131,11 @@ public partial class UIManager : Control
 		if (p == null) return;
 		_treasuryLabel.Text = $"Treasury: {p.Treasury:0}";
 		_incomeLabel.Text = $"Income: {_economy.TotalIncome:0}";
+		// M5: pops + their grain appetite (the grain shortage = a -N drain on the Grain line + a rising
+		// @price reads as "the population is eating it") and the poll tax they pay into the treasury.
+		string taxEarned = _economy.TaxCollected > 0f ? $", earned {_economy.TaxCollected:0}" : "";
+		_popLabel.Text = $"Pop: {p.Population:0} (eats {_economy.PlayerDemandLastTick.GetValueOrDefault(Good.Grain):0.#} grain/tick" +
+						 $" — tax +{Economy.TaxPerInterval:0}/{Economy.TaxIntervalTicks}t{taxEarned})";
 		_grainLabel.Text = FormatGood("Grain", Good.Grain, p);
 		_oreLabel.Text   = FormatGood("Ore",   Good.Ore,   p);
 		_toolsLabel.Text = FormatGood("Tools", Good.Tools, p);

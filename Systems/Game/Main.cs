@@ -88,9 +88,7 @@ public partial class Main : Node2D
 		workshopSprites.Initialize();
 
 		// "+N" gain flashes: after each tick, drain the economy's production events onto their tiles.
-		gainFeedback = new GainFeedback();
-		AddChild(gainFeedback);
-		gainFeedback.SetContext(tml);
+		// (gainFeedback itself is created in CreateObjs so MapManager can flash "-cost" on a build.)
 		gameContext.tickManager.TickProcessed += () =>
 		{
 			foreach (var (tile, good, amount) in gameContext.economy.ProducedThisTick)
@@ -99,6 +97,10 @@ public partial class Main : Node2D
 
 		PopupSceneLoad();
 		mst = BuildMst();
+
+		// M6: hand the economy the trade backbone (the MST over capitals) so goods auto-arbitrage between
+		// connected nations. Rebuilt deterministically from the seed, so this runs for new and loaded games.
+		gameContext.economy.SetTradeGraph(mst, gameContext.voronoiDiagram.GetCapitals());
 
 		DrawMSTLines();
 
@@ -151,7 +153,12 @@ public partial class Main : Node2D
 		AddChild(workshopSprites);
 		workshopSprites.SetContext(economy, tml);
 
-		MapManager mapManager = new MapManager(vD, tml, Nht, numProvinces, tickManager, economy, controls, workshopSprites);
+		// "+N"/"-cost" floating flashes (created before MapManager so a build click can flash its cost).
+		gainFeedback = new GainFeedback();
+		AddChild(gainFeedback);
+		gainFeedback.SetContext(tml);
+
+		MapManager mapManager = new MapManager(vD, tml, Nht, numProvinces, tickManager, economy, controls, workshopSprites, gainFeedback);
 		AddChild(mapManager);
 		//END CHANGES 23-Jun-26 tiles//
 

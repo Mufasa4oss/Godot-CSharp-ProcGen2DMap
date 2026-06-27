@@ -61,6 +61,7 @@ public class EconomyProductionTests
         var land = SquareLand(12, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, 99);
         Assert.NotEmpty(economy.Deposits);
+        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
 
         var (_, good) = BuildPlayerExtractor(economy);
 
@@ -80,6 +81,7 @@ public class EconomyProductionTests
     {
         var land = SquareLand(12, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, 7);
+        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
 
         var (tile, good) = BuildPlayerExtractor(economy);
         float reserve = economy.TileDeposits[tile].Reserve;
@@ -97,6 +99,8 @@ public class EconomyProductionTests
         var land = TwoNationLand(16, out var capA, out var capB);
         var economy = new Economy(land, new List<Vector2I> { capA, capB }, 2024);
         Assert.NotEmpty(economy.Deposits);
+        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
+        economy.EnableAiAutonomy = false;     // M6: keep the AI inert so this tests player extraction alone
 
         var (_, good) = BuildPlayerExtractor(economy);
         for (int i = 0; i < 6; i++) economy.OnTick(); // 3 producing ticks → 3 units

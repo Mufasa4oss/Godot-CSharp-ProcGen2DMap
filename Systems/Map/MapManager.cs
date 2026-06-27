@@ -18,8 +18,9 @@ public partial class MapManager : TileMapLayer
 	//END CHANGES 23-Jun-26//
 	private Controls _controls; // input hub: map-click + provinces-toggle signals
 	private WorkshopSprites _workshopSprites; // spawns a sprite when the player builds a workshop
+	private GainFeedback _gainFeedback; // flashes a fading "-cost" over a tile when a build is paid for
 
-	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numProvince, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites)
+	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numProvince, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites, GainFeedback gainFeedback)
 	{
 		this.vD = vD;
 		this.tml = tml;
@@ -29,6 +30,7 @@ public partial class MapManager : TileMapLayer
 		this._economy = economy;
 		this._controls = controls;
 		this._workshopSprites = workshopSprites;
+		this._gainFeedback = gainFeedback;
 	}
 	public override void _Ready()
 	{
@@ -58,6 +60,7 @@ public partial class MapManager : TileMapLayer
 			if (_economy != null && _economy.TryBuildWorkshop(tileCoords))
 			{
 				_workshopSprites.AddWorkshop(tileCoords);
+				_gainFeedback.FlashCost(tileCoords, _economy.TileBuildings[tileCoords].Cost);
 				GD.Print($"Built workshop at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
 			}
 			else
@@ -73,6 +76,7 @@ public partial class MapManager : TileMapLayer
 			if (_economy != null && _economy.TryBuildExtractor(tileCoords))
 			{
 				Building b = _economy.TileBuildings[tileCoords];
+				_gainFeedback.FlashCost(tileCoords, b.Cost);
 				GD.Print($"Built {b.Type} at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
 			}
 			else
@@ -89,6 +93,7 @@ public partial class MapManager : TileMapLayer
 			if (_economy != null && _economy.TryBuildRailroad(tileCoords))
 			{
 				_railroadLayer.SetCell(tileCoords, RailroadTiles.Rails, Vector2I.Zero);
+				_gainFeedback.FlashCost(tileCoords, Economy.RailroadCost);
 				GD.Print($"Built railroad at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
 			}
 			else

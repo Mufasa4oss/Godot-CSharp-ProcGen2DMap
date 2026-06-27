@@ -26,6 +26,24 @@ public partial class GainFeedback : Node2D
         AddChild(label);
     }
 
+    // Red "-cost" spend flash over a tile when the player pays to build — the counterpart to the +N gain
+    // flash, so spending reads on the map the same way gaining does. Same rise+fade FloatingLabel; the
+    // Modulate alpha just multiplies this red font color as it fades.
+    public void FlashCost(Vector2I tile, float amount)
+    {
+        if (_tml == null) return;
+
+        var label = new FloatingLabel
+        {
+            Text = $"-{amount:0}",
+            Position = _tml.MapToLocal(tile) - new Vector2(0f, 32f),
+            ZIndex = 2,
+        };
+        label.AddThemeFontSizeOverride("font_size", 48);
+        label.AddThemeColorOverride("font_color", new Color(1f, 0.4f, 0.4f)); // red = treasury spent
+        AddChild(label);
+    }
+
     private static Color GoodColor(Good good) => good switch
     {
         Good.Grain => new Color(1f, 0.9f, 0.3f),   // wheat yellow

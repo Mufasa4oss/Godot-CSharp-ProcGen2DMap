@@ -15,9 +15,18 @@ public class Nation
     // Money the nation spends to build (M3). Income (selling goods) arrives at M4.
     public float Treasury { get; set; }
 
+    // M5: a minimal demand sink — pops that eat grain each tick. Just a count for now (no labor sim);
+    // deterministic from construction, so it isn't serialized (regenerated like Tiles on load).
+    public float Population { get; set; }
+
     // Goods this nation holds. Filled by production (M2/M3), drawn down by workshops (M3), pop (M5) and
     // trade (M6). Persisted in the save and restored on load.
     public Dictionary<Good, float> Stockpile { get; } = new();
+
+    // M6: this nation's per-good scarcity price multiplier on the base price (1 = base). Recomputed each tick
+    // from its own local supply/demand, so different nations price the same good differently — the gradient
+    // that trade chases. Live display state, not serialized (regenerated each tick).
+    public Dictionary<Good, float> PriceMultiplier { get; } = new();
 
     public Nation(Vector2I capital, HashSet<Vector2I> tiles)
     {

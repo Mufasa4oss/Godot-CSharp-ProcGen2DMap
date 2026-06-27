@@ -29,8 +29,8 @@ have value (M4), can't route goods between provinces (M6) before there's a price
 | **M3** | **Agency + Economy UI** | Treasury (money); player **builds Workshops** (Ore→Tools, the M2-deferred chain); each capital is a **nation** with its own stockpile (player = first capital); UI shows stockpile + flows (production in, Ore→Workshop out) | Build a workshop → treasury drops, Ore drains while Tools climb, UI shows both flows | ✅ done 2026-06-25 (`Province`→`Nation`; animated workshop sprite; in-engine check pending) |
 | **M4** | **Value / Prices** | Each good has a value; a simple market lets goods be **sold for treasury income** → closes the build→produce→sell→reinvest loop | Producing + selling Tools grows the treasury faster than selling raw Ore | ✅ done 2026-06-25 (static price table; `SellAll` per good; UI sell buttons + price/**per-good income breakdown**; **in-engine verified** — build/produce/sell loop + treasury math confirmed) |
 | **M4.5** | **Clarity + raw/refined split (GATE)** | Make *where & why* the player gains resources legible, and split **raw vs refined** goods (they behave differently in code & game). Re-tunes the M4 balance note so the build choice actually bites. | All five checks below pass | 🟡 code-complete 2026-06-26 (sub-rungs 1–3 verified; 4–5 await in-engine visual confirm) |
-| **M5** | **Demand + scarcity** | A **minimal demand sink** consumes goods (the "one shortage"); prices respond to supply vs demand; grain→pops flow appears in UI. *(Minimal pop — full labor sim deferred.)* | A shortage drives a good's price up; player re-allocates production | ⬜ |
-| **M6** | **Logistics (the spine)** | Per-province stockpiles return; MST edges get **capacity**; goods flow high→low price; **connector roads** tap the nearest MST edge → deposit location gains value | Cut a road → the two sides' prices diverge / a cut-off province starves | ⬜ |
+| **M5** | **Demand + scarcity** | A **minimal demand sink** consumes goods (the "one shortage"); prices respond to supply vs demand; grain→pops flow appears in UI. *(Minimal pop — full labor sim deferred.)* | A shortage drives a good's price up; player re-allocates production | ✅ code+tests done 2026-06-27 (player pops eat grain; stock-based scarcity prices; HUD pop/shortage; 67 tests green; in-engine windowed check pending) |
+| **M6** | **Logistics (the spine)** | Per-province stockpiles return; MST edges get **capacity**; goods flow high→low price; **connector roads** tap the nearest MST edge → deposit location gains value | Cut a road → the two sides' prices diverge / a cut-off province starves | 🟡 phase-1 done 2026-06-27 (AI come alive + per-nation prices + connected auto-arbitrage; 77 tests; windowed check pending). Phases 2–3 (capacity/connectors, tariffs/blockades/diplomacy) ⬜ |
 | **M7** | Inspector + legibility + balance | Full UI panel (no console); economy legible on the map (tint by price, pulse roads, flash depleted deposits); tune to fun | Play ~10 min making choices entirely through the UI | ⬜ |
 | **M8** | **Obfuscation (final / ship)** | Two layers: (1) encrypt save files via `FileAccess.OpenEncryptedWithPass`, keeping the **seed in a plain header** so it stays shareable; (2) obfuscate the compiled C# assembly with a .NET obfuscator | Save file is unreadable in a text editor (except the seed); decompiled assembly is obscured | ⬜ |
 
@@ -47,8 +47,10 @@ production needs to read tile-bound deposits/buildings and deplete reserves.)*
 The MVP target is **one tight, fun economic-choice loop** before breadth. Each milestone below is a
 playable increment toward it. References: the "fun backlog" and design history in
 [`../Build-History.md`](../Build-History.md); the MST-highway + connector-road model in
-[`../../claude/DesignNotes.md`](../../claude/DesignNotes.md) (note its 7-resource list is **stale** — the
-current goods are Grain/Ore/Tools). System docs: [`../Documentation/`](../Documentation/).
+[`../../DesignNotes.md`](../../DesignNotes.md); the macro economy/trade vision in
+[`../Documentation/EconomyDesign.md`](../Documentation/EconomyDesign.md) +
+[`../Documentation/TradeDesign.md`](../Documentation/TradeDesign.md). System docs:
+[`../Documentation/`](../Documentation/).
 
 ### M3 — Agency + Economy UI (the first meaningful choice) — ✅ done 2026-06-25
 
@@ -159,21 +161,46 @@ economy numbers are placeholders (`Building.ExtractorCost = 50`, `WorkshopCost =
 > - **Budget:** cheap to fake, expensive to over-do. For MVP a short 8–16-frame loop per building
 >   is plenty; reserve long smooth animations (the M3 60-frame treatment) for hero buildings.
 
-### M5 — Demand + scarcity (the "one shortage" / pressure)
+### M5 — Demand + scarcity (the "one shortage" / pressure) — ✅ code+tests done 2026-06-27
 
 - **Goal / the choice.** Introduce a reason goods *run out*: a **minimal demand sink** consumes goods,
   creating a shortage the player must solve by re-allocating what they build/produce. Prices now respond
   to supply vs demand. This is the *minimal* population (a consumption node) — the full labor-gates-
   production simulation stays deferred.
-- **Player-facing UI.** The grain → pops consumption flow appears in the panel; a shortage is visible
-  (a good's price spiking / stockpile draining).
-- **New state & types.** A demand/consumption node (minimal `Pop` or a consumer); price-from-supply/
-  demand formula.
-- **Key files.** `Economy.cs` (consumption in `OnTick`, dynamic prices), UI.
-- **Dependencies.** M4 value/prices. **Deferred:** full pop model, labor pool, labor-limited production.
+- **What shipped.** `Nation.Population` (a consumption node, no labor sim) — **player-only** for now (AI
+  produce nothing to consume). A new **Pass 3** in `Economy.OnTick` has the player's pops eat
+  `Population * GrainPerPopPerTick` grain/tick, consuming `min(desired, onHand)` (the stockpile floors at
+  0 — no negative grain, no starvation penalty yet) and recording it into `PlayerConsumedLastTick[Grain]`
+  so the HUD's Grain line shows the `-N` pop drain. Prices went **dynamic**: the static table became a
+  `BasePrice` table × a per-good scarcity multiplier (`PriceOf = base × mult`), recomputed each tick from
+  a **stock-based** model — balanced (×1) at ~`PriceBufferTicks` of demand in stock, climbing toward ×3
+  when scarce, sinking toward ×0.5 on a glut; a good nothing demands stays at base (keeps `SellAll`/M4
+  tests valid). Demand for pricing is the *desired* appetite (`PlayerDemandLastTick` = pop grain + workshop
+  ore), so an unmet shortage still lifts the price. Numbers are M7-placeholders (`StartingPopulation = 5`,
+  `GrainPerPopPerTick = 0.1` → 0.5 grain/tick ≈ one farm's throttled output). HUD gained a `PopLabel`.
+- **No save/load change.** `Population` is deterministic from construction (regenerated like `Tiles`); the
+  price multiplier is a live display value (like `IncomeByGood`). Neither is serialized.
+- **Key files.** `Systems/Core/Economy/{Economy,Nation}.cs` (Pass-3 consumption, dynamic prices),
+  `UI/UIManager.cs` + `Scenes/main.tscn` (PopLabel), `Tests/EconomyDemandTests.cs` (new, 8 tests).
+- **Dependencies.** M4 value/prices. **Deferred:** full pop model, labor pool, labor-limited production,
+  AI demand, starvation penalties, population growth.
 - **Alive check.** A shortage drives a good's price up; the player re-allocates production in response.
+  **Code/tests green (67 passed); in-engine windowed confirm pending** on the user's display (Grain `-N`
+  drain + grain `@price` rising as it runs dry, then falling after building a farm).
 
 ### M6 — Logistics (geography becomes a choice; the long-term spine)
+
+> **Macro design vision:** [`../Documentation/TradeDesign.md`](../Documentation/TradeDesign.md) +
+> [`../Documentation/EconomyDesign.md`](../Documentation/EconomyDesign.md) — *automate the micro, agency in the
+> macro* (specialty/development, chokepoints/blockades, routes, tariffs, diplomacy). M6 below is the first
+> phase (connected auto-arbitrage + capacity + connectors); the political/diplomatic levers layer on after.
+>
+> **Phase-1 shipped 2026-06-27** (Build-History 2026-06-27 M6 section): the 9 AI nations are live
+> (pops + greedy extractor auto-build + tax), every nation prices goods off its own local scarcity, and goods
+> auto-arbitrage one unit/route/tick along the MST (midpoint price, distance-scaled transport cost) — so a sole
+> supplier earns gold from connected consumers. **Phases 2–3 remain:** edge **capacity** + player-built
+> **connector roads** (geography becomes decisive / "cut a road" works), then tariffs, chokepoints/blockades,
+> and diplomacy. Per-province (sub-nation) stockpiles also still pending.
 
 - **Goal / the choice.** Make *where* you build matter. **Per-province stockpiles return**; MST edges get
   **capacity**; goods flow high-price → low-price along the MST; **connector roads** tap the nearest MST

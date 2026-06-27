@@ -24,6 +24,8 @@ and `//CHANGES 23-Jun-26 tiles//` (tile refactor).
 8. [2026-06-25 — M3 agency + economy UI](#2026-06-25--m3-agency--economy-ui)
 9. [2026-06-25 — M4 value / prices](#2026-06-25--m4-value--prices)
 10. [2026-06-26 — M4.5 clarity + raw/refined split (gate)](#2026-06-26--m45-clarity--rawrefined-split-gate)
+11. [2026-06-27 — Build-cost legibility + M5 demand & scarcity](#2026-06-27--build-cost-legibility--m5-demand--scarcity)
+12. [2026-06-27 — M6 phase-1: a living, trading multi-nation economy](#2026-06-27--m6-phase-1-a-living-trading-multi-nation-economy)
 
 ---
 
@@ -417,3 +419,127 @@ railroad cost) confirmed on the user's display.
 history (deleted), refreshed the `Documentation/` system docs (Economy, SaveLoad, WorldgenPipeline,
 Architecture, TickLoop, GodotNodeLifecycle, README) to M4.5 + the railroad rename, and ticked the
 resolved items in `minorFixes.md`.
+
+---
+
+## 2026-06-27 — Build-cost legibility + M5 demand & scarcity
+
+Two pieces: the queued "show the cost / flash the spend" clarity note (which also completes M4.5
+sub-rungs 4–5's intent), then M5 — the first demand-side pressure.
+
+**Part 1 — build-cost legibility (queued note).**
+- *Cost on every buildable:* the three build toggles now read their price — "Build Railroad (10)",
+  "Build Workshop (100)", "Build Extractor (50)" — set in `UIManager._Ready` from the cost constants
+  (`Building.ExtractorCost`/`WorkshopCost`, `Economy.RailroadCost`) so the caption can never drift from
+  what `TryBuild` charges. `Economy.RailroadCost` was made `public const` for this.
+- *Spend flash:* new `GainFeedback.FlashCost(tile, amount)` — the red "−N" counterpart to the "+N" gain
+  flash (same rise+fade `FloatingLabel`). `GainFeedback` is now created in `Main.CreateObjs` (before
+  `MapManager`) and passed into the `MapManager` ctor (mirroring `WorkshopSprites`); each successful build
+  branch in `OnMapClick` flashes the cost on the built tile. So paying reads on the map the same way
+  gaining does.
+
+**Part 2 — M5: demand + scarcity.**
+- *Demand sink (pops eat grain):* `Nation.Population` (a consumption node — no labor sim). The player's
+  pops want `Population * GrainPerPopPerTick` grain/tick; a new **Pass 3** in `Economy.OnTick` consumes
+  `min(desired, onHand)` (stockpile floors at 0 — no negative grain, no starvation penalty yet), recorded
+  into the existing `PlayerConsumedLastTick[Grain]` so the HUD's Grain line shows the `-N` pop outflow for
+  free. Tunables (M7-placeholders): `StartingPopulation = 5`, `GrainPerPopPerTick = 0.1` → 0.5 grain/tick,
+  sized to ~one farm's throttled output so "feed the pops vs. sell the grain" is a real choice from the
+  first build. **Player-only** for now (AI have no production to consume).
+- *Scarcity pricing:* the static price table became a **base** table (`BasePrice`, values unchanged:
+  Grain 1 / Ore 2 / Tools 6) × a per-good `_priceMultiplier` recomputed each tick. Model is
+  **stock-based**: a good is balanced (multiplier 1) at ~`PriceBufferTicks` (5) ticks of demand in stock;
+  low stock vs demand drives the price toward the ×3 ceiling (shortage), a glut toward the ×0.5 floor; a
+  good nothing demands stays at base. (Chose stock-based over the planned flow `demand/supply` ratio
+  because the throttled flows are tiny and oscillate 0/1 per tick — stock is smoother and actually
+  spikes.) Demand for pricing is the *desired* appetite (`PlayerDemandLastTick` = pop grain + workshop
+  ore), not just satisfied consumption, so an unmet shortage still lifts the price. `PriceOf` returns
+  `base × multiplier`; before the first tick / with no demand the multiplier is 1, keeping `SellAll` and
+  the M4 value tests valid.
+- *UI:* new `PopLabel` ("Pop: N (eats M grain/tick)") in `main.tscn`/`UIManager`; the grain shortage is
+  otherwise visible through the existing Grain line (a `-N` drain + a rising `@price`).
+- *No save/load change:* `Population` is deterministic from construction (regenerated like `Tiles`), and
+  the price multiplier is a live display value (like `IncomeByGood`) — neither is serialized.
+
+**Tests.** New `Tests/EconomyDemandTests.cs` (8): pops have grain demand; eat their full appetite when
+supplied; grain floors at 0 under shortage; a shortage lifts grain's price above base; a glut sinks it
+below; a no-demand good (Tools) stays at base; raising the grain buffer relieves the shortage price. Four
+extraction-amount tests in `EconomyProductionTests`/`EconomyBuildGateTests` gained
+`PlayerNation.Population = 0f` to isolate pure extraction from the new demand sink (same isolation pattern
+as the existing `TileBuildings.Clear()`).
+
+**Verified:** `dotnet build` → 0/0; `dotnet test` → **67 passed** (59 prior + 8 demand); headless smoke
+clean (scene instantiates → new `PopLabel` resolves, economy ticks, heartbeat holds 0 under build-gating).
+
+**Pop tax (same-day follow-up, user request).** A flat **poll tax**: `Economy.TaxPerInterval = 50` gold
+into the player's treasury every `TaxIntervalTicks = 10` ticks (no pops ⇒ no tax), added at the end of
+`OnTick`. Gives a steady income independent of selling, so an early grain shortage (grain pegged at the ×3
+ceiling with no farm) isn't a dead end — bank the tax, buy a farm. `Economy.TaxCollected` tracks lifetime
+tax (display stat, not serialized — the treasury it feeds is the real saved state). HUD `PopLabel` now reads
+"Pop: 5 (eats 0.5 grain/tick — tax +50/10t, earned N)". Two tests in `EconomyDemandTests`
+(levy lands every interval + accumulates; no pops ⇒ no tax). **69 tests green.**
+
+**Pending (windowed, on the user's display).** Cost captions read on the buttons (✅ confirmed by user);
+a red "−cost" flashes on every build (mirrors the "+1" gain); the Grain line shows a `-N` pop drain and its
+`@price` ticks up as grain runs dry (✅ user saw grain pegged @3 under shortage), then back down after
+building a farm; the treasury jumps +50 every 10 ticks from the tax; plus the still-open M4.5 carry-overs
+(all-nations panel render — ✅ visible in user's screenshot, save/load of built buildings).
+
+---
+
+## 2026-06-27 — M6 phase-1: a living, trading multi-nation economy
+
+The first **monopoly-matters payoff** from `Documentation/TradeDesign.md`. Until now only the player produced,
+consumed, taxed, and had prices, so a monopoly had no victim and trade no counterparty. This brings the 9 AI
+nations to life and lets goods auto-arbitrage between connected nations. Three rungs (full phase-1 in one push,
+per the user). Spatial levers (capacity, connector roads, tariffs, blockades, diplomacy) are later phases.
+
+**Shared refactor.** `TryBuild(tile, building, Nation builder)` now charges the *builder* and gates on the
+builder owning the tile, so both the player (map click → `PlayerNation`) and the AI (auto-build → that AI
+nation) build on their own land; the player still can't build on AI land (they don't own it). New
+`Economy.EnableAiAutonomy` (default true) — one switch that gates AI population/auto-build/tax so
+extraction-isolation tests keep the AI inert.
+
+**Rung 1 — AI come alive (`Economy.cs`).** Every nation gets `StartingPopulation` in the constructor (demand +
+tax base). Pass 3 (grain consumption) and the poll tax now loop **all** nations (each taxes/feeds its own pops;
+`TaxCollected` stays a player HUD stat). New `RunAiBuild()` — each AI nation greedily builds **one extractor per
+tick** on its lowest-coordinate un-built owned deposit when it can afford one (deterministic; extractors only,
+no AI refining; treasury-gated so they grow off tax income). Production already routed output to the owning
+nation, so AI accumulate real stockpiles with no further change.
+
+**Rung 2 — per-nation prices (`Economy.cs`, `Nation.cs`).** The single global player-driven multiplier became
+**per-nation**: `Nation.PriceMultiplier` (live, not serialized) recomputed each tick from that nation's own
+demand (pop grain + its workshops' inputs, via `DemandOf`) vs. its own stock. `PriceOf(Nation, Good)` is the
+new core; `PriceOf(Good)` = the player's local price (so `SellAll` + HUD are unchanged). Different nations now
+price the same good differently — the gradient trade chases.
+
+**Rung 3 — inter-nation trade (`Economy.cs`, `Main.cs`).** `SetTradeGraph(mstEdges, capitals)` hands the
+economy the MST backbone as `(Nation, Nation, distance)` routes (wired in `Main._Ready` after `BuildMst()`;
+rebuilds from the seed for new + loaded games). New `RunTrade()` at the end of `OnTick`: along each route, each
+good flows **one unit** from the cheaper nation to the dearer when the price gap clears the distance-scaled
+transport cost (`TradeCostPerTile * distance`) and the buyer can pay, transacted at the **midpoint price** — a
+pure gold+goods transfer (no gold created), so a sole supplier's income is drained straight from its customers'
+treasuries. Events recorded in an engine-free `TradedThisTick` (for tests now; real flow viz later can replace
+`TradeNetworkVisualizer`'s fake packets). Tunables (M7): `TradeUnit = 1`, `TradeCostPerTile = 0.02`.
+
+**Persistence: no schema change.** `InitSaveAndLoad` already saved *all* `TileBuildings` + *all* nations'
+treasury/stockpile, and `ApplySavedState` re-places every building — so AI buildings/treasuries round-trip for
+free. Population is deterministic (constructor); prices + `TradedThisTick` are live.
+
+**Tests.** New `Tests/EconomyTradeTests.cs` (8): every nation has pops; AI develops + produces; tax lands for
+all; inert-AI does nothing with autonomy off; per-nation prices diverge; grain flows surplus→shortage with gold
+back; disconnected = no trade; a sole supplier's treasury climbs off a connected consumer. Updated
+`Output_lands_in_the_player_nation` to set `EnableAiAutonomy = false` (keeps testing player extraction in
+isolation). **77 tests green** (69 + 8).
+
+**Verified:** `dotnet build` → 0/0; `dotnet test` → 77 passed; headless smoke — no exceptions and the heartbeat
+now **moves on its own** (grain/ore climb with no player build, since the AI auto-build + produce; grain
+oscillates as AI pops eat it, ore accumulates with no AI consumer).
+
+**Pending (windowed, user's display):** the all-nations panel showing AI stockpiles growing + diverging; build
+nothing and watch a connected neighbour's surplus flow to you (treasury moving); a save/load round-trip with AI
+buildings present.
+
+**Next (M6 phase-2+):** edge capacity + connector roads (geography becomes decisive), then tariffs/tolls,
+chokepoints/blockades, diplomacy; AI workshops/strategy; the manual-vs-auto selling decision; per-province
+stockpiles.

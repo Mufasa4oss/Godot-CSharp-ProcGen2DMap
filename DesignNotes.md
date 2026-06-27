@@ -9,6 +9,13 @@ determines resource value, production chains create depth, and logistics is the 
 
 ## Trade Network
 
+> **Fuller vision:** the macro design of how trade should work — automate the micro, keep agency in the
+> network/policy/production/diplomacy — lives in
+> [`ReviewDocs/Documentation/TradeDesign.md`](ReviewDocs/Documentation/TradeDesign.md), which sits on the
+> economy-design principles in
+> [`ReviewDocs/Documentation/EconomyDesign.md`](ReviewDocs/Documentation/EconomyDesign.md). This section is the
+> spatial/geometry layer those build on.
+
 ### MST as the Base Highway System
 
 - The MST connecting all province capitals is the **permanent** base trade network.
@@ -22,7 +29,7 @@ determines resource value, production chains create depth, and logistics is the 
 Capital A ──────────────── Capital B
               │
               │ ← short connector road (player/AI built)
-           [Iron Mine]
+           [Ore Mine]
 ```
 
 - **MST edges** = trunk routes (the highways)
@@ -49,20 +56,17 @@ Every resource tile has implicit value based on one question:
 
 ## Production Chains (Rough Sketch)
 
-Raw materials → Processed goods → Finished goods
+The current goods are **Grain / Ore / Tools**, with one refining step already live:
 
 ```
-Coal ──┐
-       ├──► Steel Mill ──► Steel ──► Tools / Machines
-Iron ──┘
-
-Grain ──► Mill ──► Flour ──► Bakery ──► Bread
-
-Wood ──► Sawmill ──► Lumber ──► Construction Materials
+Ore ──► Workshop ──► Tools     (raw → refined; the M3 chain)
+Grain ──► (fed to pops)        (raw → consumed; the M5 demand sink)
 ```
 
-The existing resource names (Wood, Stone, Iron, Gold, Grain, Livestock, Coal) are the correct
-tier-1 raw inputs. Processed and finished goods come next.
+Deeper multi-tier chains (raw → processed → finished) are a **future** direction — e.g. adding a refined good
+that consumes Tools, or a rare strategic good with its own chain. Any such expansion should be designed through
+the triad in [`ReviewDocs/Documentation/EconomyDesign.md`](ReviewDocs/Documentation/EconomyDesign.md) (a new
+good only earns its place if it creates a decision).
 
 ---
 
@@ -79,14 +83,17 @@ tier-1 raw inputs. Processed and finished goods come next.
 
 ## Open Design Questions
 
-- **Player agency level** — Does the player place buildings manually (Factorio-style)
-  or invest capital abstractly and let buildings auto-run (Capitalism-style)?
+- **Player agency level** — *Directionally resolved (2026-06-27):* **automate the micro, keep agency in the
+  macro** — the market clears itself; the player shapes conditions (specialty, routes, tariffs, blockades,
+  diplomacy). See [`ReviewDocs/Documentation/TradeDesign.md`](ReviewDocs/Documentation/TradeDesign.md).
+  (Building placement specifics still open.)
 
 - **Connector road connection point** — Nearest MST node (capital) or any point along
   an MST edge? Mid-edge is richer but more complex to implement.
 
-- **Conflict** — Pure economic competition between AI factions and player,
-  or is there warfare/province conquest?
+- **Conflict** — *Directionally resolved (2026-06-27):* an **economic casus belli** — monopoly pricing power
+  plus chokepoint/blockade control gives a reason to fight; warfare/conquest layers on later. See
+  [`ReviewDocs/Documentation/TradeDesign.md`](ReviewDocs/Documentation/TradeDesign.md).
 
 ---
 

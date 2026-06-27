@@ -8,6 +8,7 @@ public partial class Camera : Camera2D
 	[Export] public float PanSpeed = 1500f;
 	[Export] public float ZoomSpeed = 0.1f;
 	[Export] public Vector2 ZoomLimits = new Vector2(0.5f, 3f);
+	[Export] public bool DebugZoom = true; // print the zoom level to the console whenever it changes
 	ShaderMaterial shaderMat = new ShaderMaterial();
 	private const int TileSize = 64; // pixels per tile (matches the tileset cell size)
 
@@ -49,10 +50,12 @@ public partial class Camera : Camera2D
 		if (Input.IsActionJustPressed(Controls.ZoomOut) && Zoom.X > ZoomLimits.X)
 		{
 			Zoom = Zoom * (1f - ZoomSpeed);
+			if (DebugZoom) GD.Print($"Zoom: {Zoom.X:0.###}");
 		}
 		if (Input.IsActionJustPressed(Controls.ZoomIn) && Zoom.X < ZoomLimits.Y)
 		{
 			Zoom = Zoom * (1f + ZoomSpeed);
+			if (DebugZoom) GD.Print($"Zoom: {Zoom.X:0.###}");
 		}
 		if (Input.IsActionPressed(Controls.PanUp) && Position.Y > LimitTop)
 		{
@@ -74,5 +77,16 @@ public partial class Camera : Camera2D
 		//GD.Print(Position);
 		//GD.Print("Zoom is:" + Zoom); //un-comment for posistion and zoom value tracking
 
+	}
+
+	// Middle-mouse drag panning: hold the middle button and move the mouse to grab the map. Dividing the
+	// screen-space motion by Zoom keeps the grabbed point under the cursor at any zoom level. Uses
+	// _UnhandledInput so the UI (which consumes events over the HUD panel) takes precedence.
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is InputEventMouseMotion motion && motion.ButtonMask.HasFlag(MouseButtonMask.Middle))
+		{
+			Position -= motion.Relative / Zoom;
+		}
 	}
 }

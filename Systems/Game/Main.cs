@@ -122,10 +122,30 @@ public partial class Main : Node2D
 
 	private GameContext CreateObjs()
 	{
-		List<Vector2I> mapCoordsLand = new Initialize(tml, noise, MapSizeX, MapSizeY).PlaceTiles();
+		// Second noise field for deserts: a low-frequency aridity map, seeded from the one world seed
+		// (offset so it's decorrelated from the height field) so deserts reproduce on save/load.
+		var moisture = new FastNoiseLite
+		{
+			NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin,
+			Seed = worldSeed + 7919,
+			// Higher than the height field so several distinct dry pockets land per map (a very low
+			// frequency made deserts feast-or-famine — a single trough either hit a continent or missed).
+			Frequency = 0.03f,
+		};
 
+		var init = new Initialize(tml, noise, moisture, MapSizeX, MapSizeY);
+		List<Vector2I> mapCoordsLand = init.PlaceTiles();
+
+		// Phase 2: realistic blended ground, rendered from the terrain mask. Sits under the tilemap, so
+		// it's hidden behind the (still opaque) ground tiles until Phase 3 makes them transparent.
+		var ground = new GroundRenderer();
+		AddChild(ground);
+		ground.Initialize(init.TerrainMask, MapSizeX, MapSizeY);
+
+		// Bitmask still built (GameContext carries it), but grass autotiling is no longer rendered:
+		// ground tiles are transparent and the look comes from GroundRenderer's shader, so we skip
+		// OrientCells() (it would also fail now that Grass is a single-tile source).
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
-		bitmaskObj.OrientCells();
 
 		VoronoiDiagram vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml, worldSeed);
 

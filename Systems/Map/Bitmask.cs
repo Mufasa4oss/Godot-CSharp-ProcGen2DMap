@@ -100,7 +100,9 @@ public class Bitmask
 				Vector2I current = new Vector2I(x, y);
 				int bitmask = GetBitmaskAllSurroundingTiles(current);
 				int sid = tml.GetCellSourceId(current);
-				if (sid == TerrainTiles.Water)
+				// Water has no autotile graphic; Sand uses a separate atlas (5:0..8:3) and isn't oriented
+				// through the grass atlasDict, so skip both — only Grass is reoriented here.
+				if (sid == TerrainTiles.Water || sid == TerrainTiles.Sand)
 				{
 					continue;
 				}

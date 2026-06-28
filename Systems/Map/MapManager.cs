@@ -7,7 +7,8 @@ public partial class MapManager : TileMapLayer
 	private VoronoiDiagram vD;
 	private TileMapLayer tml;
 	private Sprite2D provinces;
-	private HashSet<Vector2I> previousTiles = null;
+	private TileMapLayer _highlightLayer;   // overlay layer for the selected-province tint (never the ground data)
+	private const int HighlightSource = 2;  // BorderHighlight.tres source 2 = translucent highlight tile
 	private TickManager tickManager;
 	private int numProvinces;
 	private NoiseTexture2D noiseTexture;
@@ -37,6 +38,7 @@ public partial class MapManager : TileMapLayer
 		provinces = GetNode<Sprite2D>("../Provinces");
 		_uiManager = GetNode<UIManager>("../UIManager");
 		_railroadLayer = GetNode<TileMapLayer>("../0zTileMapLayer/RailroadLayer");
+		_highlightLayer = GetNode<TileMapLayer>("../0zTileMapLayer/BordersLayer");
 		// Connections drop automatically when this node frees (e.g. on load's scene reload).
 		_controls.MapClickRequested += OnMapClick;
 		_controls.ProvincesToggleRequested += OnToggleProvinces;
@@ -103,14 +105,9 @@ public partial class MapManager : TileMapLayer
 			return;
 		}
 
-		if (previousTiles != null)
-		{
-			foreach (Vector2I tile in previousTiles)
-			{
-				var atlasCoords = tml.GetCellAtlasCoords(tile);
-				tml.SetCell(tile, TerrainTiles.Grass, atlasCoords);
-			}
-		}
+		// Clear the previous province highlight. It lives on the overlay layer, so the ground data grid
+		// (water/grass/sand cells) is never touched — no terrain corruption when restoring.
+		_highlightLayer.Clear();
 		Vector2I capital;
 		Dictionary<Vector2I, Vector2I> provincesDictionary = vD.provincesDictionary;
 		provincesDictionary.TryGetValue(tileCoords, out capital);
@@ -140,13 +137,9 @@ public partial class MapManager : TileMapLayer
 				: new HashSet<Vector2I>();
 		foreach (Vector2I tile in nationTiles)
 		{
-			if (tile == capital) continue; // don't recolor the capital/castle tile (TerrainTiles.Capital)
-			var atlasCoords = tml.GetCellAtlasCoords(tile);
-			tml.SetCell(tile, TerrainTiles.Highlight, atlasCoords);
+			if (tile == capital) continue; // leave the castle untinted
+			_highlightLayer.SetCell(tile, HighlightSource, Vector2I.Zero);
 		}
-		// Track highlighted tiles for restore, but never the capital so the castle survives.
-		previousTiles = new HashSet<Vector2I>(nationTiles);
-		previousTiles.Remove(capital);
 	}
 
 	private void OnToggleProvinces()

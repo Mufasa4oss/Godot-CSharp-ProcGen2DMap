@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://b1grndblndtst7"]
+
+[ext_resource type="Script" path="res://Systems/Rendering/GroundBlend.cs" id="1_gblend"]
+
+[node name="GroundBlendTest" type="Node2D"]
+
+[node name="GroundBlend" type="Sprite2D" parent="."]
+script = ExtResource("1_gblend")

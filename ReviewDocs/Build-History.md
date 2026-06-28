@@ -26,6 +26,7 @@ and `//CHANGES 23-Jun-26 tiles//` (tile refactor).
 10. [2026-06-26 — M4.5 clarity + raw/refined split (gate)](#2026-06-26--m45-clarity--rawrefined-split-gate)
 11. [2026-06-27 — Build-cost legibility + M5 demand & scarcity](#2026-06-27--build-cost-legibility--m5-demand--scarcity)
 12. [2026-06-27 — M6 phase-1: a living, trading multi-nation economy](#2026-06-27--m6-phase-1-a-living-trading-multi-nation-economy)
+13. [2026-06-27 — Realistic blended ground + sand beaches & deserts (art overhaul, Option A)](#2026-06-27--realistic-blended-ground--sand-beaches--deserts)
 
 ---
 
@@ -543,3 +544,70 @@ buildings present.
 **Next (M6 phase-2+):** edge capacity + connector roads (geography becomes decisive), then tariffs/tolls,
 chokepoints/blockades, diplomacy; AI workshops/strategy; the manual-vs-auto selling decision; per-province
 stockpiles.
+
+---
+
+## 2026-06-27 — Realistic blended ground + sand beaches & deserts
+
+An art/rendering overhaul (not an economy rung): swap the Tiny Swords pixel-tile *ground look* for a
+continuous, realistic blended ground (grass + sand) rendered by a shader, and add **sand beaches +
+deserts** driven by noise. Assets (seamless grass/sand textures + the "merge" blend shader) came from the
+sibling `tile-tester` prototype. Chosen approach was **Option A** (full ground render replacement) over a
+plain-tile swap, after weighing it with the user.
+
+**Mental model — split the two things the tilemap was doing.** `0zTileMapLayer` was both the *data grid*
+(which cell is water/grass/sand, provinces, capitals, clicks, save/load) and the *look* (64×64 stamps).
+Option A keeps the data grid untouched and moves the ground *look* to one full-map shader sprite:
+- **Data grid stays** on `0zTileMapLayer`: still placed by noise, still read by Voronoi/economy/clicks.
+  Its water/grass/sand graphics for land are now **transparent** (single 0:0 tile on `transparent64.png`),
+  so the shader ground shows through. Water keeps its existing teal tile (already matches), capitals/roads
+  /borders keep drawing on top.
+- **Look** = new `GroundRenderer` (full-map `Sprite2D`, `ZIndex -100`) + `Shaders/terrain_ground.gdshader`,
+  fed a tiny **terrain-mask** `ImageTexture` (one texel per cell: R = sandiness, G = water — built in
+  `Initialize` the same way `VoronoiDiagram.CreateProvinceMap()` builds its 256×128 image). The shader
+  samples the seamless textures in **world space** (no per-cell repeating grid), `smoothstep`-blends
+  grass↔sand (soft beaches/deserts), and draws flat water (crisp shore; soft ocean blend deferred until
+  water gets a real texture). Mask texel centers align with tile centers (shared `(x+0.5)` convention).
+
+**Sand logic** (pure, unit-tested in `Systems/Core/Map/TerrainRules.cs` + `TerrainType.cs`):
+- **Beaches** = thin low-coast height band `0.1 < h < 0.135` → gentle low coasts go sandy, steep coasts
+  stay grass (natural variety, not a uniform ring; coastal by construction).
+- **Deserts** = a second low-amplitude **moisture** `FastNoiseLite` (seed `worldSeed + 7919`, freq `0.03`):
+  dry inland (`moisture < -0.20`) → desert sand. Tuned empirically — a very low frequency made deserts
+  feast-or-famine (3%→27% by seed); freq `0.03` + threshold `-0.20` gives a reliable **~11–19% of inland**
+  every seed. Deterministic from the one world seed, so save/load reproduces.
+
+**Highlight rework (required by the reveal).** Province click-highlight used to *swap* ground tiles to
+glowing-grass and restore them to grass — which both assumed stamps and would have corrupted sand cells on
+restore. Now `MapManager` draws a translucent tint on an **overlay layer** (the previously-unused
+`BordersLayer`, child of `0zTileMapLayer`, using a new `Highlight` source in `BorderHighlight.tres` →
+`highlight_overlay.png`) and `Clear()`s it on the next click — the ground data grid is never touched.
+Dropped the `previousTiles` tracking and the `Bitmask.OrientCells()` call (grass is a single transparent
+tile now; the shader does edges).
+
+**Files.** New: `Systems/Core/Map/TerrainType.cs`, `TerrainRules.cs`; `Systems/Rendering/GroundRenderer.cs`
++ ported `GroundBlend.cs`; `Shaders/terrain_ground.gdshader` + ported `Shaders/ground_blend.gdshader`;
+`Scenes/GroundBlendTest.tscn` (standalone preview of the raw blend shader); `Images/grassSeamless.png`,
+`sandSeamless.png`, `transparent64.png`, `highlight_overlay.png`; `Tests/TerrainRulesTests.cs`. Changed:
+`Initialize.cs` (classify + place sand + build mask), `Main.cs` (moisture noise, spawn `GroundRenderer`,
+drop `OrientCells`), `Bitmask.cs` (skip sand), `MapManager.cs` (overlay highlight), `tilesets/tilesetTest.tres`
+(grass/sand → transparent single tiles), `tilesets/BorderHighlight.tres` (+highlight source).
+
+**Texture note.** Confirmed via an edge-wrap metric that `grass.png` was *not* seamless (~2.6× edge seam)
+while `grassSeamless.png` (1.1×) and the user's new `sandSeamless.png` (1.07/0.93) tile cleanly — those two
+are what ship. See `tile-tester/TEXTURE_NOTES.md` (copied to `ReviewDocs/Documentation/`).
+
+**Verified:** `dotnet build` 0/0; `dotnet test` **88 passed** (77 + 11 new `TerrainRules`); headless smoke —
+no exceptions, terrain-count log prints (`Terrain: water=… grass=… sand=… (beach=… desert=…)`), economy
+heartbeat still ticks. Shader parses without error on load.
+
+**Pending (windowed, user's display — computer-use disabled for this project):** confirm the realistic grass
++ soft sandy beaches on gentle coasts + inland deserts (no repeating grid); water flat teal with a clean
+shore; capitals/borders/roads render above the ground; click a province → yellow tint highlight + inspect
+still work; open `Scenes/GroundBlendTest.tscn` to compare the raw blend look; same seed (save/load) →
+identical map. Tunables to taste: shader `ground_px` (pattern scale) + `softness`; `TerrainRules.BeachLine`
+/`DryThreshold`; moisture `Frequency` in `Main`.
+
+**Later:** real water texture/animated shader + soft shoreline (the deferred sand↔ocean blend); highlight
+that respects sand vs grass; retire the now-unused Tiny Swords ground assets + `TerrainTiles.Highlight`
+source.

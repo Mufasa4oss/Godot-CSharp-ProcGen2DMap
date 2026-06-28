@@ -17,7 +17,7 @@ public class EconomyDepositTests
     }
 
     [Fact]
-    public void Provinces_invert_tiles_under_their_capital()
+    public void Nations_invert_tiles_under_their_capital()
     {
         var land = SquareLand(10, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, 42);

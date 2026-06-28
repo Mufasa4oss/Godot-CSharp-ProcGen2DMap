@@ -665,3 +665,62 @@ turn red / goods stop; F5 → open `savegame.dat` (only `SEED` readable) → F9 
 
 **L1 status: M0–M8 all code-complete.** Remaining is windowed balance/feel tuning and the optional manual
 obfuscation pass at ship.
+
+---
+
+## Logistics Rework (player-built network + physical goods)
+
+Arc that supersedes L1's M6 + the trade parts of M7. Plan: `ReviewDocs/M-Doc/Logistics-Rework-Roadmap.md`.
+
+### LR0 — Prep / cleanup (2026-06-28)
+Pure terminology + hotkey debt paydown, **no behavior change**, so later milestone diffs stay clean.
+- **`province` → `nation` everywhere in code/scene/shader.** `VoronoiDiagram.provincesDictionary` →
+  `nationsDictionary`, `CreateProvinceMap` → `CreateNationMap`, `coloredProMap` → `coloredNationMap`;
+  `Main.numProvinces` / `MapManager.numProvinces` → `numNations` (+ the `numNations` export in `main.tscn`);
+  `GameData.NumProvinces` → `NumNations` (**save JSON key changes — old saves won't restore the nation count**);
+  `Controls.ToggleProvinces`/`ProvincesToggleRequested` → `ToggleNations`/`NationsToggleRequested`;
+  `GameContext.provinceTexture` → `nationTexture`; the `tr.gdshader` `province_map` uniform → `nation_map`.
+- **Script + node rename.** `ColoredProvincesSprite.cs` (+ `.uid`) → `ColoredNationsSprite.cs`; the `Provinces`
+  `Sprite2D` node in `main.tscn` → `Nations` (+ `MapManager`'s `GetNode("../Nations")`). The `.uid` value was
+  preserved and the `.tscn` `path=` updated; a one-off `godot --headless --import` refreshed the binary
+  `.godot/uid_cache.bin` (which still pointed at the old path after the out-of-editor rename).
+- **Diplomacy hotkey rebound `B` → `N`** in `MapManager._UnhandledInput` (gets a real UI in LR4).
+- A case-insensitive grep for `province` over `*.{cs,tscn,gdshader,godot,uid}` now finds **nothing**
+  (docs/history keep the word intentionally).
+
+**Verified:** `dotnet build` 0/0; `dotnet test` **99 passed**; headless smoke clean — `ColoredNationsSprite
+ready`, `Economy: 10 nations`, tiles check OK, 300 deposits, heartbeat ticks 1–5 accumulating grain/ore, no
+load errors (only the benign `--quit-after` `CanvasItem`/`ObjectDB` leak warnings).
+
+**Pending (windowed, user's display):** game looks/plays identically; **Q** still toggles the nation-color
+overlay; diplomacy now cycles on **N** (click a foreign nation → press **N**).
+
+### LR1 — Player roads + connectivity (replace the MST) (2026-06-28)
+The player now builds the trade network by hand; trade flows only along it. The auto-MST backbone is gone.
+- **MST removed.** Deleted `Main.BuildMst` + the nested `MstBuilder`, `DrawMSTLines`, and `GetTilesAlongLine`
+  (the L-path tracer), plus the `mst` field and the `SetTradeGraph(mst, …)` wiring. `PrimsAlgorithmSimple`
+  stays in Core (still unit-tested by `MstTests`) but nothing in the game flow calls it. A new game now starts
+  with **no roads and no inter-nation trade** until the player lays track.
+- **New Core `RoadGraph`** (`Systems/Core/Logistics/RoadGraph.cs`, pure/engine-free like `VoronoiAssignment`):
+  4-neighbour BFS over the player's road tiles. `AreConnected(a,b)` / `ShortestPathLength(a,b)` treat a capital
+  as on-network if a road sits on or beside it; diagonal-only touches don't connect. Distance = road path
+  length (longer haul ⇒ dearer transport). Covered by 7 new tests in `Tests/RoadGraphTests.cs` (connected,
+  no-road, severed-middle, diagonal, shortest path, detour-ignored, unreachable).
+- **Trade re-gated on real roads.** New `Economy.RebuildRoadRoutes()` rebuilds `_tradeRoutes` from `RoadGraph`
+  connectivity over the (persisted) `Railroads` set — a route exists between two capitals iff a contiguous road
+  path links them. `RunTrade`/`SetTradeGraph`/`_tradeRoutes` are otherwise **unchanged** (the abstract trade is
+  kept transitionally; `SetTradeGraph` stays for the economy tests). Called after worldgen, after a load
+  restore, and on every road change.
+- **Road building promoted.** `MapManager`: left-**drag** lays a continuous road (not just one tile per click),
+  **right-click cuts** a tile (new `Economy.RemoveRailroad`), each rebuilding the routes so a finished link
+  starts trading and a severed one stops. Roads made **cheap** (`RailroadCost` 10 → 2) since the player now
+  lays the whole network. On load, `Main.DrawPlayerRoads` repaints the saved track (replacing `DrawMSTLines`).
+
+**Verified:** `dotnet build` 0/0; `dotnet test` **106 passed** (99 + 7 new); headless smoke clean —
+`ColoredNationsSprite ready`, `Economy: 10 nations / 9195 land tiles (OK)`, 300 deposits, heartbeat ticks 1–5
+accumulating grain/ore with **no trade and no MST** (correct: no roads laid headlessly), no exceptions (only the
+benign `--quit-after` leak warnings).
+
+**Pending (windowed, user's display — the interactive half of the alive check):** enter Build-Road mode and
+drag a road between two capitals → trade begins on it; **right-click** a tile mid-link → trade stops / the
+region isolates; confirm no auto-backbone appears on a fresh map.

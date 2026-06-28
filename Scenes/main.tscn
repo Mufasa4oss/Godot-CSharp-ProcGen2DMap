@@ -4,7 +4,7 @@
 [ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesets/tilesetTest.tres" id="2_kry3j"]
 [ext_resource type="Script" uid="uid://o6vvujhl4c1e" path="res://Systems/Cameras/Camera.cs" id="3_21xkr"]
 [ext_resource type="TileSet" uid="uid://dx55c1nn6ogax" path="res://tilesets/BorderHighlight.tres" id="3_kry3j"]
-[ext_resource type="Script" uid="uid://clehyfud31ory" path="res://Systems/Map/ColoredProvincesSprite.cs" id="4_6bp64"]
+[ext_resource type="Script" uid="uid://clehyfud31ory" path="res://Systems/Map/ColoredNationsSprite.cs" id="4_6bp64"]
 [ext_resource type="TileSet" uid="uid://0cior3rfmbg7" path="res://tilesets/road.tres" id="4_344ge"]
 [ext_resource type="Script" uid="uid://dw5qrglxk2coj" path="res://UI/UIManager.cs" id="6_21xkr"]
 [ext_resource type="Texture2D" uid="uid://hiqqvhkimd63" path="res://Images/Blender & Krita Assets/Rails/RailsHoriz.png" id="7_6bp64"]
@@ -33,7 +33,7 @@ corner_detail = 5
 [node name="Main" type="Node2D" unique_id=401272265]
 script = ExtResource("1_jjvhh")
 Nht = SubResource("NoiseTexture2D_h2yge")
-numProvinces = 10
+numNations = 10
 
 [node name="0zTileMapLayer" type="TileMapLayer" parent="." unique_id=643109037]
 tile_set = ExtResource("2_kry3j")
@@ -53,7 +53,7 @@ position_smoothing_enabled = true
 script = ExtResource("3_21xkr")
 ZoomLimits = Vector2(-100, 100)
 
-[node name="Provinces" type="Sprite2D" parent="." unique_id=394796974]
+[node name="Nations" type="Sprite2D" parent="." unique_id=394796974]
 visible = false
 script = ExtResource("4_6bp64")
 

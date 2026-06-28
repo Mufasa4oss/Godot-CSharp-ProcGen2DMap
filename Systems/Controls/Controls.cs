@@ -12,7 +12,7 @@ public partial class Controls : Node
     // --- action names (must match project.godot [input]) ---
     public const string Save = "f5";
     public const string Load = "f9";
-    public const string ToggleProvinces = "QPressed";
+    public const string ToggleNations = "QPressed";
     public const string MapClick = "LeftClick";
     public const string ZoomIn = "ZoomIn";
     public const string ZoomOut = "ZoomOut";
@@ -24,7 +24,7 @@ public partial class Controls : Node
     // --- discrete intent signals ---
     [Signal] public delegate void SaveRequestedEventHandler();
     [Signal] public delegate void LoadRequestedEventHandler();
-    [Signal] public delegate void ProvincesToggleRequestedEventHandler();
+    [Signal] public delegate void NationsToggleRequestedEventHandler();
     [Signal] public delegate void MapClickRequestedEventHandler();
 
     public override void _UnhandledInput(InputEvent @event)
@@ -32,7 +32,7 @@ public partial class Controls : Node
         // _UnhandledInput (not _Input) so the UI still consumes clicks first.
         if (Input.IsActionJustPressed(Save)) EmitSignal(SignalName.SaveRequested);
         if (Input.IsActionJustPressed(Load)) EmitSignal(SignalName.LoadRequested);
-        if (Input.IsActionJustPressed(ToggleProvinces)) EmitSignal(SignalName.ProvincesToggleRequested);
+        if (Input.IsActionJustPressed(ToggleNations)) EmitSignal(SignalName.NationsToggleRequested);
         if (Input.IsActionJustPressed(MapClick)) EmitSignal(SignalName.MapClickRequested);
     }
 }

@@ -6,7 +6,7 @@ public partial class Main : Node2D
 {
 	// --- Godot exports & scene node refs ---
 	[Export] NoiseTexture2D Nht;
-	[Export] int numProvinces = 1;
+	[Export] int numNations = 1;
 	Noise noise;
 	TileMapLayer tml;
 	UIManager control;
@@ -16,7 +16,6 @@ public partial class Main : Node2D
 
 	// --- Game state ---
 	GameContext gameContext;
-	List<PrimsAlgorithmSimple.Edge> mst;
 	Controls controls; // input hub
 	WorkshopSprites workshopSprites; // animated sprites for player-built workshops
 	GainFeedback gainFeedback; // fading "+N" flashes over producing buildings (M4.5 sub-rung 4)
@@ -44,14 +43,15 @@ public partial class Main : Node2D
 		controls.LoadRequested += OnLoadRequested;
 
 		// New game = fresh random seed. Loaded game = re-run worldgen from the saved seed so the whole
-		// world (terrain, provinces, deposits, MST railroads) regenerates identically.
+		// world (terrain, nations, deposits) regenerates identically; the player's paid-for roads are
+		// restored from the save (ApplySavedState), not seed-derived.
 		GameData loaded = PendingLoad;
 		PendingLoad = null;
 		if (loaded != null)
 		{
 			MapSizeX = loaded.Width;
 			MapSizeY = loaded.Height;
-			numProvinces = loaded.NumProvinces;
+			numNations = loaded.NumNations;
 			worldSeed = loaded.Seed;
 			noiseTexture.Set("frequency", loaded.Frequency); // reload reset the SubResource to scene defaults
 		}
@@ -96,19 +96,13 @@ public partial class Main : Node2D
 		};
 
 		PopupSceneLoad();
-		mst = BuildMst();
 
-		// M6: hand the economy the trade backbone (the MST over capitals) so goods auto-arbitrage between
-		// connected nations. Rebuilt deterministically from the seed, so this runs for new and loaded games.
-		// M6 phase 2: also hand in each route's corridor (the L-path tiles between its two capitals) so player
-		// railroad tiles laid along a route raise its trade capacity (a "connector road").
-		var tradeCapitals = gameContext.voronoiDiagram.GetCapitals();
-		var routeCorridors = new List<HashSet<Vector2I>>();
-		foreach (var edge in mst)
-			routeCorridors.Add(new HashSet<Vector2I>(GetTilesAlongLine(tradeCapitals[edge.From], tradeCapitals[edge.To])));
-		gameContext.economy.SetTradeGraph(mst, tradeCapitals, routeCorridors);
-
-		DrawMSTLines();
+		// LR1: no auto-MST backbone anymore. The trade network IS whatever roads the player has laid — build
+		// the routes from real road connectivity (RoadGraph BFS over the economy's road tiles), recomputed on
+		// every road change in MapManager. A new game starts with no roads (so no inter-nation trade) until the
+		// player builds one; a loaded game restored its paid-for roads above, so this picks them straight up.
+		gameContext.economy.RebuildRoadRoutes();
+		DrawPlayerRoads();
 
 		TradeNetworkVisualizer tradeVisualizer = new TradeNetworkVisualizer();
 		AddChild(tradeVisualizer);
@@ -156,10 +150,10 @@ public partial class Main : Node2D
 		// OrientCells() (it would also fail now that Grass is a single-tile source).
 		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
 
-		VoronoiDiagram vD = new VoronoiDiagram(MapSizeX, MapSizeY, numProvinces, mapCoordsLand, tml, worldSeed);
+		VoronoiDiagram vD = new VoronoiDiagram(MapSizeX, MapSizeY, numNations, mapCoordsLand, tml, worldSeed);
 
 		//CHANGES 23-Jun-26 tiles// build economy with the single worldSeed; add land cross-check + deposits summary
-		Economy economy = new Economy(vD.provincesDictionary, vD.GetCapitals(), worldSeed);
+		Economy economy = new Economy(vD.nationsDictionary, vD.GetCapitals(), worldSeed);
 
 		int sumNationTiles = 0;
 		foreach (var nation in economy.Nations.Values) sumNationTiles += nation.Tiles.Count;
@@ -187,15 +181,15 @@ public partial class Main : Node2D
 		AddChild(gainFeedback);
 		gainFeedback.SetContext(tml);
 
-		MapManager mapManager = new MapManager(vD, tml, Nht, numProvinces, tickManager, economy, controls, workshopSprites, gainFeedback);
+		MapManager mapManager = new MapManager(vD, tml, Nht, numNations, tickManager, economy, controls, workshopSprites, gainFeedback);
 		AddChild(mapManager);
 		//END CHANGES 23-Jun-26 tiles//
 
-		var provinceTexture = vD.coloredProMap;
-		MapTextureCreated?.Invoke(provinceTexture);
+		var nationTexture = vD.coloredNationMap;
+		MapTextureCreated?.Invoke(nationTexture);
 
 		//CHANGES 23-Jun-26// GameContext now carries economy instead of resourceManager + tilesResources
-		return new GameContext(bitmaskObj, vD, economy, tickManager, mapManager, provinceTexture, noise, MapSizeX, MapSizeY, tml);
+		return new GameContext(bitmaskObj, vD, economy, tickManager, mapManager, nationTexture, noise, MapSizeX, MapSizeY, tml);
 		//END CHANGES 23-Jun-26//
 	}
 
@@ -214,36 +208,6 @@ public partial class Main : Node2D
 			((ResourcePopup)popupScene).StartFadeOut();
 			timer.QueueFree();
 		};
-	}
-
-	public List<PrimsAlgorithmSimple.Edge> BuildMst()
-	{
-		return new MstBuilder(gameContext).Build();
-	}
-
-	// Builds a fully-connected graph of capitals weighted by straight-line distance, then returns
-	// its minimum spanning tree (the backbone the railroads are drawn along).
-	public class MstBuilder
-	{
-		int capitalCount;
-		List<Vector2I> capitals;
-
-		public MstBuilder(GameContext gc)
-		{
-			capitals     = gc.voronoiDiagram.GetCapitals();
-			capitalCount = capitals.Count;
-		}
-
-		public List<PrimsAlgorithmSimple.Edge> Build()
-		{
-			PrimsAlgorithmSimple prim = new PrimsAlgorithmSimple(capitalCount);
-
-			for (int i = 0; i < capitalCount; i++)
-				for (int j = i + 1; j < capitalCount; j++)
-					prim.AddEdge(i, j, (capitals[i] - capitals[j]).Length());
-
-			return prim.FindMST();
-		}
 	}
 
 	public override void _Process(double delta)
@@ -269,53 +233,21 @@ public partial class Main : Node2D
 		}
 	}
 
-	private void DrawMSTLines()
+	// LR1: draw the player's paid-for road tiles onto the railroad layer (none on a new game; a loaded game
+	// restored them before this runs). Replaces DrawMSTLines now that there's no deterministic MST backbone to
+	// paint — the only track on the map is what the player bought.
+	private void DrawPlayerRoads()
 	{
-		var capitals   = gameContext.voronoiDiagram.GetCapitals();
-		var capitalSet = new HashSet<Vector2I>(capitals);
+		var roadTiles = new HashSet<Vector2I>(gameContext.economy.Railroads);
+		if (roadTiles.Count == 0) return;
+
 		TileMapLayer railroadLayer = tml.GetNode<TileMapLayer>("RailroadLayer");
-		HashSet<Vector2I> railroadTiles = new HashSet<Vector2I>();
-
-		foreach (var edge in mst)
-			foreach (Vector2I tile in GetTilesAlongLine(capitals[edge.From], capitals[edge.To]))
-				if (!capitalSet.Contains(tile))
-					railroadTiles.Add(tile);
-
-		foreach (Vector2I tile in railroadTiles)
+		foreach (Vector2I tile in roadTiles)
 			railroadLayer.SetCell(tile, RailroadTiles.Rails, Vector2I.Zero);
 
-		new RailroadBitmask().OrientRailroadCells(railroadLayer, railroadTiles, capitalSet, tml);
-
-		// Re-draw the player's paid-for railroads (a loaded game; none on a new game). Plain cells, matching
-		// the live placement in MapManager — these aren't part of the deterministic MST backbone.
-		foreach (Vector2I tile in gameContext.economy.Railroads)
-			railroadLayer.SetCell(tile, RailroadTiles.Rails, Vector2I.Zero);
-	}
-
-	private List<Vector2I> GetTilesAlongLine(Vector2I from, Vector2I to)
-	{
-		// Railroad-style L-path: one straight run along the major axis, a single
-		// 90° corner, then a straight run along the minor axis. This avoids the
-		// per-tile zig-zag a diagonal Bresenham walk produces, so track reads as
-		// long straight lines like real rail instead of stair-stepped corners.
-		var tiles = new List<Vector2I>();
-		int x = from.X, y = from.Y;
-		int sx = to.X >= from.X ? 1 : -1;
-		int sy = to.Y >= from.Y ? 1 : -1;
-		bool horizontalFirst = Math.Abs(to.X - from.X) >= Math.Abs(to.Y - from.Y);
-
-		if (horizontalFirst)
-		{
-			while (x != to.X) { tiles.Add(new Vector2I(x, y)); x += sx; }
-			while (y != to.Y) { tiles.Add(new Vector2I(x, y)); y += sy; }
-		}
-		else
-		{
-			while (y != to.Y) { tiles.Add(new Vector2I(x, y)); y += sy; }
-			while (x != to.X) { tiles.Add(new Vector2I(x, y)); x += sx; }
-		}
-
-		tiles.Add(new Vector2I(x, y)); // destination
-		return tiles;
+		// Orient them into connected rail sprites (straights/corners/junctions), skipping capital tiles the
+		// same way the old backbone draw did.
+		var capitalSet = new HashSet<Vector2I>(gameContext.voronoiDiagram.GetCapitals());
+		new RailroadBitmask().OrientRailroadCells(railroadLayer, roadTiles, capitalSet, tml);
 	}
 }

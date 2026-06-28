@@ -5,7 +5,7 @@ using Godot;
 
 // Owns the economy graph. Nations are the thin ownership/government nodes; the real economic entities
 // (deposits, buildings) live on tiles in TileDeposits / TileBuildings. Everything is built once from the
-// Voronoi province map + the single world seed. Production + player building plug into OnTick / the
+// Voronoi nation map + the single world seed. Production + player building plug into OnTick / the
 // build methods.
 public class Economy
 {
@@ -72,7 +72,9 @@ public class Economy
     private const float StartingTreasury = Building.ExtractorCost;
     // M4.5: laying one railroad tile costs treasury too, so track is a real economic spend (placeholder).
     // Public so the HUD can label the Build-Railroad button and the spend flash can read the price.
-    public const float RailroadCost = 10f;
+    // LR1: cheap, because the player now has to lay the WHOLE network by hand (no free MST backbone) — a
+    // road should be an easy, frequent click, not a hard purchase. Tuned for real in LR5.
+    public const float RailroadCost = 2f;
 
     // M5 demand-sink tunables (M7-placeholders). The player's pops eat GrainPerPopPerTick each tick; demand
     // (= Population * rate = 0.5 grain/tick) is sized to roughly one farm's throttled output (1 unit every
@@ -164,10 +166,10 @@ public class Economy
 
     private long tickCount = 0;
 
-    public Economy(Dictionary<Vector2I, Vector2I> provincesDictionary, List<Vector2I> capitals, int worldSeed)
+    public Economy(Dictionary<Vector2I, Vector2I> nationsDictionary, List<Vector2I> capitals, int worldSeed)
     {
         // 1. Thin nations: invert tile -> capital into capital -> tiles.
-        foreach (var kvp in provincesDictionary)
+        foreach (var kvp in nationsDictionary)
         {
             Vector2I tile = kvp.Key;
             Vector2I capital = kvp.Value;
@@ -192,7 +194,7 @@ public class Economy
             }
 
         // 2. Tile-bound deposits, deterministic from a sub-seed derived from the one world seed.
-        PlaceDeposits(provincesDictionary, worldSeed);
+        PlaceDeposits(nationsDictionary, worldSeed);
     }
 
     private void PlaceDeposits(Dictionary<Vector2I, Vector2I> land, int worldSeed)
@@ -281,6 +283,11 @@ public class Economy
         Railroads.Add(tile);
         return true;
     }
+
+    // LR1: remove one of the player's road tiles — the "cut a road" lever. No refund (track is cheap, and
+    // undoing a misclick shouldn't pay out). False if there was no road there. Callers rebuild the road
+    // routes afterwards so a severed link stops carrying trade.
+    public bool RemoveRailroad(Vector2I tile) => Railroads.Remove(tile);
 
     // M4.5 sub-rung 2: player builds the matching extractor on a deposit tile — Mine on Ore, Farm on
     // Grain. Raw goods are build-gated: no extractor on the deposit → no output. The type is auto-picked
@@ -519,6 +526,27 @@ public class Economy
                 _tradeRoutes.Add(new TradeRoute(a, b, (float)edge.Weight, corridor));
             }
         }
+    }
+
+    // LR1: rebuild the trade backbone from the player's ROAD network instead of the old MST. Two capitals get
+    // a trade route exactly when a contiguous path of road tiles connects them (RoadGraph BFS), and the
+    // route's Distance is that path's length so a longer haul costs more transport. This replaces the auto-MST
+    // entirely: a fresh game has no roads and therefore no inter-nation trade until the player lays one, and
+    // pulling a tile out of a link drops the route (the "cut a road" alive check). Call after any road change
+    // (build / remove / load) and once after worldgen. Deterministic — capitals sorted — so saves/replays
+    // match. RunTrade still consumes _tradeRoutes unchanged; only their *source* moved from MST to roads.
+    public void RebuildRoadRoutes()
+    {
+        _tradeRoutes.Clear();
+        var graph = new RoadGraph(Railroads);
+        var capitals = Nations.Keys.OrderBy(c => c.X).ThenBy(c => c.Y).ToList();
+        for (int i = 0; i < capitals.Count; i++)
+            for (int j = i + 1; j < capitals.Count; j++)
+            {
+                int distance = graph.ShortestPathLength(capitals[i], capitals[j]);
+                if (distance < 0) continue; // not road-connected ⇒ no route ⇒ no trade between them
+                _tradeRoutes.Add(new TradeRoute(Nations[capitals[i]], Nations[capitals[j]], distance, null));
+            }
     }
 
     // M6 phase 2/3: find the route linking two capitals (undirected), or null.

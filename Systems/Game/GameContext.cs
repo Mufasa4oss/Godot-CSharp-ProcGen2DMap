@@ -11,7 +11,7 @@ public class GameContext
 	//END CHANGES 23-Jun-26//
 	public TickManager tickManager { get; }
 	public MapManager mapManager { get; }
-	public Texture2D provinceTexture { get; }
+	public Texture2D nationTexture { get; }
 	public Noise noise { get; }
 	public int mapSizeX {get;}
 	public int mapSizeY { get; }
@@ -30,7 +30,7 @@ public class GameContext
 		//END CHANGES 23-Jun-26//
 		this.tickManager = tm;
 		this.mapManager = mm;
-		this.provinceTexture = pt;
+		this.nationTexture = pt;
 		this.noise = n;
 		this.mapSizeX = msx;
 		this.mapSizeY = msy;

@@ -13,12 +13,10 @@ public partial class VoronoiDiagram
 	private int mapSizeX;
 	private int mapSizeY;
 	private int worldSeed; // one canonical seed so the same world reproduces (save/load determinism)
-	public Texture2D coloredProMap;
-	public Dictionary<Vector2I, Vector2I> provincesDictionary; //key is any coord and the value is the (coords of) closest province center
+	public Texture2D coloredNationMap;
+	public Dictionary<Vector2I, Vector2I> nationsDictionary; //key is any coord and the value is the (coords of) closest nation center (capital)
 
 
-
-	//[Export] private Polygon2D[] provincePolygons;
 
 	//private List<Vector2I> borderLines = new List<Vector2I>();
 
@@ -36,7 +34,7 @@ public partial class VoronoiDiagram
 		this.mapSizeY = mapsizey; //tiles
 		this.worldSeed = worldSeed;
 		GeneratePoints();
-		this.coloredProMap = CreateProvinceMap();
+		this.coloredNationMap = CreateNationMap();
 		
 
 	}
@@ -83,7 +81,7 @@ public partial class VoronoiDiagram
 
 
 
-	//need to make a texture2d of the provinces with unique colors
+	//need to make a texture2d of the nations with unique colors
 
 	// Mix the world seed into a distinct deterministic seed for color generation so colors are
 	// reproducible from the one seed without sharing a stream with capital placement.
@@ -94,18 +92,18 @@ public partial class VoronoiDiagram
 
 	private HashSet<Color> CreateUniqueColorSet()
 	{
-		int numProvinces = placedCords.Count;
+		int numNations = placedCords.Count;
 		Color lastColor = new Color(0, 0, 0);
-		// Derived sub-seed so province colors are deterministic but not correlated with capital placement.
+		// Derived sub-seed so nation colors are deterministic but not correlated with capital placement.
 		var random = new System.Random(DeriveColorSeed(worldSeed));
 
 		HashSet<Color> colorSet = new HashSet<Color>();
-		for (int i = 0; i < numProvinces; i++)
+		for (int i = 0; i < numNations; i++)
 		{
 			Color color;
 			do
 			{
-				float hue = ((float)i / numProvinces) + ((float)random.NextDouble() * 0.05f);
+				float hue = ((float)i / numNations) + ((float)random.NextDouble() * 0.05f);
 				hue = hue % 1.0f;
 				color = Color.FromHsv(hue, 1f, 1f, 1f);
 
@@ -115,31 +113,31 @@ public partial class VoronoiDiagram
 		}
 		return colorSet;
 	}
-	private Texture2D CreateProvinceMap()
+	private Texture2D CreateNationMap()
 	{
 		int pixelSizeX = mapSizeX;
 		int pixelSizeY = mapSizeY;
 		HashSet<Color> colorSet = CreateUniqueColorSet();
 		Image image = Image.CreateEmpty(pixelSizeX, pixelSizeY, false, Image.Format.Rgba8);
-		Dictionary<Vector2I, Vector2I> provinceMap = CreateDictionaryOfTilesCapitals();
-		provincesDictionary = provinceMap;
-		Dictionary<Vector2I, Color> provinceColors = new Dictionary<Vector2I, Color>();
+		Dictionary<Vector2I, Vector2I> nationMap = CreateDictionaryOfTilesCapitals();
+		nationsDictionary = nationMap;
+		Dictionary<Vector2I, Color> nationColors = new Dictionary<Vector2I, Color>();
 
 
 
 		for (int i = 0; i < placedCords.Count; i++)
 		{
-			provinceColors[placedCords[i]] = colorSet.ElementAt(i);
+			nationColors[placedCords[i]] = colorSet.ElementAt(i);
 		}
 
 
 		//color each pixel
-		foreach (var dictItem in provinceMap)
+		foreach (var dictItem in nationMap)
 		{
 			Vector2I tile = dictItem.Key;
 			Vector2I capital = dictItem.Value;
 
-			if (provinceColors.TryGetValue(capital, out Color pc))
+			if (nationColors.TryGetValue(capital, out Color pc))
 			{
 				image.SetPixel(tile.X, tile.Y, pc);
 			}

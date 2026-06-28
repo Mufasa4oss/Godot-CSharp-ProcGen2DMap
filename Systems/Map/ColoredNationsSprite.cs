@@ -1,14 +1,14 @@
 using Godot;
 using System;
 
-public partial class ColoredProvincesSprite : Sprite2D
+public partial class ColoredNationsSprite : Sprite2D
 {
 	//private bool isInitialized = false;
-	Sprite2D provinceSprite;
+	Sprite2D nationSprite;
 	//Camera2D camera;
-	//public static event Action ProvincesSceneInitalized;
+	//public static event Action NationsSceneInitalized;
 
-	public void InitializeProvinces(Texture2D texture)
+	public void InitializeNations(Texture2D texture)
 	{
 		Texture = texture;
 
@@ -20,20 +20,20 @@ public partial class ColoredProvincesSprite : Sprite2D
 		Scale = targetSize / textureSize; // Scale to fit the map
 		Position = targetSize / 2; // Center it
 								   //camera = GetNode<Camera2D>("/root/Main/Camera2D");
-								   //shader stuff really no idea how it works. But this makes thick black provincial borders
+								   //shader stuff really no idea how it works. But this makes thick black national borders
 		ShaderMaterial shade = new ShaderMaterial();
 		shade.Shader = ResourceLoader.Load<Shader>("res://Shaders/tr.gdshader");
 		Material = shade;
-		shade.SetShaderParameter("province_map", Texture);
+		shade.SetShaderParameter("nation_map", Texture);
 		shade.SetShaderParameter("screen_texture_size", new Vector2(Main.MapSizeX, Main.MapSizeY));
 		Main.MapTextureCreated -= MainEventMethod;
-		//ProvincesSceneInitalized?.Invoke();
+		//NationsSceneInitalized?.Invoke();
 	}
 	//configuration
 	public override void _Ready()
 	{
-		GD.Print("ColoredProvincesSprite ready");
-		
+		GD.Print("ColoredNationsSprite ready");
+
 		Main.MapTextureCreated += MainEventMethod;
 	}
 
@@ -42,6 +42,6 @@ public partial class ColoredProvincesSprite : Sprite2D
 	{
 		//GD.Print("Event triggered");
 		//isInitialized = true;
-		InitializeProvinces(t);
+		InitializeNations(t);
 	}
 }

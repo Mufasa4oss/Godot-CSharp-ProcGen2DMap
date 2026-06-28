@@ -20,7 +20,7 @@ public class GameData
 	public int Seed { get; set; }
 	public float Frequency { get; set; }
 	public string NoiseType { get; set; } = "Perlin";
-	public int NumProvinces { get; set; }
+	public int NumNations { get; set; }
 	// Capitals are NOT stored: they regenerate deterministically from Seed. Persisting derived state
 	// would risk a saved-vs-regenerated drift bug.
 
@@ -36,7 +36,7 @@ public class GameData
 	public List<Vector2I> Railroads { get; set; } = new();
 
 	public GameData() { } //Required only for deserialization (Serialization.Load). DO NOT USE OTHERWISE.
-	public GameData(string name, long tick, float tickInterval, float tickTimer, int x, int y, int seed, float frequency, int numProvinces,
+	public GameData(string name, long tick, float tickInterval, float tickTimer, int x, int y, int seed, float frequency, int numNations,
 		String NoiseType)
 	{
 		this.Name = name;
@@ -48,6 +48,6 @@ public class GameData
 		this.Seed = seed;
 		this.Frequency = frequency;
 		this.NoiseType = NoiseType;
-		this.NumProvinces = numProvinces;
+		this.NumNations = numNations;
 	}
 }

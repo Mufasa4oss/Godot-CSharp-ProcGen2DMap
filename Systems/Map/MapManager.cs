@@ -6,28 +6,28 @@ public partial class MapManager : TileMapLayer
 {
 	private VoronoiDiagram vD;
 	private TileMapLayer tml;
-	private Sprite2D provinces;
-	private TileMapLayer _highlightLayer;   // overlay layer for the selected-province tint (never the ground data)
+	private Sprite2D nations;
+	private TileMapLayer _highlightLayer;   // overlay layer for the selected-nation tint (never the ground data)
 	private const int HighlightSource = 2;  // BorderHighlight.tres source 2 = translucent highlight tile
 	private TickManager tickManager;
-	private int numProvinces;
+	private int numNations;
 	private NoiseTexture2D noiseTexture;
 	private UIManager _uiManager;
 	private TileMapLayer _railroadLayer;
 	//CHANGES 23-Jun-26// economy ref for click-inspect
 	private Economy _economy;
 	//END CHANGES 23-Jun-26//
-	private Controls _controls; // input hub: map-click + provinces-toggle signals
+	private Controls _controls; // input hub: map-click + nations-toggle signals
 	private WorkshopSprites _workshopSprites; // spawns a sprite when the player builds a workshop
 	private GainFeedback _gainFeedback; // flashes a fading "-cost" over a tile when a build is paid for
-	private Vector2I? _lastClickedCapital; // M7: last-inspected nation, target of the diplomacy hotkey (B)
+	private Vector2I? _lastClickedCapital; // M7: last-inspected nation, target of the diplomacy hotkey (N)
 
-	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numProvince, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites, GainFeedback gainFeedback)
+	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numNation, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites, GainFeedback gainFeedback)
 	{
 		this.vD = vD;
 		this.tml = tml;
 		this.tickManager = tm;
-		this.numProvinces = numProvince;
+		this.numNations = numNation;
 		this.noiseTexture = nht;
 		this._economy = economy;
 		this._controls = controls;
@@ -36,22 +36,22 @@ public partial class MapManager : TileMapLayer
 	}
 	public override void _Ready()
 	{
-		provinces = GetNode<Sprite2D>("../Provinces");
+		nations = GetNode<Sprite2D>("../Nations");
 		_uiManager = GetNode<UIManager>("../UIManager");
 		_railroadLayer = GetNode<TileMapLayer>("../0zTileMapLayer/RailroadLayer");
 		_highlightLayer = GetNode<TileMapLayer>("../0zTileMapLayer/BordersLayer");
 		// Connections drop automatically when this node frees (e.g. on load's scene reload).
 		_controls.MapClickRequested += OnMapClick;
-		_controls.ProvincesToggleRequested += OnToggleProvinces;
+		_controls.NationsToggleRequested += OnToggleNations;
 	}
 	private void Initialize()
 	{
-		//provinces = GetNode<Sprite2D>("Provinces");
-		provinces.Visible = false;
-		//Main.ProvincesSceneInitalized -= EventMethod;
+		//nations = GetNode<Sprite2D>("Nations");
+		nations.Visible = false;
+		//Main.NationsSceneInitalized -= EventMethod;
 
 	}
-	// Left-click: in railroad-build mode lay track; otherwise inspect + highlight the clicked province.
+	// Left-click: in railroad-build mode lay track; otherwise inspect + highlight the clicked nation.
 	private void OnMapClick()
 	{
 		Vector2 mousePosition = tml.GetLocalMousePosition();
@@ -89,30 +89,22 @@ public partial class MapManager : TileMapLayer
 			return;
 		}
 
-		// M4.5: laying railroad now costs treasury (TryBuildRailroad charges + dedupes), making track a
-		// real economic spend like the gathering buildings.
+		// M4.5/LR1: laying road costs treasury (TryBuildRailroad charges + dedupes), a real economic spend.
+		// A single click lays one tile here; holding the button and dragging lays a continuous run (see
+		// _UnhandledInput). Both go through TryLayRoad so they behave identically.
 		if (_uiManager.IsRailroadBuildMode)
 		{
-			if (_economy != null && _economy.TryBuildRailroad(tileCoords))
-			{
-				_railroadLayer.SetCell(tileCoords, RailroadTiles.Rails, Vector2I.Zero);
-				_gainFeedback.FlashCost(tileCoords, Economy.RailroadCost);
-				GD.Print($"Built railroad at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
-			}
-			else
-			{
-				GD.Print($"Can't build railroad at {tileCoords} (already track, or can't afford)");
-			}
+			TryLayRoad(tileCoords);
 			return;
 		}
 
-		// Clear the previous province highlight. It lives on the overlay layer, so the ground data grid
+		// Clear the previous nation highlight. It lives on the overlay layer, so the ground data grid
 		// (water/grass/sand cells) is never touched — no terrain corruption when restoring.
 		_highlightLayer.Clear();
 		Vector2I capital;
-		Dictionary<Vector2I, Vector2I> provincesDictionary = vD.provincesDictionary;
-		provincesDictionary.TryGetValue(tileCoords, out capital);
-			// M7: remember the clicked nation (if any) as the diplomacy hotkey (B) target.
+		Dictionary<Vector2I, Vector2I> nationsDictionary = vD.nationsDictionary;
+		nationsDictionary.TryGetValue(tileCoords, out capital);
+			// M7: remember the clicked nation (if any) as the diplomacy hotkey (N) target.
 			_lastClickedCapital = (_economy != null && _economy.Nations.ContainsKey(capital)) ? capital : (Vector2I?)null;
 		//CHANGES 23-Jun-26 tiles// tile-based click-inspect: deposit + building on the clicked tile, plus owner
 		if (_economy != null)
@@ -132,7 +124,7 @@ public partial class MapManager : TileMapLayer
 			}
 		}
 		//END CHANGES 23-Jun-26 tiles//
-		// Reuse the province's precomputed tile set instead of LINQ-scanning all land tiles per
+		// Reuse the nation's precomputed tile set instead of LINQ-scanning all land tiles per
 		// click (Tell-Don't-Ask: ask the Economy that owns the data).
 		HashSet<Vector2I> nationTiles =
 			_economy != null && _economy.Nations.TryGetValue(capital, out Nation clicked)
@@ -145,12 +137,28 @@ public partial class MapManager : TileMapLayer
 		}
 	}
 
-	// M7 diplomacy hotkey: press B after clicking a foreign province to cycle the player's stance toward that
-	// nation (Neutral -> Friendly -> Hostile -> ...). Hostile blockades the route; Friendly drops the import
-	// tariff. Uses a raw key so no project.godot input action is needed.
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.B }) return;
+		// LR1: ergonomic road building, active only while Build-Road mode is on so it never fights inspect/pan.
+		// Left-drag lays a continuous road (each new tile under the cursor); right-click cuts a tile.
+		if (_uiManager != null && _uiManager.IsRailroadBuildMode)
+		{
+			if (@event is InputEventMouseMotion motion && (motion.ButtonMask & MouseButtonMask.Left) != 0)
+			{
+				TryLayRoad(MouseTile());
+				return;
+			}
+			if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true })
+			{
+				RemoveRoad(MouseTile());
+				return;
+			}
+		}
+
+		// M7 diplomacy hotkey: press N after clicking a foreign nation to cycle the player's stance toward that
+		// nation (Neutral -> Friendly -> Hostile -> ...). Hostile blockades the route; Friendly drops the import
+		// tariff. Uses a raw key so no project.godot input action is needed.
+		if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.N }) return;
 		if (_economy?.PlayerNation == null || _lastClickedCapital is not Vector2I cap) return;
 		if (cap == _economy.PlayerNation.Capital) return; // no relations with yourself
 
@@ -164,8 +172,30 @@ public partial class MapManager : TileMapLayer
 		GD.Print($"Diplomacy: you are now {next} toward the nation at {cap}");
 	}
 
-	private void OnToggleProvinces()
+	// LR1: lay one road tile (from a click or a drag). Charges RailroadCost, paints the cell, and rebuilds the
+	// road routes so a freshly-completed link starts carrying trade next tick. Idempotent + cheap:
+	// TryBuildRailroad no-ops on an existing tile, so dragging back over laid road never double-charges.
+	private void TryLayRoad(Vector2I tile)
 	{
-		provinces.Visible = !provinces.Visible;
+		if (_economy == null || !_economy.TryBuildRailroad(tile)) return;
+		_railroadLayer.SetCell(tile, RailroadTiles.Rails, Vector2I.Zero);
+		_gainFeedback.FlashCost(tile, Economy.RailroadCost);
+		_economy.RebuildRoadRoutes(); // a new tile may have just connected (or extended) the network
+	}
+
+	// LR1: cut one road tile (right-click) — the "sever a road" lever. Rebuilds routes so the trade that
+	// crossed the now-broken link stops.
+	private void RemoveRoad(Vector2I tile)
+	{
+		if (_economy == null || !_economy.RemoveRailroad(tile)) return;
+		_railroadLayer.EraseCell(tile);
+		_economy.RebuildRoadRoutes();
+	}
+
+	private Vector2I MouseTile() => tml.LocalToMap(tml.ToLocal(tml.GetLocalMousePosition()));
+
+	private void OnToggleNations()
+	{
+		nations.Visible = !nations.Visible;
 	}
 }

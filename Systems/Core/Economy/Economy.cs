@@ -568,6 +568,7 @@ public class Economy
             route.FlowLastTick = 0f;
             // M6 phase 2: the route's per-tick throughput (backbone + player connector rails; 0 if blocked).
             float capacity = route.CapacityWith(Railroads, BaseRouteCapacity, CapacityPerRail);
+            route.CapacityLastTick = capacity; // surfaced for the view's congestion coloring
             if (capacity < TradeUnit) continue; // cut, or below one unit of throughput
 
             Nation a = route.A, b = route.B;

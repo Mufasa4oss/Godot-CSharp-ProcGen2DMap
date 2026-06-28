@@ -20,8 +20,10 @@ public class TradeRoute
     // A hard cut: a blocked route moves nothing (M6 phase-2 "cut a road"; driven by hostility in phase 3).
     public bool Blocked { get; set; }
 
-    // Units that actually crossed last tick — view-only congestion signal, recomputed each trade pass.
+    // Units that actually crossed last tick + the route's capacity that tick — view-only congestion signals
+    // (flow / capacity = how saturated the road is), recomputed each trade pass.
     public float FlowLastTick { get; set; }
+    public float CapacityLastTick { get; set; }
 
     public TradeRoute(Nation a, Nation b, float distance, HashSet<Vector2I> corridor)
     {

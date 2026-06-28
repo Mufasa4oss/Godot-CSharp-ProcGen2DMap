@@ -112,7 +112,10 @@ public partial class Main : Node2D
 
 		TradeNetworkVisualizer tradeVisualizer = new TradeNetworkVisualizer();
 		AddChild(tradeVisualizer);
-		tradeVisualizer.Initialize(mst, gameContext.voronoiDiagram.GetCapitals(), tml);
+		tradeVisualizer.Initialize(gameContext.economy, tml);
+		// M7: each tick, hand the visualizer that tick's real inter-nation trades so it animates actual flows
+		// (and recolors roads by congestion from the live TradeRoutes).
+		gameContext.tickManager.TickProcessed += () => tradeVisualizer.OnTradesProcessed(gameContext.economy.TradedThisTick);
 
 		//CHANGES 23-Jun-26 tiles// deposit dots overlay (gray=ore, neon-yellow=grain)
 		DepositOverlay depositOverlay = new DepositOverlay();

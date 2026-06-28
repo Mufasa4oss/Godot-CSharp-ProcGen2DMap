@@ -20,6 +20,7 @@ public partial class MapManager : TileMapLayer
 	private Controls _controls; // input hub: map-click + provinces-toggle signals
 	private WorkshopSprites _workshopSprites; // spawns a sprite when the player builds a workshop
 	private GainFeedback _gainFeedback; // flashes a fading "-cost" over a tile when a build is paid for
+	private Vector2I? _lastClickedCapital; // M7: last-inspected nation, target of the diplomacy hotkey (B)
 
 	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numProvince, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites, GainFeedback gainFeedback)
 	{
@@ -111,6 +112,8 @@ public partial class MapManager : TileMapLayer
 		Vector2I capital;
 		Dictionary<Vector2I, Vector2I> provincesDictionary = vD.provincesDictionary;
 		provincesDictionary.TryGetValue(tileCoords, out capital);
+			// M7: remember the clicked nation (if any) as the diplomacy hotkey (B) target.
+			_lastClickedCapital = (_economy != null && _economy.Nations.ContainsKey(capital)) ? capital : (Vector2I?)null;
 		//CHANGES 23-Jun-26 tiles// tile-based click-inspect: deposit + building on the clicked tile, plus owner
 		if (_economy != null)
 		{
@@ -140,6 +143,25 @@ public partial class MapManager : TileMapLayer
 			if (tile == capital) continue; // leave the castle untinted
 			_highlightLayer.SetCell(tile, HighlightSource, Vector2I.Zero);
 		}
+	}
+
+	// M7 diplomacy hotkey: press B after clicking a foreign province to cycle the player's stance toward that
+	// nation (Neutral -> Friendly -> Hostile -> ...). Hostile blockades the route; Friendly drops the import
+	// tariff. Uses a raw key so no project.godot input action is needed.
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.B }) return;
+		if (_economy?.PlayerNation == null || _lastClickedCapital is not Vector2I cap) return;
+		if (cap == _economy.PlayerNation.Capital) return; // no relations with yourself
+
+		DiplomaticStance next = _economy.GetRelation(_economy.PlayerNation.Capital, cap) switch
+		{
+			DiplomaticStance.Neutral  => DiplomaticStance.Friendly,
+			DiplomaticStance.Friendly => DiplomaticStance.Hostile,
+			_                         => DiplomaticStance.Neutral,
+		};
+		_economy.SetPlayerStance(cap, next);
+		GD.Print($"Diplomacy: you are now {next} toward the nation at {cap}");
 	}
 
 	private void OnToggleProvinces()

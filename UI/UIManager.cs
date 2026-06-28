@@ -146,7 +146,9 @@ public partial class UIManager : Control
 			string tag = nation.IsPlayer ? "▶ You" : $"AI {nation.Owner}";
 			label.Text = $"{tag}:  G {nation.Stockpile.GetValueOrDefault(Good.Grain):0}" +
 						 $"  O {nation.Stockpile.GetValueOrDefault(Good.Ore):0}" +
-						 $"  T {nation.Stockpile.GetValueOrDefault(Good.Tools):0}";
+						 $"  T {nation.Stockpile.GetValueOrDefault(Good.Tools):0}" +
+						 // M7: show the player's diplomatic stance toward each AI nation (Neutral/Friendly/Hostile).
+						 (nation.IsPlayer ? "" : $"  [{_economy.GetRelation(_economy.PlayerNation.Capital, nation.Capital)}]");
 		}
 	}
 

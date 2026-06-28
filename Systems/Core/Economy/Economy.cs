@@ -50,6 +50,10 @@ public class Economy
     // Read-only view of the trade backbone for the Godot layer (draw routes; color by flow/capacity).
     public IReadOnlyList<TradeRoute> TradeRoutes => _tradeRoutes;
 
+    // M6 phase 3: pairwise diplomatic stance between nations, keyed by an ordered capital pair so a<->b is one
+    // entry. Defaults to Neutral. Live political state — not serialized yet (resets to Neutral on load).
+    private readonly Dictionary<(Vector2I, Vector2I), DiplomaticStance> _relations = new();
+
     // M6: per-tick inter-nation trade events (seller capital → buyer capital, good, amount, unit price) so the
     // view can later draw real flows. Plain data (Vector2I capitals only). Recomputed each tick.
     public readonly List<(Vector2I From, Vector2I To, Good Good, float Amount, float Price)> TradedThisTick = new();
@@ -100,6 +104,11 @@ public class Economy
     // (persisted) Railroads set, so it needs no extra save state.
     private const float BaseRouteCapacity = 1f;
     private const float CapacityPerRail   = 0.5f;
+
+    // M6 phase 3: a Neutral importer levies this tariff (fraction of a good's base price) on imports — a pure
+    // barrier that raises the price gap a trade must clear (it suppresses imports / denies a rival export
+    // income). Friendly = 0 (free trade); Hostile = full blockade (handled in RunTrade).
+    private const float NeutralTariffRate = 0.25f;
 
     // M4: each good's *base* sale value. Tools is worth more than the Ore a Workshop consumes to make it
     // (1 Ore → 1 Tools), so refining Ore→Tools and selling Tools out-earns selling raw Ore — the payoff that
@@ -521,13 +530,30 @@ public class Economy
     }
 
     // M6 phase 2: cut (or restore) a route. A blocked route carries nothing, so the far side's imported good
-    // runs dry and its price diverges (the "cut a road" alive check). Phase 3 drives this from hostility.
+    // runs dry and its price diverges (the "cut a road" alive check). Phase 3 also blockades via hostility.
     public bool SetRouteBlocked(Vector2I capA, Vector2I capB, bool blocked)
     {
         TradeRoute r = FindRoute(capA, capB);
         if (r == null) return false;
         r.Blocked = blocked;
         return true;
+    }
+
+    // M6 phase 3 — diplomacy. Order a capital pair so (a,b) and (b,a) map to one relations entry.
+    private static (Vector2I, Vector2I) RelationKey(Vector2I a, Vector2I b) =>
+        (a.X < b.X || (a.X == b.X && a.Y <= b.Y)) ? (a, b) : (b, a);
+
+    public DiplomaticStance GetRelation(Vector2I capA, Vector2I capB) =>
+        _relations.GetValueOrDefault(RelationKey(capA, capB), DiplomaticStance.Neutral);
+
+    public void SetRelation(Vector2I capA, Vector2I capB, DiplomaticStance stance) =>
+        _relations[RelationKey(capA, capB)] = stance;
+
+    // The player's stance toward another nation — the diplomatic lever: Friendly = free trade (cheap imports
+    // but enriches the partner), Neutral = tariffed trade, Hostile = blockade (deny a rival all trade).
+    public void SetPlayerStance(Vector2I otherCapital, DiplomaticStance stance)
+    {
+        if (PlayerNation != null) SetRelation(PlayerNation.Capital, otherCapital, stance);
     }
 
     // M6: along each route, every good flows one unit from the cheaper nation to the dearer one when the price
@@ -545,6 +571,7 @@ public class Economy
             if (capacity < TradeUnit) continue; // cut, or below one unit of throughput
 
             Nation a = route.A, b = route.B;
+            if (GetRelation(a.Capital, b.Capital) == DiplomaticStance.Hostile) continue; // blockade — no trade
             float transportCost = TradeCostPerTile * route.Distance;
             foreach (Good good in BasePrice.Keys)
             {
@@ -555,8 +582,9 @@ public class Economy
                 Nation seller = priceA <= priceB ? a : b;
                 Nation buyer  = priceA <= priceB ? b : a;
 
-                // M6 phase 3: the buyer nation tariffs imports — it adds to the price the buyer must beat and
-                // is collected into the buyer government's treasury (protectionism that can choke a route).
+                // M6 phase 3: the buyer's import tariff (from its stance toward the seller) — a pure barrier that
+                // raises the price gap a trade must clear. Not a gold transfer: the buyer nation IS its own
+                // government, so taxing its own imports would be a wash (and minting it would create money).
                 float tariff = TariffRate(buyer, seller) * BasePrice.GetValueOrDefault(good);
 
                 if (PriceOf(buyer, good) - PriceOf(seller, good) <= transportCost + tariff) continue; // gap too small
@@ -564,22 +592,26 @@ public class Economy
 
                 float unitPrice = (PriceOf(seller, good) + PriceOf(buyer, good)) / 2f;                // split the surplus
                 float cost = TradeUnit * unitPrice;
-                if (buyer.Treasury < cost + tariff * TradeUnit) continue;                             // can't afford goods + tariff
+                if (buyer.Treasury < cost) continue;                                                  // can't afford it
 
                 seller.AddGood(good, -TradeUnit);
                 buyer.AddGood(good, TradeUnit);
                 seller.Treasury += cost;
                 buyer.Treasury  -= cost;
-                if (tariff > 0f) buyer.Treasury += tariff * TradeUnit; // tariff stays inside the buyer government
                 route.FlowLastTick += TradeUnit;
                 TradedThisTick.Add((seller.Capital, buyer.Capital, good, TradeUnit, unitPrice));
             }
         }
     }
 
-    // M6 phase 3 hook: the tariff rate a buyer nation levies on imports from a seller (a fraction of the
-    // good's base price). Zero in phase 2; phase 3 drives it from diplomatic relations.
-    private float TariffRate(Nation buyer, Nation seller) => 0f;
+    // M6 phase 3: the buyer's import tariff toward the seller, a fraction of base price (Friendly free-trades,
+    // Neutral levies NeutralTariffRate; Hostile never reaches here — it's blockaded in RunTrade).
+    private float TariffRate(Nation buyer, Nation seller) => GetRelation(buyer.Capital, seller.Capital) switch
+    {
+        DiplomaticStance.Friendly => 0f,
+        DiplomaticStance.Neutral  => NeutralTariffRate,
+        _ => 0f,
+    };
 
     private static void AddFlow(Dictionary<Good, float> flows, Good good, float amount)
     {

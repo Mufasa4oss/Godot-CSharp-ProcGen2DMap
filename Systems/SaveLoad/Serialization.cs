@@ -15,7 +15,7 @@ public class Serialization
 	 */
 
 
-	public static string savePath = "user://savegame.json";
+	public static string savePath = "user://savegame.dat";
 
 	/*
 	 * Windows: %APPDATA%\Godot\app_userdata\<YourProject>\
@@ -44,8 +44,11 @@ Mac: ~/Library/Application Support/Godot/app_userdata/<YourProject>/
 			String json = JsonSerializer.Serialize(data, GetJsonOptions());
 			//GD.Print(json);
 			using var file = Godot.FileAccess.Open(savePath, Godot.FileAccess.ModeFlags.Write);
-			file.StoreString(json);
-			GD.Print("Save complete" + " saved at: " + savePath);
+			// M8: plain, shareable SEED header (the world regenerates from it) + an AES-encrypted body, so the
+			// save is unreadable in a text editor except for the seed.
+			file.StoreLine($"SEED {data.Seed}");
+			file.StoreString(SaveCrypto.Encrypt(json));
+			GD.Print("Save complete (encrypted) saved at: " + savePath);
 		}
 		catch (Exception e)
 		{
@@ -65,7 +68,10 @@ Mac: ~/Library/Application Support/Godot/app_userdata/<YourProject>/
 			}
 
 			using var file = Godot.FileAccess.Open(savePath, Godot.FileAccess.ModeFlags.Read);
-			string json = file.GetAsText();
+			// First line is the plain "SEED <n>" header; the remainder is the AES-encrypted base64 body.
+			string all = file.GetAsText();
+			int nl = all.IndexOf('\n');
+			string json = SaveCrypto.Decrypt((nl >= 0 ? all.Substring(nl + 1) : all).Trim());
 			GameData data = JsonSerializer.Deserialize<GameData>(json, GetJsonOptions())!;
 
 			GD.Print("Game loaded.");

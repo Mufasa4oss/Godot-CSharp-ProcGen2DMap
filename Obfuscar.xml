@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  M8 part 2 — .NET assembly obfuscation (MANUAL, pre-ship only). NOT wired into the normal build.
+
+  WHY IT'S OPT-IN: Godot binds C# by NAME via its source generators + reflection — engine lifecycle
+  (_Ready/_Process/_Draw/_UnhandledInput), [Export] fields, [Signal] delegates, and [Tool] scripts are
+  all resolved by their original names at runtime. Renaming them breaks the game silently. So this config
+  keeps the whole public + Godot-facing surface intact and only obfuscates private internals. The strongest
+  protection here is actually the encrypted saves (SaveCrypto) + shipping IL instead of source; name
+  obfuscation of a Godot C# game is inherently limited.
+
+  HOW TO RUN (release machine, after `dotnet build -c Release`):
+    dotnet tool install -g Obfuscar.GlobalTool
+    obfuscar.console Obfuscar.xml
+  Then ALWAYS launch the obfuscated build in-engine and confirm: worldgen, ticks, build/sell, save/load,
+  and the diplomacy hotkey all still work (anything bound-by-name is what breaks first).
+  Full notes: ReviewDocs/Documentation/Obfuscation.md
+-->
+<Obfuscator>
+  <Var name="InPath" value=".godot\mono\temp\bin\ExportRelease" />
+  <Var name="OutPath" value=".godot\mono\temp\bin\ExportRelease\obfuscated" />
+  <!-- Keep everything Godot touches by name. -->
+  <Var name="KeepPublicApi" value="true" />
+  <Var name="HidePrivateApi" value="true" />
+  <Var name="RenameProperties" value="false" />
+  <Var name="RenameEvents" value="false" />
+  <Var name="RenameFields" value="false" />
+  <Var name="ReuseNames" value="true" />
+  <Var name="UseUnicodeNames" value="false" />
+
+  <Module file="$(InPath)\ProceduralMapGenerator.dll">
+    <!-- Belt-and-braces: never rename Node-derived types or members Godot reflects on. Obfuscar honors the
+         [Obfuscation] attribute too, but these skips make the Godot exclusions explicit. -->
+    <SkipType name="*" attrib="public" />
+  </Module>
+</Obfuscator>

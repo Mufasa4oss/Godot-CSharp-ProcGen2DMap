@@ -43,9 +43,12 @@ public class Economy
     // is plain data (Vector2I only, no signals) that the view drains after each OnTick. Recomputed each tick.
     public readonly List<(Vector2I Tile, Good Good, float Amount)> ProducedThisTick = new();
 
-    // M6: the trade backbone (the MST connecting capitals) as nation pairs + their distance, handed in from
-    // the Godot layer via SetTradeGraph. Empty until set, so Core stays testable with an injected graph.
-    private readonly List<(Nation A, Nation B, float Distance)> _tradeRoutes = new();
+    // M6: the trade backbone (the MST connecting capitals) as TradeRoute objects, handed in from the Godot
+    // layer via SetTradeGraph. Empty until set, so Core stays testable with an injected graph.
+    private readonly List<TradeRoute> _tradeRoutes = new();
+
+    // Read-only view of the trade backbone for the Godot layer (draw routes; color by flow/capacity).
+    public IReadOnlyList<TradeRoute> TradeRoutes => _tradeRoutes;
 
     // M6: per-tick inter-nation trade events (seller capital → buyer capital, good, amount, unit price) so the
     // view can later draw real flows. Plain data (Vector2I capitals only). Recomputed each tick.
@@ -89,6 +92,14 @@ public class Economy
     // so near nations trade on small gaps and far nations only on big ones (geography starts to matter).
     private const float TradeUnit        = 1f;
     private const float TradeCostPerTile = 0.02f;
+
+    // M6 phase 2: per-route throughput. A route moves at most BaseRouteCapacity units/tick (the always-present
+    // MST backbone) plus CapacityPerRail for every player railroad tile laid along it — so building track on a
+    // route is a "connector road" that raises its capacity. A low base makes capacity bite: a sole supplier
+    // can't flood a distant market until the player invests in the road. Capacity is derived live from the
+    // (persisted) Railroads set, so it needs no extra save state.
+    private const float BaseRouteCapacity = 1f;
+    private const float CapacityPerRail   = 0.5f;
 
     // M4: each good's *base* sale value. Tools is worth more than the Ore a Workshop consumes to make it
     // (1 Ore → 1 Tools), so refining Ore→Tools and selling Tools out-earns selling raw Ore — the payoff that
@@ -483,17 +494,40 @@ public class Economy
     // M6: hand in the trade backbone — the MST over capitals (edge endpoints are indices into `capitals`),
     // stored as nation pairs + distance so OnTick's trade pass can route goods. Called from the Godot layer
     // after worldgen; tests inject a small graph directly. Safe to call before/again — it rebuilds the list.
-    public void SetTradeGraph(List<PrimsAlgorithmSimple.Edge> mstEdges, List<Vector2I> capitals)
+    public void SetTradeGraph(List<PrimsAlgorithmSimple.Edge> mstEdges, List<Vector2I> capitals,
+        List<HashSet<Vector2I>> corridors = null)
     {
         _tradeRoutes.Clear();
         if (mstEdges == null || capitals == null) return;
-        foreach (var edge in mstEdges)
+        for (int i = 0; i < mstEdges.Count; i++)
         {
+            var edge = mstEdges[i];
             if (edge.From < 0 || edge.From >= capitals.Count || edge.To < 0 || edge.To >= capitals.Count) continue;
             if (Nations.TryGetValue(capitals[edge.From], out Nation a) &&
                 Nations.TryGetValue(capitals[edge.To], out Nation b))
-                _tradeRoutes.Add((a, b, (float)edge.Weight));
+            {
+                HashSet<Vector2I> corridor = (corridors != null && i < corridors.Count) ? corridors[i] : null;
+                _tradeRoutes.Add(new TradeRoute(a, b, (float)edge.Weight, corridor));
+            }
         }
+    }
+
+    // M6 phase 2/3: find the route linking two capitals (undirected), or null.
+    public TradeRoute FindRoute(Vector2I capA, Vector2I capB)
+    {
+        foreach (TradeRoute r in _tradeRoutes)
+            if (r.Connects(capA, capB)) return r;
+        return null;
+    }
+
+    // M6 phase 2: cut (or restore) a route. A blocked route carries nothing, so the far side's imported good
+    // runs dry and its price diverges (the "cut a road" alive check). Phase 3 drives this from hostility.
+    public bool SetRouteBlocked(Vector2I capA, Vector2I capB, bool blocked)
+    {
+        TradeRoute r = FindRoute(capA, capB);
+        if (r == null) return false;
+        r.Blocked = blocked;
+        return true;
     }
 
     // M6: along each route, every good flows one unit from the cheaper nation to the dearer one when the price
@@ -503,31 +537,49 @@ public class Economy
     // MST order, goods in enum order.
     private void RunTrade()
     {
-        foreach (var (a, b, distance) in _tradeRoutes)
+        foreach (TradeRoute route in _tradeRoutes)
         {
-            float transportCost = TradeCostPerTile * distance;
+            route.FlowLastTick = 0f;
+            // M6 phase 2: the route's per-tick throughput (backbone + player connector rails; 0 if blocked).
+            float capacity = route.CapacityWith(Railroads, BaseRouteCapacity, CapacityPerRail);
+            if (capacity < TradeUnit) continue; // cut, or below one unit of throughput
+
+            Nation a = route.A, b = route.B;
+            float transportCost = TradeCostPerTile * route.Distance;
             foreach (Good good in BasePrice.Keys)
             {
+                if (route.FlowLastTick + TradeUnit > capacity) break; // route saturated this tick
+
                 float priceA = PriceOf(a, good);
                 float priceB = PriceOf(b, good);
                 Nation seller = priceA <= priceB ? a : b;
                 Nation buyer  = priceA <= priceB ? b : a;
 
-                if (PriceOf(buyer, good) - PriceOf(seller, good) <= transportCost) continue; // gap too small
-                if (seller.Stockpile.GetValueOrDefault(good) < TradeUnit) continue;          // nothing to ship
+                // M6 phase 3: the buyer nation tariffs imports — it adds to the price the buyer must beat and
+                // is collected into the buyer government's treasury (protectionism that can choke a route).
+                float tariff = TariffRate(buyer, seller) * BasePrice.GetValueOrDefault(good);
 
-                float unitPrice = (PriceOf(seller, good) + PriceOf(buyer, good)) / 2f;       // split the surplus
+                if (PriceOf(buyer, good) - PriceOf(seller, good) <= transportCost + tariff) continue; // gap too small
+                if (seller.Stockpile.GetValueOrDefault(good) < TradeUnit) continue;                   // nothing to ship
+
+                float unitPrice = (PriceOf(seller, good) + PriceOf(buyer, good)) / 2f;                // split the surplus
                 float cost = TradeUnit * unitPrice;
-                if (buyer.Treasury < cost) continue;                                         // can't afford it
+                if (buyer.Treasury < cost + tariff * TradeUnit) continue;                             // can't afford goods + tariff
 
                 seller.AddGood(good, -TradeUnit);
                 buyer.AddGood(good, TradeUnit);
                 seller.Treasury += cost;
                 buyer.Treasury  -= cost;
+                if (tariff > 0f) buyer.Treasury += tariff * TradeUnit; // tariff stays inside the buyer government
+                route.FlowLastTick += TradeUnit;
                 TradedThisTick.Add((seller.Capital, buyer.Capital, good, TradeUnit, unitPrice));
             }
         }
     }
+
+    // M6 phase 3 hook: the tariff rate a buyer nation levies on imports from a seller (a fraction of the
+    // good's base price). Zero in phase 2; phase 3 drives it from diplomatic relations.
+    private float TariffRate(Nation buyer, Nation seller) => 0f;
 
     private static void AddFlow(Dictionary<Good, float> flows, Good good, float amount)
     {

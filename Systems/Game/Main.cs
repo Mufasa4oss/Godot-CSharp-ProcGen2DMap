@@ -100,7 +100,13 @@ public partial class Main : Node2D
 
 		// M6: hand the economy the trade backbone (the MST over capitals) so goods auto-arbitrage between
 		// connected nations. Rebuilt deterministically from the seed, so this runs for new and loaded games.
-		gameContext.economy.SetTradeGraph(mst, gameContext.voronoiDiagram.GetCapitals());
+		// M6 phase 2: also hand in each route's corridor (the L-path tiles between its two capitals) so player
+		// railroad tiles laid along a route raise its trade capacity (a "connector road").
+		var tradeCapitals = gameContext.voronoiDiagram.GetCapitals();
+		var routeCorridors = new List<HashSet<Vector2I>>();
+		foreach (var edge in mst)
+			routeCorridors.Add(new HashSet<Vector2I>(GetTilesAlongLine(tradeCapitals[edge.From], tradeCapitals[edge.To])));
+		gameContext.economy.SetTradeGraph(mst, tradeCapitals, routeCorridors);
 
 		DrawMSTLines();
 

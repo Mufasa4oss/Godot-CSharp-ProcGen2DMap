@@ -27,6 +27,7 @@ and `//CHANGES 23-Jun-26 tiles//` (tile refactor).
 11. [2026-06-27 — Build-cost legibility + M5 demand & scarcity](#2026-06-27--build-cost-legibility--m5-demand--scarcity)
 12. [2026-06-27 — M6 phase-1: a living, trading multi-nation economy](#2026-06-27--m6-phase-1-a-living-trading-multi-nation-economy)
 13. [2026-06-27 — Realistic blended ground + sand beaches & deserts (art overhaul, Option A)](#2026-06-27--realistic-blended-ground--sand-beaches--deserts)
+14. [2026-06-27 — L1 economy completion: M6 phases 2–3, M7, M8](#2026-06-27--l1-economy-completion-m6-phases-23-m7-m8)
 
 ---
 
@@ -611,3 +612,56 @@ identical map. Tunables to taste: shader `ground_px` (pattern scale) + `softness
 **Later:** real water texture/animated shader + soft shoreline (the deferred sand↔ocean blend); highlight
 that respects sand vs grass; retire the now-unused Tiny Swords ground assets + `TerrainTiles.Highlight`
 source.
+
+---
+
+## 2026-06-27 — L1 economy completion: M6 phases 2–3, M7, M8
+
+Finished the remaining L1 ladder in one pass (M6 phase-1 + the art overhaul were earlier today). Core
+mechanics are unit-tested; visual/interactive bits are headless-clean and flagged for a windowed pass.
+Per-milestone commits on `main`.
+
+### M6 phase 2 — route capacity + connector roads
+Trade routes became `TradeRoute` objects with a per-tick **capacity** = `BaseRouteCapacity` (the MST
+backbone) + `CapacityPerRail` per **player railroad tile in the route's corridor**. So laying track along a
+route is a **connector road** that raises throughput — railroads finally have an economic purpose.
+`RunTrade` caps total units/route/tick and records `FlowLastTick`/`CapacityLastTick`; `SetRouteBlocked` cuts
+a route (carries nothing → the far side starves, prices diverge). Capacity is derived live from the
+persisted `Railroads` set + deterministic MST corridors (passed from `Main` in `SetTradeGraph`), so **no new
+save state**. Tests: `Tests/EconomyCapacityTests.cs`.
+
+### M6 phase 3 — diplomacy (tariffs + blockades)
+Pairwise `DiplomaticStance` (Hostile/Neutral/Friendly, default Neutral): **Hostile = blockade** (RunTrade
+skips the route), **Neutral = a pure import-tariff barrier** (`NeutralTariffRate` × base price) the price gap
+must clear, **Friendly = free trade**. The tariff is a barrier only, not a gold transfer (a nation is its own
+government — taxing its own imports would mint money). `GetRelation`/`SetRelation`/`SetPlayerStance` give the
+player the lever; relations are live state (not yet serialized). Tests: `Tests/EconomyDiplomacyTests.cs`.
+
+### M7 — legibility + diplomacy controls
+- **TradeNetworkVisualizer** rewritten to draw REAL data: routes are roads colored by live congestion (idle
+  gray / flowing green / near-capacity orange / cut red) and widened by capacity; a colored packet spawns per
+  actual trade (`Economy.TradedThisTick`, fed each tick from `Main`). No more fake random packets.
+- **DepositOverlay** reflects live state: dim idle, bright + bigger when worked, pulsing red when played out.
+- **Diplomacy is playable:** click a foreign province, press **B** to cycle the player's stance (raw key, no
+  project.godot change); stance shows in the click-inspect line and on each AI's HUD nation row.
+- **Balance** stays documented placeholders — final "tune to fun" needs a windowed playtest (can't judge fun
+  headless). Province-price map tint deferred (trade roads + deposit flash + HUD cover legibility for now).
+
+### M8 — encrypted saves + obfuscation config
+- **Saves are AES-256 encrypted** (on by default). `Systems/Core/SaveCrypto.cs` (pure .NET, unit-tested)
+  encrypts the JSON body; `Serialization` writes `SEED <n>` + base64 to `user://savegame.dat` — the **seed
+  stays plain** (shareable; the world regenerates from it), everything else is unreadable in a text editor.
+- **Assembly obfuscation** is a **manual, opt-in** step (`Obfuscar.xml` + `Documentation/Obfuscation.md`),
+  deliberately not in the build: Godot binds C# by name, so naive renaming breaks it; the config keeps the
+  Godot-facing surface and only obfuscates private internals. Tests: `Tests/SaveCryptoTests.cs`.
+
+**Verified:** `dotnet test` **99 passed** (77 → 99 across the day: +TerrainRules, +Capacity, +Diplomacy,
++SaveCrypto); `dotnet build` 0/0; headless smoke clean each milestone (worldgen + terrain log + economy
+heartbeat, no exceptions).
+
+**Pending (windowed, user's display):** trade roads recoloring with congestion + packets moving on real
+trades; deposit dots flashing when depleted; press **B** on a neighbour to blockade/ally and watch its road
+turn red / goods stop; F5 → open `savegame.dat` (only `SEED` readable) → F9 restores. Economy balance tuning.
+
+**L1 status: M0–M8 all code-complete.** Remaining is windowed balance/feel tuning and the optional manual
+obfuscation pass at ship.

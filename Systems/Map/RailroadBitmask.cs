@@ -32,6 +32,19 @@ public class RailroadBitmask
         }
     }
 
+    // LR1: re-orient only `tilesToPaint` (e.g. the tiles a live build/cut touched) while still reading adjacency
+    // from the full `allRoads` set, so a localized edit refreshes the affected sprites without repainting the
+    // whole network. Tiles not in `allRoads` (a just-cut cell, or a non-road neighbour) are skipped.
+    public void OrientRailroadCells(TileMapLayer railroadLayer, IEnumerable<Vector2I> tilesToPaint, HashSet<Vector2I> allRoads, HashSet<Vector2I> capitalSet, TileMapLayer terrainLayer)
+    {
+        foreach (Vector2I tile in tilesToPaint)
+        {
+            if (!allRoads.Contains(tile)) continue;
+            int mask = GetCardinalMask(tile, allRoads, capitalSet);
+            railroadLayer.SetCell(tile, RailroadTiles.Rails, ResolveAtlas(mask, tile, terrainLayer));
+        }
+    }
+
     private int GetCardinalMask(Vector2I tile, HashSet<Vector2I> railroadTiles, HashSet<Vector2I> capitalSet)
     {
         int mask = 0;

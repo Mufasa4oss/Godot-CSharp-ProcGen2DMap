@@ -114,15 +114,3 @@ layout_mode = 2
 toggle_mode = true
 keep_pressed_outside = true
 text = "Build Extractor"
-
-[node name="SellGrainButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746073]
-layout_mode = 2
-text = "Sell Grain"
-
-[node name="SellOreButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746074]
-layout_mode = 2
-text = "Sell Ore"
-
-[node name="SellToolsButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746075]
-layout_mode = 2
-text = "Sell Tools"

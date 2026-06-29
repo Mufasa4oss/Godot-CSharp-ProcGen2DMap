@@ -48,27 +48,55 @@ public class RoadGraph
     public int ShortestPathLength(Vector2I from, Vector2I to)
     {
         if (from == to) return 0;
+        List<Vector2I> path = ShortestPath(from, to);
+        // path holds the road tiles between the ends; + 1 for the final step off the last road onto `to`
+        // (the step from `from` onto the first road is already counted by that first road being in the path).
+        return path.Count == 0 ? -1 : path.Count + 1;
+    }
+
+    // The road tiles forming a shortest road path linking `from` to `to` (typically two capitals), in order,
+    // or an empty list if none exists (or from == to). Same 4-neighbour BFS as the length query, but it tracks
+    // parents so it can hand back the actual track carrying the link — used as a route's corridor so the
+    // capacity model counts the very tiles laid for it, not a now-nonexistent MST corridor.
+    public List<Vector2I> ShortestPath(Vector2I from, Vector2I to)
+    {
+        var path = new List<Vector2I>();
+        if (from == to) return path;
 
         var goals  = new HashSet<Vector2I>(NetworkRoadsAt(to));
         var starts = NetworkRoadsAt(from);
-        if (goals.Count == 0 || starts.Count == 0) return -1; // a road touches neither end ⇒ unreachable
+        if (goals.Count == 0 || starts.Count == 0) return path; // a road touches neither end ⇒ unreachable
 
+        var parent  = new Dictionary<Vector2I, Vector2I>();
         var visited = new HashSet<Vector2I>();
-        var frontier = new Queue<(Vector2I tile, int steps)>();
+        var frontier = new Queue<Vector2I>();
         foreach (Vector2I s in starts)
-            if (visited.Add(s)) frontier.Enqueue((s, 1)); // 1 = the step from `from` onto this first road
+            if (visited.Add(s)) frontier.Enqueue(s); // start roads are roots — no parent entry
 
         while (frontier.Count > 0)
         {
-            var (tile, steps) = frontier.Dequeue();
-            if (goals.Contains(tile)) return steps + 1; // + the step from this last road onto `to`
+            Vector2I tile = frontier.Dequeue();
+            if (goals.Contains(tile))
+            {
+                for (Vector2I cur = tile; ; )
+                {
+                    path.Add(cur);
+                    if (!parent.TryGetValue(cur, out Vector2I p)) break; // reached a root start tile
+                    cur = p;
+                }
+                path.Reverse();
+                return path;
+            }
             foreach (Vector2I d in Cardinals)
             {
                 Vector2I next = tile + d;
                 if (_roads.Contains(next) && visited.Add(next))
-                    frontier.Enqueue((next, steps + 1));
+                {
+                    parent[next] = tile;
+                    frontier.Enqueue(next);
+                }
             }
         }
-        return -1;
+        return path; // empty: exhausted the component without reaching a goal
     }
 }

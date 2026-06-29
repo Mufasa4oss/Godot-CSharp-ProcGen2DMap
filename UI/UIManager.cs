@@ -10,7 +10,6 @@ public partial class UIManager : Control
 	private Label _treasuryLabel, _incomeLabel, _popLabel, _grainLabel, _oreLabel, _toolsLabel;
 	private Button _buildRailroadButton, _buildWorkshopButton, _buildExtractorButton;
 	private Button[] _buildButtons;                              // the mutually-exclusive build toggles
-	private Button _sellGrainButton, _sellOreButton, _sellToolsButton;
 
 	private PanelContainer _panel;                               // the draggable HUD panel
 	private VBoxContainer _vbox;                                 // host for the dynamic nation rows
@@ -68,14 +67,8 @@ public partial class UIManager : Control
 			self.Toggled += pressed => OnBuildToggled(self, pressed);
 		}
 
-		// M4: sell the whole stockpile of a good for treasury income. Plain (non-toggle) buttons — one
-		// press = one sale. The economy is the single owner of the sell logic; the UI just triggers it.
-		_sellGrainButton = GetNode<Button>("PanelContainer/VBox/SellGrainButton");
-		_sellGrainButton.Pressed += () => _economy?.SellAll(Good.Grain);
-		_sellOreButton = GetNode<Button>("PanelContainer/VBox/SellOreButton");
-		_sellOreButton.Pressed += () => _economy?.SellAll(Good.Ore);
-		_sellToolsButton = GetNode<Button>("PanelContainer/VBox/SellToolsButton");
-		_sellToolsButton.Pressed += () => _economy?.SellAll(Good.Tools);
+		// LR3: the Sell buttons are gone. Income now comes from the internal market — your haulers deliver goods
+		// to the capital and your pops buy them automatically (see the Income line). Nothing to wire here.
 	}
 
 	// Build modes are mutually exclusive: turning one toggle on turns the other two off (setting their
@@ -130,12 +123,18 @@ public partial class UIManager : Control
 		Nation p = _economy?.PlayerNation;
 		if (p == null) return;
 		_treasuryLabel.Text = $"Treasury: {p.Treasury:0}";
-		_incomeLabel.Text = $"Income: {_economy.TotalIncome:0}";
+		// LR3: income is fed by the internal market buying delivered goods — show this tick's sales so the
+		// player sees the haulers' deliveries turning into treasury (no more Sell button).
+		float marketUnits = _economy.InternalSoldLastTick.Values.Sum();
+		string mkt = marketUnits > 0f ? $" (pops bought {marketUnits:0.#}/tick)" : "";
+		_incomeLabel.Text = $"Income: {_economy.TotalIncome:0}{mkt}";
 		// M5: pops + their grain appetite (the grain shortage = a -N drain on the Grain line + a rising
 		// @price reads as "the population is eating it") and the poll tax they pay into the treasury.
 		string taxEarned = _economy.TaxCollected > 0f ? $", earned {_economy.TaxCollected:0}" : "";
+		// LR5: show the upkeep sink alongside the tax so the player sees both sides of the interval pulse.
+		string upkeep = _economy.UpkeepPaidLastInterval > 0f ? $", upkeep -{_economy.UpkeepPaidLastInterval:0}" : "";
 		_popLabel.Text = $"Pop: {p.Population:0} (eats {_economy.PlayerDemandLastTick.GetValueOrDefault(Good.Grain):0.#} grain/tick" +
-						 $" — tax +{Economy.TaxPerInterval:0}/{Economy.TaxIntervalTicks}t{taxEarned})";
+						 $" — tax +{Economy.TaxPerInterval:0}/{Economy.TaxIntervalTicks}t{taxEarned}{upkeep})";
 		_grainLabel.Text = FormatGood("Grain", Good.Grain, p);
 		_oreLabel.Text   = FormatGood("Ore",   Good.Ore,   p);
 		_toolsLabel.Text = FormatGood("Tools", Good.Tools, p);

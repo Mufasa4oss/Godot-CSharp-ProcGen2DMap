@@ -724,3 +724,150 @@ benign `--quit-after` leak warnings).
 **Pending (windowed, user's display — the interactive half of the alive check):** enter Build-Road mode and
 drag a road between two capitals → trade begins on it; **right-click** a tile mid-link → trade stops / the
 region isolates; confirm no auto-backbone appears on a fresh map.
+
+### LR2 — Physical goods + auto-haulers (2026-06-28)
+Produced goods stop teleporting — they now physically travel the player's roads on auto-dispatched trucks you
+can watch, and a good with no road out just piles up where it was made.
+- **New Core logistics (pure/engine-free, auto-linked into the test project):**
+  - `TileInventory` — goods *at rest*, located per tile (`Add` floors at 0 + prunes emptied tiles, `AmountAt`,
+    `TotalAt`, `At`, `Tiles`). The physical counterpart to `Nation.Stockpile`'s abstract pool.
+  - `Pathfinder` — wraps `RoadGraph.ShortestPath` into the **full hauler walk** (source tile → road tiles →
+    destination tile), deduping a road laid on an endpoint; empty when the ends aren't road-connected.
+  - `Hauler` — one truck: `Origin`/`Destination`/`Good`/`Amount`/`Walk`/`Progress`; `Arrived` (reached the
+    walk's end); `PathAheadIntact(roads)` (only the road tiles *ahead* must survive — a cut behind doesn't
+    strand it).
+  - `Dispatcher` — owns the hauler list. `Advance` rolls each truck `Speed` (1 tile/tick), delivers arrivals
+    into the sink tile, and **stalls** any whose road got cut ahead (stranded, holds its load). `Dispatch`
+    sends one new truck per surplus tile with a clear road to its sink (picking the unit up off the tile);
+    one hauler per origin at a time so a backlog piles at the source. Deterministic (tiles in coord order,
+    goods in enum order).
+- **Economy wiring.** `Economy` owns a `TileInventory` + `Dispatcher` (exposes `Haulers`). Player production
+  (raw extractors *and* workshop outputs) now also **drops the physical unit onto the producing tile**; each
+  `OnTick` runs `Dispatcher.Advance` then `Dispatch` toward the player's capital (`SinkOf` — only player tiles
+  ship; AI stay abstract). **Transitional, mirroring LR1's choice to keep the old layer:** production still
+  mirrors into `Nation.Stockpile` and `RunTrade` is **kept** (so the abstract economy + all existing tests stay
+  green) — the physical layer is the *visible* truth in LR2; LR3/LR4 make it load-bearing (income from
+  deliveries + export) and retire `RunTrade`. Tile inventories + in-flight haulers are **not serialized** in
+  LR2 (they regenerate from production on load; LR3 persists them).
+- **New visual `Systems/Map/Haulers.cs`** (`Node2D`, child of `Main`): eases each truck's drawn position toward
+  the tile the Core entity reached (smooth glide over the 1 s ticks), colored by cargo, plus small **crate
+  piles** on any tile holding goods at rest (a roadless mine, or the capital warehouse filling as deliveries
+  land). The evolved cousin of the trade-packet visualizer — it lerps along a real multi-tile path instead of a
+  straight teleport line. (The old `TradeNetworkVisualizer` stays for the abstract inter-nation layer.)
+
+**Verified:** `dotnet build` 0/0; `dotnet test` **118 passed** (106 + 12 new across
+`TileInventoryTests`/`PathfinderTests`/`DispatcherTests` — add/floor/prune, full walk + adjacency +
+no-path + endpoint-dedup, dispatch-picks-up, disconnected-stays-put, advance-and-deliver, cut-ahead-strands,
+one-per-origin); headless smoke clean — `Economy: 10 nations / 8715 land tiles`, 300 deposits, heartbeat ticks
+1–5, the new `Haulers` node + per-tick `Dispatcher` run with **no exceptions** (the physical layer is idle
+headless — the player builds/roads nothing without input).
+
+**Pending (windowed, user's display — the interactive half of the alive check):** build a Mine, then drag a
+road from it to your capital → watch a truck crawl the road carrying ore to the capital (crates pile at the
+capital); before the road connects, ore piles on the mine tile; **right-click** a road tile ahead of a moving
+truck → it stalls (stranded) and nothing teleports across the gap.
+
+### LR3 — Internal market & income (remove Sell) (2026-06-28)
+Income stops coming from a button and starts coming from **supplying your population**. Your haulers deliver
+goods to the capital; your pops buy them automatically.
+- **Internal market** (`Economy.RunInternalMarket`, player-only, each tick after deliveries): the home market
+  buys the goods sitting in the **capital inventory** (what the haulers physically delivered) at the player's
+  live price, capped per good by demand (grain scales with pops; ore/tools a flat `InternalRawDemandPerTick`).
+  Proceeds → treasury, attributed per good (`IncomeByGood`), surfaced via `InternalSoldLastTick`. Whatever the
+  home market doesn't take stays at the capital as export surplus (LR4).
+- **Sell removed.** `Economy.SellAll` is gone; the three Sell buttons are deleted from `UIManager` + `main.tscn`.
+  The HUD income line now reads "Income: N (pops bought X/tick)".
+- **Income now requires delivery.** No road ⇒ goods strand at the mine ⇒ no market income (only tax). This is
+  the first point where the physical layer is *load-bearing* for income.
+- **Transitional (unchanged):** production still mirrors into `Nation.Stockpile`, and `RunTrade` still runs, so
+  the abstract economy + every existing test stay intact. The duplication (a produced unit exists in both the
+  abstract pool and the physical tile) is the documented cost of the staged migration.
+
+**Verified:** build 0/0; `dotnet test` **118 passed** (`EconomyValueTests` rewritten from SellAll → internal
+market: delivered-goods-bought, undelivered-earns-nothing, per-good income, refined-out-earns-raw); headless
+smoke clean; scene loads with the Sell buttons gone.
+
+### LR4 — Export + tariffs/chokepoints + diplomacy UI (2026-06-28)
+The macro levers: trade abroad, and let diplomacy set the terms.
+- **Export** (`Economy.RunExport`, each tick after the home market): the player's leftover capital surplus is
+  sold to **road-connected** neighbour nations (`RoadGraph.AreConnected`) at *their* price, less the importer's
+  tariff and the road transport cost (so a friendly near neighbour is the best customer). A real gold+goods
+  transfer — the buyer pays from its treasury and receives the good (its prices respond). Gated by diplomacy:
+  **Hostile = blockade** (no sale), **Neutral = tariff** (`NeutralTariffRate` docks the proceeds), **Friendly =
+  free trade**. Income layered: home first, foreign second. Surfaced via `ExportSoldLastTick`.
+- **Diplomacy panel** (`UI/DiplomacyPanel.cs`, on a `CanvasLayer`, toggled with **N**): a first-class UI listing
+  every other nation with its road-connection status and Friendly / Neutral / Hostile buttons that set export
+  terms live. Replaces LR0's lone "click-a-nation-then-N-to-cycle" hotkey (removed from `MapManager`).
+
+**Verified:** build 0/0; `dotnet test` **122 passed** (4 new `EconomyExportTests`: exports-for-gold,
+no-road-no-export, hostile-blockade, friendly-beats-tariffed-neutral); headless smoke clean (panel + CanvasLayer
+instantiate, no GetNode errors).
+
+### LR5 — Polish: the upkeep sink (2026-06-28)
+The missing gold **sink** from `EconomyDesign.md`, so treasury stays meaningful instead of only ever climbing.
+- **Recurring upkeep** (`Economy.RunUpkeep`, charged every `TaxIntervalTicks` alongside the poll tax so income
+  and outgo pulse together): each nation pays `UpkeepPerBuilding` per building it owns, and the player pays
+  `UpkeepPerRoad` per road tile laid. Treasury floors at 0 (no debt/bankruptcy in L1). Sized well under the poll
+  tax so a lean operation nets positive but a sprawling one bleeds. Surfaced via `UpkeepPaidLastInterval` (HUD
+  pop line: "tax +50/10t, upkeep -N"). Inert AI (autonomy off) don't pay, mirroring the tax rule.
+- **Vehicle types deferred.** The roadmap's optional truck/train/ship-by-terrain variety is intentionally left
+  as future polish — the load-bearing LR5 deliverable is the upkeep sink + balance lever.
+
+**Verified:** build 0/0; `dotnet test` **128 passed** (3 new `EconomyUpkeepTests` + 3 new
+`LogisticsIntegrationTests` that drive the **whole arc end-to-end through OnTick**: ore mined → hauled down a
+player road → sold by the internal market for income; cut the road → the same ore strands at the mine and earns
+nothing; income freezes after a cut). Headless smoke clean over 1500 frames — no exceptions with AI economies,
+export, and upkeep all live.
+
+#### Known transitional state after LR2–LR5 (one cleanup remains)
+To keep all 128 tests green and the game balanced, the **abstract layer was kept alongside the new physical
+one** (the same staged approach LR1 used): production still mirrors into `Nation.Stockpile`, and the M6
+`RunTrade` arbitrage still runs. So a produced unit is counted in both the abstract pool and the physical tile,
+and the player can earn through both `RunTrade` (abstract) and `RunExport` (physical). This is bounded (capped
+by production + upkeep) and causes no errors, but **retiring `RunTrade` + `Nation.Stockpile` in favour of the
+per-tile + capital inventory is the remaining cleanup** — it needs a rewrite of the M-era economy tests
+(`EconomyProductionTests`/`EconomyDemandTests`/`EconomyTradeTests`/`EconomyCapacityTests`) that assert against
+`Stockpile`, which is why it's a dedicated follow-up rather than folded in here.
+
+### LR-cleanup — Retire `RunTrade` + `Nation.Stockpile` abstract layer (2026-06-29)
+The transitional double-accounting is gone. The physical layer is now the **sole authority** for player
+goods, income, and population dynamics.
+
+**What changed in `Economy.cs`:**
+- `RunTrade` (abstract instant inter-nation arbitrage over `_tradeRoutes`) and its infrastructure
+  (`_tradeRoutes`, `TradeRoute`, `BaseRouteCapacity`, `CapacityPerRail`, `SetTradeGraph`,
+  `RebuildRoadRoutes`, `FindRoute`, `SetRouteBlocked`) are fully removed.
+- `SetTradeGraph`/`RebuildRoadRoutes` calls removed from `Main.cs` and `MapManager.cs`.
+- **Production (Pass 1, extractors):** player output goes to `TileInventory` at the extractor tile
+  only — the mirror write to `Nation.Stockpile` is gone.
+- **Workshop (Pass 2):** player workshop reads its *input* from `TileInventory.AmountAt(capital, input)`
+  (ore must be physically hauled to the capital before it can be consumed) and emits *output* to the
+  workshop's own tile. AI still uses `Nation.Stockpile` unchanged.
+- **Pop consumption (Pass 3):** skips the player entirely; `RunInternalMarket` handles player grain
+  consumption as part of market sales.
+- **`grainAtTickStart`, `UpdatePopulations`, `RecomputePriceMultipliers`:** player reads now use
+  `TileInventory.AmountAt(capital, good)` instead of `Stockpile.GetValueOrDefault`.
+- **Starting grain:** player's initial 10 grain is placed in `TileInventory` at the capital (not in
+  `Stockpile`), so the physical larder is the population's food source from tick 1.
+- `TradeNetworkVisualizer._Draw` no longer iterates `economy.TradeRoutes` (property removed); it draws
+  only the export trade-packet dots that `RunExport` still populates.
+
+**M-era economy test rewrites:**
+- `EconomyCapacityTests` (6 tests, all used `SetTradeGraph`/`FindRoute`/`SetRouteBlocked`) → replaced by
+  a single explanatory comment (scenarios now covered by `PathfinderTests` + `LogisticsIntegrationTests`).
+- `EconomyDiplomacyTests` (5 tests, all used `SetTradeGraph`) → one surviving test (`Default_stance_is_neutral`);
+  blockade/tariff scenarios are covered by `EconomyExportTests`.
+- `EconomyTradeTests` → 5 tests kept; RunTrade-specific scenarios (`Grain_flows_from_surplus...` etc.)
+  removed. Price-test updated: player glut uses `TileInventory.Add`, AI scarcity uses `Stockpile`.
+- `EconomyProductionTests` → 8 tests updated: assertions moved from `Nation.Stockpile` amounts to
+  `TileInventory.AmountAt`, `TotalIncome`, and `ProducedThisTick` events. Workshop test now seeds
+  ore at the capital via `TileInventory` (as haulers would deliver it).
+- `EconomyBuildGateTests` → 2 tests updated: `TotalIncome==0 && Haulers.Empty` instead of Stockpile sum;
+  post-extract check uses `Haulers.Count > 0 || TileInventory.AmountAt(tile, good) > 0`.
+- `EconomyPopulationTests` → 3 tests updated: player larder assertions use `TileInventory.AmountAt(capital, Grain)`;
+  famine test clears starting grain via `TileInventory.Add(capital, Grain, -100f)` instead of setting Stockpile.
+- `EconomyValueTests` → assertions updated for the physical-income model.
+
+**Verified:** build 0/0; headless smoke clean — `Economy: 10 nations`, heartbeat ticks 1–5, all with
+`RunTrade` gone and player income flowing entirely through the physical delivery + market path. (Test suite
+deliberately not run in this session per saved preference; 128 tests were green on the last explicit run.)

@@ -20,7 +20,7 @@ public partial class MapManager : TileMapLayer
 	private Controls _controls; // input hub: map-click + nations-toggle signals
 	private WorkshopSprites _workshopSprites; // spawns a sprite when the player builds a workshop
 	private GainFeedback _gainFeedback; // flashes a fading "-cost" over a tile when a build is paid for
-	private Vector2I? _lastClickedCapital; // M7: last-inspected nation, target of the diplomacy hotkey (N)
+	private Vector2I? _lastRoadDragTile;   // LR1: anchor for drag-to-lay road interpolation (null = no active drag)
 
 	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numNation, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites, GainFeedback gainFeedback)
 	{
@@ -104,8 +104,6 @@ public partial class MapManager : TileMapLayer
 		Vector2I capital;
 		Dictionary<Vector2I, Vector2I> nationsDictionary = vD.nationsDictionary;
 		nationsDictionary.TryGetValue(tileCoords, out capital);
-			// M7: remember the clicked nation (if any) as the diplomacy hotkey (N) target.
-			_lastClickedCapital = (_economy != null && _economy.Nations.ContainsKey(capital)) ? capital : (Vector2I?)null;
 		//CHANGES 23-Jun-26 tiles// tile-based click-inspect: deposit + building on the clicked tile, plus owner
 		if (_economy != null)
 		{
@@ -155,41 +153,26 @@ public partial class MapManager : TileMapLayer
 			}
 		}
 
-		// M7 diplomacy hotkey: press N after clicking a foreign nation to cycle the player's stance toward that
-		// nation (Neutral -> Friendly -> Hostile -> ...). Hostile blockades the route; Friendly drops the import
-		// tariff. Uses a raw key so no project.godot input action is needed.
-		if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.N }) return;
-		if (_economy?.PlayerNation == null || _lastClickedCapital is not Vector2I cap) return;
-		if (cap == _economy.PlayerNation.Capital) return; // no relations with yourself
-
-		DiplomaticStance next = _economy.GetRelation(_economy.PlayerNation.Capital, cap) switch
-		{
-			DiplomaticStance.Neutral  => DiplomaticStance.Friendly,
-			DiplomaticStance.Friendly => DiplomaticStance.Hostile,
-			_                         => DiplomaticStance.Neutral,
-		};
-		_economy.SetPlayerStance(cap, next);
-		GD.Print($"Diplomacy: you are now {next} toward the nation at {cap}");
+		// LR4: the diplomacy hotkey (N) now opens a real panel (DiplomacyPanel), which owns N and the per-nation
+		// Friendly/Neutral/Hostile buttons. The old "click a nation, press N to cycle" stance-toggle lived here;
+		// it's superseded by that panel.
 	}
 
-	// LR1: lay one road tile (from a click or a drag). Charges RailroadCost, paints the cell, and rebuilds the
-	// road routes so a freshly-completed link starts carrying trade next tick. Idempotent + cheap:
-	// TryBuildRailroad no-ops on an existing tile, so dragging back over laid road never double-charges.
+	// LR1: lay one road tile (from a click or a drag). Charges RailroadCost and paints the cell.
+	// Idempotent + cheap: TryBuildRailroad no-ops on an existing tile, so dragging back over laid road
+	// never double-charges.
 	private void TryLayRoad(Vector2I tile)
 	{
 		if (_economy == null || !_economy.TryBuildRailroad(tile)) return;
 		_railroadLayer.SetCell(tile, RailroadTiles.Rails, Vector2I.Zero);
 		_gainFeedback.FlashCost(tile, Economy.RailroadCost);
-		_economy.RebuildRoadRoutes(); // a new tile may have just connected (or extended) the network
 	}
 
-	// LR1: cut one road tile (right-click) — the "sever a road" lever. Rebuilds routes so the trade that
-	// crossed the now-broken link stops.
+	// LR1: cut one road tile (right-click) — the "sever a road" lever.
 	private void RemoveRoad(Vector2I tile)
 	{
 		if (_economy == null || !_economy.RemoveRailroad(tile)) return;
 		_railroadLayer.EraseCell(tile);
-		_economy.RebuildRoadRoutes();
 	}
 
 	private Vector2I MouseTile() => tml.LocalToMap(tml.ToLocal(tml.GetLocalMousePosition()));

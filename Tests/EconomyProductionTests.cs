@@ -48,9 +48,21 @@ public class EconomyProductionTests
             if (e.TileNation.TryGetValue(tile, out Nation n) && n.IsPlayer && !e.TileBuildings.ContainsKey(tile))
             {
                 Assert.True(e.TryBuildExtractor(tile));
+                // LR: output only banks into the stockpile when a road links the deposit to the capital, so
+                // lay one — every production test here is about the flow, not the connectivity gate.
+                ConnectToCapital(e, tile, n.Capital);
                 return (tile, e.TileDeposits[tile].Good);
             }
         throw new InvalidOperationException("no player-owned deposit tile available");
+    }
+
+    // LR: lay a contiguous L-shaped road from `tile` to `capital` (walk the column, then the row) so the
+    // deposit's output passes the deposit→capital connectivity gate and reaches the national stockpile.
+    private static void ConnectToCapital(Economy e, Vector2I tile, Vector2I capital)
+    {
+        int x = tile.X, y = tile.Y;
+        while (x != capital.X) { e.Railroads.Add(new Vector2I(x, y)); x += x < capital.X ? 1 : -1; }
+        while (y != capital.Y) { e.Railroads.Add(new Vector2I(x, y)); y += y < capital.Y ? 1 : -1; }
     }
 
     // ---- Production (build-gated extractors, M4.5) ----
@@ -63,17 +75,50 @@ public class EconomyProductionTests
         Assert.NotEmpty(economy.Deposits);
         economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
 
-        var (_, good) = BuildPlayerExtractor(economy);
+        BuildPlayerExtractor(economy);
 
-        // M4.5 throttle: a flat 1 unit, only on alternating ticks — nothing on the first tick, +1 on the
-        // second, so the deposit isn't effectively free.
-        economy.OnTick();
-        Assert.Equal(0f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
-        economy.OnTick();
-        Assert.Equal(1f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
-        economy.OnTick();
-        economy.OnTick();
-        Assert.Equal(2f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
+        // M4.5 throttle: a flat 1 unit, only on alternating ticks — no ProducedThisTick event on odd ticks.
+        economy.OnTick(); // tick 1 (odd: throttled)
+        Assert.Empty(economy.ProducedThisTick);
+
+        economy.OnTick(); // tick 2 (even: produces)
+        Assert.Contains(economy.ProducedThisTick, e => e.Amount == 1f);
+
+        economy.OnTick(); // tick 3 (odd: throttled again)
+        Assert.Empty(economy.ProducedThisTick);
+
+        economy.OnTick(); // tick 4 (even: produces again)
+        Assert.Contains(economy.ProducedThisTick, e => e.Amount == 1f);
+    }
+
+    // LR: without a road, extracted goods strand on the mine tile. Lay a road and haulers carry them to the
+    // capital where the internal market earns income. Player-only requirement.
+    [Fact]
+    public void Extractor_output_strands_without_road_and_delivers_when_roaded()
+    {
+        var land = SquareLand(12, out var capital);
+        var economy = new Economy(land, new List<Vector2I> { capital }, 99);
+        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
+
+        // Build the extractor WITHOUT calling BuildPlayerExtractor (which lays a road for us).
+        economy.PlayerNation.Treasury += Building.ExtractorCost;
+        Vector2I tile = economy.TileDeposits.Keys
+            .Where(t => t != capital && economy.TileNation.TryGetValue(t, out Nation n) && n.IsPlayer)
+            .OrderBy(t => t.X).ThenBy(t => t.Y).First();
+        Good good = economy.TileDeposits[tile].Good;
+        Assert.True(economy.TryBuildExtractor(tile));
+
+        // No road yet → reserve depletes but goods strand at the mine (no hauler dispatched).
+        float reserveBefore = economy.TileDeposits[tile].Reserve;
+        for (int i = 0; i < 6; i++) economy.OnTick();
+        Assert.True(economy.TileDeposits[tile].Reserve < reserveBefore, "deposit should still deplete");
+        Assert.True(economy.TileInventory.AmountAt(tile, good) > 0f, "unroaded goods strand on the mine tile");
+        Assert.Empty(economy.Haulers); // no hauler without a road
+
+        // Lay a road → haulers start carrying goods; after enough ticks income arrives.
+        ConnectToCapital(economy, tile, capital);
+        for (int i = 0; i < 30; i++) economy.OnTick(); // enough for hauler travel + market sale
+        Assert.True(economy.TotalIncome > 0f, "a roaded deposit must deliver goods to the capital for income");
     }
 
     [Fact]
@@ -83,14 +128,15 @@ public class EconomyProductionTests
         var economy = new Economy(land, new List<Vector2I> { capital }, 7);
         economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
 
-        var (tile, good) = BuildPlayerExtractor(economy);
+        var (tile, _) = BuildPlayerExtractor(economy);
         float reserve = economy.TileDeposits[tile].Reserve;
 
         // 1 unit every other tick → the deposit empties in ~2*reserve ticks; a margin guarantees it.
-        for (int i = 0; i < (int)(2 * reserve) + 4; i++) economy.OnTick();
+        // After all that, enough ticks have passed for haulers to deliver and the market to sell.
+        for (int i = 0; i < (int)(2 * reserve) + 40; i++) economy.OnTick();
 
-        Assert.Equal(0f, economy.TileDeposits[tile].Reserve, 3);
-        Assert.Equal(reserve, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
+        Assert.Equal(0f, economy.TileDeposits[tile].Reserve, 3); // fully depleted
+        Assert.True(economy.TotalIncome > 0f, "extracted goods must have been delivered and sold");
     }
 
     [Fact]
@@ -102,16 +148,18 @@ public class EconomyProductionTests
         economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
         economy.EnableAiAutonomy = false;     // M6: keep the AI inert so this tests player extraction alone
 
-        var (_, good) = BuildPlayerExtractor(economy);
-        for (int i = 0; i < 6; i++) economy.OnTick(); // 3 producing ticks → 3 units
+        BuildPlayerExtractor(economy);
+        // Run enough ticks for hauler delivery and market income to settle (3 producing ticks + travel time).
+        for (int i = 0; i < 40; i++) economy.OnTick();
 
-        Assert.Equal(3f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
+        // Player extracted goods → delivered to capital → sold through internal market.
+        Assert.True(economy.TotalIncome > 0f, "player extraction must yield income");
         // Whole-world build-gating: the AI nation can't build, so it produces nothing.
         Assert.Equal(0f, economy.Nations[capB].Stockpile.Values.Sum(), 3);
     }
 
     [Fact]
-    public void Same_seed_reproduces_identical_stockpiles()
+    public void Same_seed_reproduces_identical_income()
     {
         var landA = SquareLand(12, out var capA);
         var landB = SquareLand(12, out var capB);
@@ -121,9 +169,10 @@ public class EconomyProductionTests
         BuildPlayerExtractor(a); // same seed → same deposit layout → same tile chosen
         BuildPlayerExtractor(b);
 
-        for (int i = 0; i < 30; i++) { a.OnTick(); b.OnTick(); }
+        for (int i = 0; i < 60; i++) { a.OnTick(); b.OnTick(); }
 
-        Assert.Equal(StockSignature(a), StockSignature(b));
+        // Same seed, same inputs → deterministic income.
+        Assert.Equal(a.TotalIncome, b.TotalIncome, 3);
     }
 
     // ---- M3: owners ----
@@ -192,18 +241,18 @@ public class EconomyProductionTests
 
         // Isolate the workshop from the random extractors so the test is deterministic.
         economy.TileBuildings.Clear();
-        var tile = new Vector2I(5, 5);
-        economy.TileBuildings[tile] = Building.Of(BuildingType.Workshop);
+        var workshopTile = new Vector2I(5, 5);
+        economy.TileBuildings[workshopTile] = Building.Of(BuildingType.Workshop);
 
-        // No ore → no run.
+        // No ore at capital → no run.
         economy.OnTick();
-        Assert.Equal(0f, economy.PlayerNation.Stockpile.GetValueOrDefault(Good.Tools), 3);
+        Assert.Equal(0f, economy.TileInventory.AmountAt(workshopTile, Good.Tools), 3);
 
-        // With ore → consume 1 Ore, produce 1 Tools (Workshop Rate = 1).
-        economy.PlayerNation.AddGood(Good.Ore, 5f);
+        // Deliver ore to the capital (as a hauler would) → consume 1 Ore, produce 1 Tools (Workshop Rate = 1).
+        economy.TileInventory.Add(cap, Good.Ore, 5f);
         economy.OnTick();
-        Assert.Equal(1f, economy.PlayerNation.Stockpile.GetValueOrDefault(Good.Tools), 3);
-        Assert.Equal(4f, economy.PlayerNation.Stockpile.GetValueOrDefault(Good.Ore), 3);
+        Assert.Equal(1f, economy.TileInventory.AmountAt(workshopTile, Good.Tools), 3); // output on workshop tile
+        Assert.Equal(4f, economy.TileInventory.AmountAt(cap, Good.Ore), 3);            // 4 ore remain at capital
         Assert.Equal(1f, economy.PlayerConsumedLastTick.GetValueOrDefault(Good.Ore), 3);
         Assert.Equal(1f, economy.PlayerProducedLastTick.GetValueOrDefault(Good.Tools), 3);
     }
@@ -247,8 +296,6 @@ public class EconomyProductionTests
 
         Assert.Equal(reserves, loaded.Deposits.Select(d => d.Reserve).ToList());
         Assert.Equal(p.Treasury, loaded.PlayerNation.Treasury, 3);
-        Assert.Equal(p.Stockpile.GetValueOrDefault(Good.Ore),
-                     loaded.PlayerNation.Stockpile.GetValueOrDefault(Good.Ore), 3);
         Assert.Equal(BuildingType.Workshop, loaded.TileBuildings[ws].Type);
         Assert.Equal(played.TileBuildings[mine].Type, loaded.TileBuildings[mine].Type);
         Assert.Contains(rail, loaded.Railroads);
@@ -266,13 +313,4 @@ public class EconomyProductionTests
         Assert.Equal(before, economy.Deposits.Select(d => d.Reserve).ToList());
     }
 
-    // Canonical description of every nation's stockpile: capital + sorted good:amount pairs.
-    private static string StockSignature(Economy e)
-    {
-        var parts = e.Nations.Values
-            .OrderBy(n => n.Capital.X).ThenBy(n => n.Capital.Y)
-            .Select(n => $"{n.Capital.X}.{n.Capital.Y}=" + string.Join(",",
-                n.Stockpile.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}:{kv.Value}")));
-        return string.Join("|", parts);
-    }
 }

@@ -1,6 +1,9 @@
 # Logistics Rework — Milestone Roadmap (player-built network + physical goods)
 
-> **Status: in progress — LR0 + LR1 code-complete (2026-06-28); LR1 windowed check pending, then LR2.** A focused arc that **supersedes L1's M6 (logistics) and the
+> **Status: LR0–LR5 + LR-cleanup ALL COMPLETE (2026-06-29).** All milestones committed; abstract layer
+> (`RunTrade` + `Nation.Stockpile` for player) retired; M-era economy tests rewritten; headless smoke clean.
+> Windowed alive checks are pending user walkthrough (see checklist at bottom of each milestone detail). A focused arc that
+> **supersedes L1's M6 (logistics) and the
 > trade parts of M7**. It realizes the already-locked vision in
 > [`../Documentation/TradeDesign.md`](../Documentation/TradeDesign.md) +
 > [`../Documentation/EconomyDesign.md`](../Documentation/EconomyDesign.md). Sibling of
@@ -86,11 +89,12 @@ changing it.
 | M | Name | What it adds | Alive check | Status |
 |---|------|--------------|-------------|--------|
 | **LR0** | Prep / cleanup | Rename every residual `province` → `nation` (code + `main.tscn` node + `GetNode` paths); rebind diplomacy hotkey **B → N**. No behavior change. | Game runs identically; no `province` identifiers remain; diplomacy is on **N**; 99 tests still green | ✅ (2026-06-28) |
-| **LR1** | Player roads + connectivity (replace MST) | Remove MST gen + backbone; ergonomic road building (click-drag, cheap); Core `RoadGraph` (BFS); re-gate the *existing* trade on real road connectivity | Build a road; the auto-backbone is gone; two nations trade **only** when road-connected; cut a road → trade stops / region isolates | 🟡 code-complete (2026-06-28); windowed check pending |
-| **LR2** | Physical goods + auto-haulers | Tile inventories (producers emit onto their tile); A* path + dispatcher + hauler entities carrying loads over time; visualizer renders them; instant arbitrage removed | Watch a hauler carry ore from a mine along your road; severing the road strands the goods; nothing teleports anymore | ⬜ |
-| **LR3** | Internal market & income (remove Sell) | Capital settlement sink — pops **buy** delivered goods → income; remove `SellAll` + Sell buttons; migrate national-pool reads to per-tile + capital inventory | Income comes from supplying your own pops (no Sell button); an undelivered good = unsold + a visible shortage | ⬜ |
-| **LR4** | Export + tariffs/chokepoints + diplomacy UI | Haul to a connected neighbor → sell abroad at their price; tariffs/tolls at crossings you control (own the tile a flow crosses → tax or cut); first-class diplomacy panel | Export to a connected neighbor earns gold; a tariff/chokepoint taxes or cuts a crossing; diplomacy panel sets export terms | ⬜ |
-| **LR5** | Polish | Vehicle types (truck/train/ship by terrain/road tier); recurring upkeep sinks; balance pass | Play ~10 min: build network, watch the economy flow, money stays meaningful (upkeep bites) | ⬜ |
+| **LR1** | Player roads + connectivity (replace MST) | Remove MST gen + backbone; ergonomic road building (click-drag, cheap); Core `RoadGraph` (BFS); re-gate the *existing* trade on real road connectivity | Build a road; the auto-backbone is gone; two nations trade **only** when road-connected; cut a road → trade stops / region isolates | ✅ (2026-06-28) |
+| **LR2** | Physical goods + auto-haulers | Tile inventories (producers emit onto their tile); road path + dispatcher + hauler entities carrying loads over time; `Haulers` renderer draws them + at-rest piles. (`RunTrade` **kept transitionally** like LR1, not removed — retired in LR-cleanup.) | Watch a hauler carry ore from a mine along your road; severing the road strands the goods; nothing teleports anymore | ✅ (2026-06-28) |
+| **LR3** | Internal market & income (remove Sell) | `Economy.RunInternalMarket` — pops **buy** the goods haulers delivered to the capital → income (demand-capped; surplus → export); `SellAll` + Sell buttons removed. (National-pool reads kept transitionally, not migrated — see LR-cleanup.) | Income comes from supplying your own pops (no Sell button); an undelivered good earns nothing + strands | ✅ (2026-06-28) |
+| **LR4** | Export + tariffs/chokepoints + diplomacy UI | `Economy.RunExport` — capital surplus sold to road-connected neighbours at their price, less importer tariff + transport; gated by stance (Hostile blockade / Neutral tariff / Friendly free). First-class `DiplomacyPanel` (press **N**) sets terms. (Tariff = importer's barrier; per-tile crossing tolls deferred.) | Export to a connected neighbor earns gold; Hostile blockades it; Friendly nets more than tariffed Neutral; panel sets terms | ✅ (2026-06-28) |
+| **LR5** | Polish | `Economy.RunUpkeep` — recurring upkeep per building + per road tile (the gold sink), charged on the tax interval. (Vehicle-type variety deferred as future polish.) | Play ~10 min: build network, watch goods flow, money stays meaningful (upkeep bites) | ✅ (2026-06-28) |
+| **LR-cleanup** | Retire abstract layer | `RunTrade` + `Nation.Stockpile` mirror writes removed; player uses `TileInventory` at capital as sole goods source; M-era economy tests rewritten. | Game earns income only from physical deliveries; no abstract arbitrage | ✅ (2026-06-29) |
 
 ---
 
@@ -125,7 +129,11 @@ changing it.
 - **Adds.** Tile inventories (producers emit onto their own tile). A* shortest-path + an auto-dispatcher
   (match surplus source → nearest connected demand) + **hauler entities** that travel the path over time
   carrying a load and unload at the sink. The visualizer renders haulers. Transport cost/time = path length;
-  throughput = haulers. Remove the instant `RunTrade` arbitrage.
+  throughput = haulers. ~~Remove the instant `RunTrade` arbitrage.~~ **As built (2026-06-28): `RunTrade` is
+  KEPT transitionally** (same call LR1 made — keeping the abstract layer so the suite stays green and the game
+  stays balanced). Production *mirrors* into both `Nation.Stockpile` (abstract) and `TileInventory` (physical);
+  the haulers are the visible physical truth. `RunTrade` + the mirror are retired in **LR3/LR4**, once income
+  reads deliveries instead of the pool.
 - **Key files.** **new** `Systems/Core/Logistics/{TileInventory,Pathfinder,Dispatcher}.cs` (+ tests), **new**
   `Systems/Map/Haulers.cs` (render/movement), `Economy.OnTick` (emit to tiles, not the pool).
 - **Dependencies.** LR1. **Alive check.** A hauler visibly carries ore from a mine to a destination along your

@@ -31,6 +31,15 @@ public class EconomyBuildGateTests
             .OrderBy(t => t.X).ThenBy(t => t.Y)
             .First();
 
+    // LR: lay a contiguous L-shaped road from `tile` to `capital` so the deposit's output passes the
+    // deposit→capital connectivity gate and banks into the national stockpile.
+    private static void ConnectToCapital(Economy e, Vector2I tile, Vector2I capital)
+    {
+        int x = tile.X, y = tile.Y;
+        while (x != capital.X) { e.Railroads.Add(new Vector2I(x, y)); x += x < capital.X ? 1 : -1; }
+        while (y != capital.Y) { e.Railroads.Add(new Vector2I(x, y)); y += y < capital.Y ? 1 : -1; }
+    }
+
     // ---- Sub-rung 2: build-gated extraction ----
 
     [Fact]
@@ -39,10 +48,11 @@ public class EconomyBuildGateTests
         var economy = PlayerEconomy(out _);
         Assert.NotEmpty(economy.Deposits);
         Assert.Empty(economy.TileBuildings); // M4.5: no auto-placed extractors
-
         for (int i = 0; i < 10; i++) economy.OnTick();
 
-        Assert.Equal(0f, economy.Nations.Values.Sum(n => n.Stockpile.Values.Sum()), 3);
+        // No buildings → no production → nothing in TileInventory, no haulers, no income.
+        Assert.Equal(0f, economy.TotalIncome, 3);
+        Assert.Empty(economy.Haulers);
     }
 
     [Fact]
@@ -50,22 +60,25 @@ public class EconomyBuildGateTests
     {
         var economy = PlayerEconomy(out _);
         economy.PlayerNation.Treasury = 1000f;
-        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
+        economy.PlayerNation.Population = 0f;   // isolate extraction from the M5 pop demand sink
         Vector2I tile = FirstDepositTile(economy);
         Good good = economy.TileDeposits[tile].Good;
         float before = economy.PlayerNation.Treasury;
 
         Assert.True(economy.TryBuildExtractor(tile));
+        ConnectToCapital(economy, tile, economy.PlayerNation.Capital); // road the deposit so the hauler can move
 
         // Mine on an Ore deposit, Farm on a Grain deposit — auto-picked from the deposit.
         BuildingType expected = good == Good.Ore ? BuildingType.Mine : BuildingType.Farm;
         Assert.Equal(expected, economy.TileBuildings[tile].Type);
         Assert.Equal(before - Building.ExtractorCost, economy.PlayerNation.Treasury, 3);
 
-        // Flow starts: nothing until the first producing tick (every other tick), then +1.
-        economy.OnTick();
-        economy.OnTick();
-        Assert.Equal(1f, economy.PlayerNation.Stockpile.GetValueOrDefault(good), 3);
+        // Flow starts: nothing until the first producing tick (every other tick), then a hauler is dispatched.
+        economy.OnTick(); // tick 1 (odd: throttled — no output)
+        Assert.Empty(economy.ProducedThisTick);
+        economy.OnTick(); // tick 2 (even: produces → hauler dispatched)
+        Assert.True(economy.Haulers.Count > 0 || economy.TileInventory.AmountAt(tile, good) > 0f,
+            "producing tick should have dispatched a hauler or left goods on the mine tile");
     }
 
     [Fact]

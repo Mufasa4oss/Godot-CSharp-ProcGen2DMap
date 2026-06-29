@@ -19,10 +19,8 @@ public partial class TradeNetworkVisualizer : Node2D
         public Color Color;
     }
     private readonly List<Packet> _packets = new();
-    private const float PacketSpeed   = 0.6f; // fraction of edge per second
-    private const float PacketRadius  = 24f;
-    private const float RoadBaseWidth = 5f;
-    private const float RoadCapWidth  = 5f;   // extra width per unit of capacity
+    private const float PacketSpeed  = 0.6f; // fraction of edge per second
+    private const float PacketRadius = 24f;
 
     private static Color GoodColor(Good good) => good switch
     {
@@ -68,28 +66,7 @@ public partial class TradeNetworkVisualizer : Node2D
     {
         if (_economy == null || _tml == null) return;
 
-        // Roads: one line per route, colored by congestion and widened by capacity.
-        foreach (TradeRoute route in _economy.TradeRoutes)
-        {
-            Vector2 a = _tml.MapToLocal(route.A.Capital);
-            Vector2 b = _tml.MapToLocal(route.B.Capital);
-            float cap = Mathf.Max(route.CapacityLastTick, 0f);
-            float congestion = cap > 0.01f ? Mathf.Clamp(route.FlowLastTick / cap, 0f, 1f) : 0f;
-
-            bool blocked = route.Blocked ||
-                _economy.GetRelation(route.A.Capital, route.B.Capital) == DiplomaticStance.Hostile;
-            Color color;
-            if (blocked)
-                color = new Color(0.85f, 0.15f, 0.15f, 0.9f);                                   // cut — red
-            else if (route.FlowLastTick <= 0f)
-                color = new Color(0.35f, 0.35f, 0.40f, 0.6f);                                   // idle — dim gray
-            else
-                color = new Color(0.30f, 0.90f, 0.40f).Lerp(new Color(1f, 0.55f, 0.10f), congestion); // green→orange
-
-            DrawLine(a, b, color, RoadBaseWidth + RoadCapWidth * cap);
-        }
-
-        // Packets: real trades in motion.
+        // Packets: real export trades in motion (capital → capital).
         foreach (Packet p in _packets)
             DrawCircle(p.Start.Lerp(p.End, p.Progress), PacketRadius, p.Color);
     }

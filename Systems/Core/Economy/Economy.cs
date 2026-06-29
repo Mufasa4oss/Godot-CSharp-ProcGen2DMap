@@ -21,6 +21,14 @@ public class Economy
     // track you bought survives save/load, and used to dedupe so you're never charged twice for a tile.
     public HashSet<Vector2I> Railroads { get; } = new();
 
+    // LR2+: the physical goods layer. Production drops the player's output onto the producing tile;
+    // the Dispatcher auto-dispatches haulers that carry surplus along the road network to the capital.
+    // Goods have a location and a travel time — nothing teleports. Not serialized (in-flight haulers and
+    // at-rest piles regenerate from production on load).
+    public TileInventory TileInventory { get; } = new();
+    public Dispatcher Dispatcher { get; } = new();
+    public IReadOnlyList<Hauler> Haulers => Dispatcher.Haulers;
+
     // The player's nation (Owner 0 = the first placed capital). Cached; ownership doesn't change in L1.
     public Nation PlayerNation { get; private set; }
 
@@ -33,6 +41,14 @@ public class Economy
     public Dictionary<Good, float> PlayerProducedLastTick { get; } = new();
     public Dictionary<Good, float> PlayerConsumedLastTick { get; } = new();
 
+    // LR3: per-good amount the internal market bought from the capital's delivered goods last tick (the home
+    // economy "selling to your pops"). Drives the HUD's live income readout. Recomputed each OnTick.
+    public Dictionary<Good, float> InternalSoldLastTick { get; } = new();
+
+    // LR4: per-good amount EXPORTED from the capital to road-connected neighbours last tick (the foreign half of
+    // income). Recomputed each OnTick.
+    public Dictionary<Good, float> ExportSoldLastTick { get; } = new();
+
     // M5: the player's *desired* demand per good last tick (pops want grain, workshops want ore) — the full
     // appetite, NOT just what was satisfied, so unmet demand still pushes the price up. Drives the dynamic
     // price multiplier; recomputed each OnTick.
@@ -42,13 +58,6 @@ public class Economy
     // source building (M4.5 sub-rung 4 — see where & why a gain happened). Core stays engine-free: this
     // is plain data (Vector2I only, no signals) that the view drains after each OnTick. Recomputed each tick.
     public readonly List<(Vector2I Tile, Good Good, float Amount)> ProducedThisTick = new();
-
-    // M6: the trade backbone (the MST connecting capitals) as TradeRoute objects, handed in from the Godot
-    // layer via SetTradeGraph. Empty until set, so Core stays testable with an injected graph.
-    private readonly List<TradeRoute> _tradeRoutes = new();
-
-    // Read-only view of the trade backbone for the Godot layer (draw routes; color by flow/capacity).
-    public IReadOnlyList<TradeRoute> TradeRoutes => _tradeRoutes;
 
     // M6 phase 3: pairwise diplomatic stance between nations, keyed by an ordered capital pair so a<->b is one
     // entry. Defaults to Neutral. Live political state — not serialized yet (resets to Neutral on load).
@@ -81,6 +90,15 @@ public class Economy
     // other tick), so "feed the pops vs. sell the grain" is a real allocation choice from the first build.
     private const float StartingPopulation  = 5f;
     private const float GrainPerPopPerTick   = 0.1f;
+
+    // Pop dynamics: every nation opens with StartingGrain in the larder. Each tick the population responds to the
+    // grain stockpile's *trajectory*, not its level — a genuine surplus (the larder ended the tick higher than it
+    // started) grows pops by PopGrowthRate; an empty larder (famine) shrinks them by PopStarveRate; a larder that
+    // merely holds steady or draws down but isn't yet empty leaves the population unchanged. Both rates compound
+    // per tick. Placeholders, tuned later.
+    private const float StartingGrain = 10f;
+    private const float PopGrowthRate = 0.01f; // +1%/tick when grain is in surplus (stockpile rose this tick)
+    private const float PopStarveRate = 0.05f; // -5%/tick when grain hit zero (famine)
     // M5: a flat poll tax on the player's pops — TaxPerInterval gold into the treasury every
     // TaxIntervalTicks ticks, a steady government income on top of selling goods (placeholders, M7). Public
     // so the HUD can label the cadence.
@@ -93,24 +111,29 @@ public class Economy
     // in stock ⇒ scarce ⇒ price climbs toward the ceiling, more ⇒ glut ⇒ price sinks toward the floor.
     private const float PriceBufferTicks = 5f;
 
-    // M6 trade tunables (M7 placeholders). Goods auto-arbitrage cheaper-nation → dearer-nation along the MST:
-    // one unit per route/good/tick, but only when the price gap clears the distance-scaled transport cost —
-    // so near nations trade on small gaps and far nations only on big ones (geography starts to matter).
+    // LR4 export tunables. One unit exported per neighbour/good/tick; transport cost scales with road path
+    // length, keeping geography meaningful (far buyers cost more to reach than near ones).
     private const float TradeUnit        = 1f;
     private const float TradeCostPerTile = 0.02f;
 
-    // M6 phase 2: per-route throughput. A route moves at most BaseRouteCapacity units/tick (the always-present
-    // MST backbone) plus CapacityPerRail for every player railroad tile laid along it — so building track on a
-    // route is a "connector road" that raises its capacity. A low base makes capacity bite: a sole supplier
-    // can't flood a distant market until the player invests in the road. Capacity is derived live from the
-    // (persisted) Railroads set, so it needs no extra save state.
-    private const float BaseRouteCapacity = 1f;
-    private const float CapacityPerRail   = 0.5f;
-
     // M6 phase 3: a Neutral importer levies this tariff (fraction of a good's base price) on imports — a pure
     // barrier that raises the price gap a trade must clear (it suppresses imports / denies a rival export
-    // income). Friendly = 0 (free trade); Hostile = full blockade (handled in RunTrade).
+    // income). Friendly = 0 (free trade); Hostile = full blockade (handled in RunExport).
     private const float NeutralTariffRate = 0.25f;
+
+    // LR3 internal market: the player's pops/economy BUY goods the haulers physically delivered to the capital,
+    // paying the treasury — the new income faucet that replaces the manual Sell button. Demand is capped per
+    // tick (grain scales with pops; raws/refined have a flat industrial+luxury appetite), so income is bounded
+    // by what you actually produce and DELIVER (no roads ⇒ goods strand at the mine ⇒ no market income, only
+    // tax). Whatever the internal market doesn't absorb stays in the capital inventory for export (LR4).
+    private const float InternalRawDemandPerTick = 1f; // ore/tools the home market soaks up each tick
+
+    // LR5 upkeep (the missing gold sink). Charged every TaxIntervalTicks: each building a nation owns costs
+    // UpkeepPerBuilding, and every road tile the player laid costs UpkeepPerRoad. Sized well under the poll tax
+    // (TaxPerInterval) so a lean operation still nets positive, but a sprawling one stops being free — the
+    // pressure that keeps gold meaningful. Public so the HUD can explain the cadence.
+    public const float UpkeepPerBuilding = 5f;
+    public const float UpkeepPerRoad     = 0.5f;
 
     // M4: each good's *base* sale value. Tools is worth more than the Ore a Workshop consumes to make it
     // (1 Ore → 1 Tools), so refining Ore→Tools and selling Tools out-earns selling raw Ore — the payoff that
@@ -154,6 +177,10 @@ public class Economy
     // M5: lifetime gold collected from the pop tax — a display stat (the real state is the Treasury it
     // feeds, which the save persists), so it isn't serialized and resets on load like IncomeByGood.
     public float TaxCollected { get; private set; }
+
+    // LR5: the upkeep the player paid at the last interval — a HUD stat so the gold sink is legible (resets on
+    // load like the other display stats).
+    public float UpkeepPaidLastInterval { get; private set; }
     public float TotalIncome
     {
         get
@@ -192,6 +219,16 @@ public class Economy
                 n.Population = StartingPopulation; // M6: every nation has pops (demand + tax base)
                 if (n.IsPlayer) PlayerNation = n;
             }
+
+        // Every nation opens with a small grain larder so its pops don't starve before the first farm feeds them.
+        // The player's larder is physical grain at their capital (TileInventory); AI use the abstract Stockpile.
+        foreach (Nation nation in Nations.Values)
+        {
+            if (nation.IsPlayer)
+                TileInventory.Add(nation.Capital, Good.Grain, StartingGrain);
+            else
+                nation.AddGood(Good.Grain, StartingGrain);
+        }
 
         // 2. Tile-bound deposits, deterministic from a sub-seed derived from the one world seed.
         PlaceDeposits(nationsDictionary, worldSeed);
@@ -318,23 +355,9 @@ public class Economy
         return true;
     }
 
-    // M4: sell the player's entire stockpile of `good` at its (local) price, moving the proceeds into the
-    // treasury. Returns the revenue (0 if there's nothing to sell). This is the manual "dump to the abstract
-    // market" action, kept alongside M6's automatic inter-nation trade (the auto/manual split is M7's call).
-    public float SellAll(Good good)
-    {
-        Nation nation = PlayerNation;
-        if (nation == null) return 0f;
-
-        nation.Stockpile.TryGetValue(good, out float amount);
-        if (amount <= 0f) return 0f;
-
-        float revenue = amount * PriceOf(good);
-        nation.AddGood(good, -amount);
-        nation.Treasury += revenue;
-        AddFlow(IncomeByGood, good, revenue);
-        return revenue;
-    }
+    // LR3: the manual Sell action (M4's `SellAll`) is GONE. Income now comes from the internal market
+    // (RunInternalMarket) buying the goods your haulers physically deliver to the capital — you earn by
+    // supplying your population, not by dumping a stockpile into an abstract market with a button.
 
     // M3: advance the tick and run production in two passes so workshops can consume what extractors
     // produced the same tick. M5 adds a third pass — pops consume grain — and recomputes scarcity prices.
@@ -345,8 +368,19 @@ public class Economy
         PlayerProducedLastTick.Clear();
         PlayerConsumedLastTick.Clear();
         PlayerDemandLastTick.Clear();
+        InternalSoldLastTick.Clear();
+        ExportSoldLastTick.Clear();
         ProducedThisTick.Clear();
         TradedThisTick.Clear();
+
+        // Pop dynamics: snapshot each nation's grain BEFORE this tick's production/eating/trade so the population
+        // pass at the end can tell a real surplus (the larder rose) from a drawdown (it fell).
+        // Player grain lives in TileInventory at their capital; AI grain lives in their Stockpile.
+        var grainAtTickStart = new Dictionary<Nation, float>();
+        foreach (Nation nation in Nations.Values)
+            grainAtTickStart[nation] = nation.IsPlayer
+                ? TileInventory.AmountAt(nation.Capital, Good.Grain)
+                : nation.Stockpile.GetValueOrDefault(Good.Grain);
 
         // M6: the AI develop their territory — each affordable AI nation builds one extractor per tick on its
         // own deposits. Runs before production so a fresh extractor can produce this tick.
@@ -365,12 +399,20 @@ public class Economy
             if (deposit.Reserve <= 0f) continue;
 
             float amount = System.Math.Min(1f, deposit.Reserve);
-            deposit.Reserve -= amount;
+            deposit.Reserve -= amount; // extraction is physical — the reserve depletes whether or not a road exists
             Nation nation = TileNation[tile];
             Good good = building.Outputs[0];
-            nation.AddGood(good, amount);
-            ProducedThisTick.Add((tile, good, amount));
-            if (nation.IsPlayer) AddFlow(PlayerProducedLastTick, good, amount);
+            ProducedThisTick.Add((tile, good, amount)); // the "+N" flash fires at the mine regardless (it was dug up)
+
+            if (nation.IsPlayer)
+            {
+                TileInventory.Add(tile, good, amount); // physical goods drop on the mine/farm tile
+                AddFlow(PlayerProducedLastTick, good, amount);
+            }
+            else
+            {
+                nation.AddGood(good, amount); // AI use the abstract Stockpile pool
+            }
         }
 
         // Pass 2 — workshops (have inputs): consume inputs and produce outputs from/into the owning
@@ -389,48 +431,58 @@ public class Economy
             bool canRun = true;
             foreach (Good input in building.Inputs)
             {
-                nation.Stockpile.TryGetValue(input, out float have);
+                float have = nation.IsPlayer
+                    ? TileInventory.AmountAt(nation.Capital, input)
+                    : nation.Stockpile.GetValueOrDefault(input);
                 if (have < building.Rate) { canRun = false; break; }
             }
             if (!canRun) continue;
 
             foreach (Good input in building.Inputs)
             {
-                nation.AddGood(input, -building.Rate);
-                if (nation.IsPlayer) AddFlow(PlayerConsumedLastTick, input, building.Rate);
+                if (nation.IsPlayer)
+                {
+                    TileInventory.Add(nation.Capital, input, -building.Rate); // consume delivered inputs
+                    AddFlow(PlayerConsumedLastTick, input, building.Rate);
+                }
+                else
+                {
+                    nation.AddGood(input, -building.Rate);
+                }
             }
             foreach (Good output in building.Outputs)
             {
-                nation.AddGood(output, building.Rate);
                 ProducedThisTick.Add((tile, output, building.Rate));
-                if (nation.IsPlayer) AddFlow(PlayerProducedLastTick, output, building.Rate);
+                if (nation.IsPlayer)
+                {
+                    AddFlow(PlayerProducedLastTick, output, building.Rate);
+                    TileInventory.Add(tile, output, building.Rate); // physical output on the workshop tile
+                }
+                else
+                {
+                    nation.AddGood(output, building.Rate);
+                }
             }
         }
 
-        // Pass 3 — demand sink (M5/M6): every nation's pops eat grain. They *want* the full Population-scaled
-        // amount (recorded as demand so an unmet appetite still drives grain's price up), but can only eat
-        // what's on hand — the stockpile floors at 0. An empty grain stockpile + a high grain price is the
-        // visible "shortage" a nation solves by building more farms (or importing). No starvation penalty yet.
+        // Pass 3 — demand sink (M5/M6): AI nations' pops eat grain from their Stockpile. The player's pops
+        // are handled by RunInternalMarket (they "buy" grain physically delivered to the capital).
         foreach (Nation nation in Nations.Values)
         {
             if (nation.Population <= 0f) continue;
-            float desired = nation.Population * GrainPerPopPerTick;
+            if (nation.IsPlayer) continue; // player grain handled by RunInternalMarket + TileInventory
 
+            float desired = nation.Population * GrainPerPopPerTick;
             nation.Stockpile.TryGetValue(Good.Grain, out float onHand);
             float eaten = System.Math.Min(desired, onHand);
             if (eaten > 0f) nation.AddGood(Good.Grain, -eaten);
-
-            if (nation.IsPlayer) // the HUD shows the player's grain appetite + drain
-            {
-                AddFlow(PlayerDemandLastTick, Good.Grain, desired);
-                if (eaten > 0f) AddFlow(PlayerConsumedLastTick, Good.Grain, eaten);
-            }
         }
 
         // M5/M6: poll tax — a steady government income from each nation's pops, TaxPerInterval gold every
         // TaxIntervalTicks ticks (no pops ⇒ no tax). Lets a nation earn without selling, so an early grain
         // shortage isn't a dead end (save up for a farm / imports). The AI's tax is what funds their building.
         if (tickCount % TaxIntervalTicks == 0)
+        {
             foreach (Nation nation in Nations.Values)
             {
                 if (nation.Population <= 0f) continue;
@@ -439,12 +491,144 @@ public class Economy
                 if (nation.IsPlayer) TaxCollected += TaxPerInterval; // a player HUD stat
             }
 
+            // LR5: recurring UPKEEP — the gold sink, charged on the same interval so income and outgo pulse
+            // together. Each nation pays for what it operates (its buildings; the player also pays per road
+            // tile), so an over-built network bleeds the treasury instead of gold only ever climbing.
+            RunUpkeep();
+        }
+
         // M6: recompute every nation's per-good scarcity price from its own local demand + stock.
         RecomputePriceMultipliers();
 
-        // M6: goods auto-arbitrage between connected nations (cheaper → dearer) along the trade backbone.
-        RunTrade();
+        // LR2+: the physical layer. Roll the trucks already on the road (delivering arrivals, stalling any whose
+        // road got cut), then dispatch fresh ones to drain this tick's new surplus toward the player's capital.
+        // Advance-before-dispatch so a good delivered to the capital this tick isn't instantly re-shipped.
+        Dispatcher.Advance(TileInventory, Railroads);
+        Dispatcher.Dispatch(TileInventory, Railroads, SinkOf);
+
+        // LR3: the internal market — your pops buy the goods the haulers just delivered to your capital, paying
+        // the treasury. This is the income faucet that replaced the manual Sell button: earn by *supplying your
+        // population*, which requires physically delivering (build the road or the goods strand at the mine).
+        RunInternalMarket();
+
+        // LR4: export — whatever the home market left over at the capital is sold to road-connected neighbours
+        // at their price, gated by diplomacy (Hostile blockades, Neutral tariffs, Friendly free-trades) and
+        // docked by distance. Income layered: home first, foreign second.
+        RunExport();
+
+        // Pop dynamics: with all of this tick's grain movement settled, grow/shrink each nation's population from
+        // how its larder fared — surplus grows, famine shrinks, holding-or-drawing-down stays put.
+        UpdatePopulations(grainAtTickStart);
         return tickCount;
+    }
+
+    // Grow or shrink each nation's population from its grain trajectory this tick (see the pop-dynamics tunables).
+    // A famine (grain ended at zero) shrinks it by PopStarveRate; a surplus (the grain stockpile ended higher than
+    // it started) grows it by PopGrowthRate; a steady or merely-drawing-down-but-non-empty larder leaves it
+    // unchanged. Applies to every nation with pops, matching the grain demand sink (which also ignores AI autonomy).
+    private void UpdatePopulations(Dictionary<Nation, float> grainAtTickStart)
+    {
+        foreach (Nation nation in Nations.Values)
+        {
+            if (nation.Population <= 0f) continue;
+            float grainNow = nation.IsPlayer
+                ? TileInventory.AmountAt(nation.Capital, Good.Grain)
+                : nation.Stockpile.GetValueOrDefault(Good.Grain);
+            float grainStart = grainAtTickStart.GetValueOrDefault(nation);
+
+            if (grainNow <= 0f)
+                nation.Population *= 1f - PopStarveRate;   // famine: the larder is empty
+            else if (grainNow > grainStart)
+                nation.Population *= 1f + PopGrowthRate;    // surplus: the larder grew this tick
+            // else steady: holding, or drawing down but not yet empty
+        }
+    }
+
+    // LR3: sell the player's delivered (capital-inventory) goods to the home market for treasury income, capped
+    // per good by local demand so income tracks production+delivery rather than a button press. Anything beyond
+    // the home appetite stays in the capital inventory as export surplus (LR4). Priced at the player nation's
+    // live scarcity price, and attributed per good (the HUD's income breakdown). Player-only — the AI keep the
+    // abstract Stockpile economy.
+    private void RunInternalMarket()
+    {
+        Nation p = PlayerNation;
+        if (p == null) return;
+        Vector2I capital = p.Capital;
+
+        // Grain demand replaces Pass 3 for the player: pops "buy" grain here instead of eating from Stockpile.
+        if (p.Population > 0f)
+            AddFlow(PlayerDemandLastTick, Good.Grain, InternalDemandOf(Good.Grain));
+
+        foreach (Good good in BasePrice.Keys)
+        {
+            float delivered = TileInventory.AmountAt(capital, good);
+            if (delivered <= 0f) continue;
+
+            float demand = InternalDemandOf(good);
+            float sold = System.Math.Min(delivered, demand);
+            if (sold <= 0f) continue;
+
+            float revenue = sold * PriceOf(p, good);
+            TileInventory.Add(capital, good, -sold);
+            p.Treasury += revenue;
+            AddFlow(IncomeByGood, good, revenue);
+            AddFlow(InternalSoldLastTick, good, sold);
+            if (good == Good.Grain) AddFlow(PlayerConsumedLastTick, Good.Grain, sold);
+        }
+    }
+
+    // LR3: how much of a good the player's home market will buy per tick. Grain is food (scales with pops);
+    // ore + tools are a flat industrial/luxury appetite. Sized small so a real surplus spills over to export.
+    private float InternalDemandOf(Good good) =>
+        good == Good.Grain ? PlayerNation.Population * GrainPerPopPerTick : InternalRawDemandPerTick;
+
+    // LR4: export the player's leftover delivered surplus (sitting in the capital inventory after the home
+    // market) to road-connected neighbour nations. Each connected, non-blockading neighbour buys up to one unit
+    // per good per tick at *their* price, less the importer's tariff and the road transport cost — so a friendly
+    // near neighbour is the best customer and a hostile one buys nothing (the blockade lever). A real gold+goods
+    // transfer (the buyer pays from its treasury and receives the good, so its own prices respond), drained from
+    // the same capital surplus the home market didn't take. Player-only; deterministic (neighbours sorted).
+    private void RunExport()
+    {
+        Nation seller = PlayerNation;
+        if (seller == null) return;
+        Vector2I cap = seller.Capital;
+
+        var graph = new RoadGraph(Railroads);
+        var buyers = new List<Nation>();
+        foreach (Nation n in Nations.Values)
+            if (!n.IsPlayer && graph.AreConnected(cap, n.Capital)) buyers.Add(n);
+        if (buyers.Count == 0) return;
+        buyers.Sort((a, b) => a.Capital.X != b.Capital.X ? a.Capital.X - b.Capital.X : a.Capital.Y - b.Capital.Y);
+
+        foreach (Good good in BasePrice.Keys)
+            foreach (Nation buyer in buyers)
+            {
+                if (TileInventory.AmountAt(cap, good) < TradeUnit) break; // capital's surplus of this good is spent
+                if (GetRelation(cap, buyer.Capital) == DiplomaticStance.Hostile) continue; // blockade — no sale
+
+                float transport = TradeCostPerTile * graph.ShortestPathLength(cap, buyer.Capital);
+                float tariff = TariffRate(buyer, seller) * BasePrice.GetValueOrDefault(good); // importer's barrier
+                float proceeds = PriceOf(buyer, good) - tariff - transport;                   // what the player nets
+                if (proceeds <= 0f) continue;               // the gap doesn't clear costs — not worth exporting
+                if (buyer.Treasury < proceeds) continue;    // the buyer can't pay
+
+                TileInventory.Add(cap, good, -TradeUnit);
+                buyer.AddGood(good, TradeUnit);             // they receive it (their scarcity price responds)
+                seller.Treasury += proceeds;
+                buyer.Treasury  -= proceeds;
+                AddFlow(IncomeByGood, good, proceeds);
+                AddFlow(ExportSoldLastTick, good, TradeUnit);
+                TradedThisTick.Add((cap, buyer.Capital, good, TradeUnit, proceeds));
+            }
+    }
+
+    // Where a producer tile's goods should be hauled — its owning nation's capital. Player tiles only
+    // (the player owns the road network); AI tiles return null (their goods live in Nation.Stockpile).
+    private Vector2I? SinkOf(Vector2I tile)
+    {
+        if (!TileNation.TryGetValue(tile, out Nation owner) || !owner.IsPlayer) return null;
+        return owner.Capital;
     }
 
     // M6: set every nation's per-good price multiplier from its own scarcity — a good is balanced
@@ -461,7 +645,9 @@ public class Economy
                 float d = demand.GetValueOrDefault(good);
                 if (d <= 0f) { nation.PriceMultiplier[good] = 1f; continue; }
 
-                float stock = nation.Stockpile.GetValueOrDefault(good);
+                float stock = nation.IsPlayer
+                    ? TileInventory.AmountAt(nation.Capital, good)
+                    : nation.Stockpile.GetValueOrDefault(good);
                 float ratio = (d * PriceBufferTicks) / System.Math.Max(stock, 1f);
                 nation.PriceMultiplier[good] = System.Math.Clamp(ratio, MinPriceMultiplier, MaxPriceMultiplier);
             }
@@ -481,6 +667,31 @@ public class Economy
             foreach (Good input in building.Inputs) AddFlow(demand, input, building.Rate);
         }
         return demand;
+    }
+
+    // LR5: charge each nation upkeep on what it operates — UpkeepPerBuilding per building it owns, plus (for the
+    // player) UpkeepPerRoad per road tile laid. Treasury floors at 0 (no debt/bankruptcy in L1 — a broke nation
+    // simply can't spend). Mirrors the tax rule: inert AI (autonomy off) don't pay. Deterministic.
+    private void RunUpkeep()
+    {
+        // Count each nation's buildings once.
+        var buildingCount = new Dictionary<Nation, int>();
+        foreach (Vector2I tile in TileBuildings.Keys)
+            if (TileNation.TryGetValue(tile, out Nation owner))
+                buildingCount[owner] = buildingCount.GetValueOrDefault(owner) + 1;
+
+        foreach (Nation nation in Nations.Values)
+        {
+            if (!nation.IsPlayer && !EnableAiAutonomy) continue; // inert AI don't pay (mirrors tax)
+
+            float upkeep = buildingCount.GetValueOrDefault(nation) * UpkeepPerBuilding;
+            if (nation.IsPlayer) upkeep += Railroads.Count * UpkeepPerRoad; // the road network is the player's
+            if (upkeep <= 0f) continue;
+
+            nation.Treasury -= upkeep;
+            if (nation.Treasury < 0f) nation.Treasury = 0f;
+            if (nation.IsPlayer) UpkeepPaidLastInterval = upkeep;
+        }
     }
 
     // M6: each AI nation develops one extractor per tick on its own deposits when it can afford one. Greedy +
@@ -507,66 +718,6 @@ public class Economy
         }
     }
 
-    // M6: hand in the trade backbone — the MST over capitals (edge endpoints are indices into `capitals`),
-    // stored as nation pairs + distance so OnTick's trade pass can route goods. Called from the Godot layer
-    // after worldgen; tests inject a small graph directly. Safe to call before/again — it rebuilds the list.
-    public void SetTradeGraph(List<PrimsAlgorithmSimple.Edge> mstEdges, List<Vector2I> capitals,
-        List<HashSet<Vector2I>> corridors = null)
-    {
-        _tradeRoutes.Clear();
-        if (mstEdges == null || capitals == null) return;
-        for (int i = 0; i < mstEdges.Count; i++)
-        {
-            var edge = mstEdges[i];
-            if (edge.From < 0 || edge.From >= capitals.Count || edge.To < 0 || edge.To >= capitals.Count) continue;
-            if (Nations.TryGetValue(capitals[edge.From], out Nation a) &&
-                Nations.TryGetValue(capitals[edge.To], out Nation b))
-            {
-                HashSet<Vector2I> corridor = (corridors != null && i < corridors.Count) ? corridors[i] : null;
-                _tradeRoutes.Add(new TradeRoute(a, b, (float)edge.Weight, corridor));
-            }
-        }
-    }
-
-    // LR1: rebuild the trade backbone from the player's ROAD network instead of the old MST. Two capitals get
-    // a trade route exactly when a contiguous path of road tiles connects them (RoadGraph BFS), and the
-    // route's Distance is that path's length so a longer haul costs more transport. This replaces the auto-MST
-    // entirely: a fresh game has no roads and therefore no inter-nation trade until the player lays one, and
-    // pulling a tile out of a link drops the route (the "cut a road" alive check). Call after any road change
-    // (build / remove / load) and once after worldgen. Deterministic — capitals sorted — so saves/replays
-    // match. RunTrade still consumes _tradeRoutes unchanged; only their *source* moved from MST to roads.
-    public void RebuildRoadRoutes()
-    {
-        _tradeRoutes.Clear();
-        var graph = new RoadGraph(Railroads);
-        var capitals = Nations.Keys.OrderBy(c => c.X).ThenBy(c => c.Y).ToList();
-        for (int i = 0; i < capitals.Count; i++)
-            for (int j = i + 1; j < capitals.Count; j++)
-            {
-                int distance = graph.ShortestPathLength(capitals[i], capitals[j]);
-                if (distance < 0) continue; // not road-connected ⇒ no route ⇒ no trade between them
-                _tradeRoutes.Add(new TradeRoute(Nations[capitals[i]], Nations[capitals[j]], distance, null));
-            }
-    }
-
-    // M6 phase 2/3: find the route linking two capitals (undirected), or null.
-    public TradeRoute FindRoute(Vector2I capA, Vector2I capB)
-    {
-        foreach (TradeRoute r in _tradeRoutes)
-            if (r.Connects(capA, capB)) return r;
-        return null;
-    }
-
-    // M6 phase 2: cut (or restore) a route. A blocked route carries nothing, so the far side's imported good
-    // runs dry and its price diverges (the "cut a road" alive check). Phase 3 also blockades via hostility.
-    public bool SetRouteBlocked(Vector2I capA, Vector2I capB, bool blocked)
-    {
-        TradeRoute r = FindRoute(capA, capB);
-        if (r == null) return false;
-        r.Blocked = blocked;
-        return true;
-    }
-
     // M6 phase 3 — diplomacy. Order a capital pair so (a,b) and (b,a) map to one relations entry.
     private static (Vector2I, Vector2I) RelationKey(Vector2I a, Vector2I b) =>
         (a.X < b.X || (a.X == b.X && a.Y <= b.Y)) ? (a, b) : (b, a);
@@ -584,57 +735,8 @@ public class Economy
         if (PlayerNation != null) SetRelation(PlayerNation.Capital, otherCapital, stance);
     }
 
-    // M6: along each route, every good flows one unit from the cheaper nation to the dearer one when the price
-    // gap clears the route's transport cost and the buyer can pay — a pure gold+goods transfer (no gold
-    // created), so a sole supplier's income is drained straight from its customers' treasuries. Pops have
-    // already eaten this tick (Pass 3), so only post-consumption surplus is exported. Deterministic: routes in
-    // MST order, goods in enum order.
-    private void RunTrade()
-    {
-        foreach (TradeRoute route in _tradeRoutes)
-        {
-            route.FlowLastTick = 0f;
-            // M6 phase 2: the route's per-tick throughput (backbone + player connector rails; 0 if blocked).
-            float capacity = route.CapacityWith(Railroads, BaseRouteCapacity, CapacityPerRail);
-            route.CapacityLastTick = capacity; // surfaced for the view's congestion coloring
-            if (capacity < TradeUnit) continue; // cut, or below one unit of throughput
-
-            Nation a = route.A, b = route.B;
-            if (GetRelation(a.Capital, b.Capital) == DiplomaticStance.Hostile) continue; // blockade — no trade
-            float transportCost = TradeCostPerTile * route.Distance;
-            foreach (Good good in BasePrice.Keys)
-            {
-                if (route.FlowLastTick + TradeUnit > capacity) break; // route saturated this tick
-
-                float priceA = PriceOf(a, good);
-                float priceB = PriceOf(b, good);
-                Nation seller = priceA <= priceB ? a : b;
-                Nation buyer  = priceA <= priceB ? b : a;
-
-                // M6 phase 3: the buyer's import tariff (from its stance toward the seller) — a pure barrier that
-                // raises the price gap a trade must clear. Not a gold transfer: the buyer nation IS its own
-                // government, so taxing its own imports would be a wash (and minting it would create money).
-                float tariff = TariffRate(buyer, seller) * BasePrice.GetValueOrDefault(good);
-
-                if (PriceOf(buyer, good) - PriceOf(seller, good) <= transportCost + tariff) continue; // gap too small
-                if (seller.Stockpile.GetValueOrDefault(good) < TradeUnit) continue;                   // nothing to ship
-
-                float unitPrice = (PriceOf(seller, good) + PriceOf(buyer, good)) / 2f;                // split the surplus
-                float cost = TradeUnit * unitPrice;
-                if (buyer.Treasury < cost) continue;                                                  // can't afford it
-
-                seller.AddGood(good, -TradeUnit);
-                buyer.AddGood(good, TradeUnit);
-                seller.Treasury += cost;
-                buyer.Treasury  -= cost;
-                route.FlowLastTick += TradeUnit;
-                TradedThisTick.Add((seller.Capital, buyer.Capital, good, TradeUnit, unitPrice));
-            }
-        }
-    }
-
-    // M6 phase 3: the buyer's import tariff toward the seller, a fraction of base price (Friendly free-trades,
-    // Neutral levies NeutralTariffRate; Hostile never reaches here — it's blockaded in RunTrade).
+    // LR4: the buyer's import tariff toward the seller, a fraction of base price (Friendly free-trades,
+    // Neutral levies NeutralTariffRate; Hostile never reaches here — blockaded in RunExport).
     private float TariffRate(Nation buyer, Nation seller) => GetRelation(buyer.Capital, seller.Capital) switch
     {
         DiplomaticStance.Friendly => 0f,

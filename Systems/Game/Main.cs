@@ -97,19 +97,28 @@ public partial class Main : Node2D
 
 		PopupSceneLoad();
 
-		// LR1: no auto-MST backbone anymore. The trade network IS whatever roads the player has laid — build
-		// the routes from real road connectivity (RoadGraph BFS over the economy's road tiles), recomputed on
-		// every road change in MapManager. A new game starts with no roads (so no inter-nation trade) until the
-		// player builds one; a loaded game restored its paid-for roads above, so this picks them straight up.
-		gameContext.economy.RebuildRoadRoutes();
 		DrawPlayerRoads();
 
 		TradeNetworkVisualizer tradeVisualizer = new TradeNetworkVisualizer();
 		AddChild(tradeVisualizer);
 		tradeVisualizer.Initialize(gameContext.economy, tml);
-		// M7: each tick, hand the visualizer that tick's real inter-nation trades so it animates actual flows
-		// (and recolors roads by congestion from the live TradeRoutes).
+		// Hand the visualizer each tick's export trades so it animates real flows.
 		gameContext.tickManager.TickProcessed += () => tradeVisualizer.OnTradesProcessed(gameContext.economy.TradedThisTick);
+
+		// LR2: the physical goods layer — auto-haulers crawling the player's roads carrying produced goods to the
+		// capital, plus at-rest piles where goods are stranded (no road) or delivered (the capital warehouse). It
+		// reads the economy's live Dispatcher/TileInventory every frame, so no per-tick hook is needed.
+		Haulers haulers = new Haulers();
+		AddChild(haulers);
+		haulers.Initialize(gameContext.economy, tml);
+
+		// LR4: the diplomacy panel (press N) — sets per-nation export terms. On a CanvasLayer so it sits in
+		// screen space, independent of the camera/zoom.
+		var diplomacyLayer = new CanvasLayer();
+		AddChild(diplomacyLayer);
+		DiplomacyPanel diplomacyPanel = new DiplomacyPanel();
+		diplomacyLayer.AddChild(diplomacyPanel);
+		diplomacyPanel.Initialize(gameContext.economy);
 
 		//CHANGES 23-Jun-26 tiles// deposit dots overlay (gray=ore, neon-yellow=grain)
 		DepositOverlay depositOverlay = new DepositOverlay();

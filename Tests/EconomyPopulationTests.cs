@@ -85,6 +85,7 @@ public class EconomyPopulationTests
         // A grain deposit + farm at Farm, roaded to the capital so haulers carry grain there.
         economy.TileDeposits[Farm]  = new Deposit(Good.Grain, new HashSet<Vector2I> { Farm }, 100f, 1f);
         economy.TileBuildings[Farm] = Building.Of(BuildingType.Farm);
+        economy.TileBuildings[Capital] = Building.Of(BuildingType.Granary); // LR6: gates the farm's output
         economy.Railroads.Add(Link);
 
         float startPop = economy.PlayerNation.Population;

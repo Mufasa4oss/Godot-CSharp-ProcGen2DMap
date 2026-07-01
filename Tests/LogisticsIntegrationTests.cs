@@ -29,6 +29,7 @@ public class LogisticsIntegrationTests
 
         economy.TileDeposits[Mine] = new Deposit(Good.Ore, new HashSet<Vector2I> { Mine }, 100f, 1f);
         economy.TileBuildings[Mine] = Building.Of(BuildingType.Mine);
+        economy.TileBuildings[Capital] = Building.Of(BuildingType.Warehouse); // LR6: gates the mine's output
         return economy;
     }
 

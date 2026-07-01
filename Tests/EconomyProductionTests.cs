@@ -41,6 +41,9 @@ public class EconomyProductionTests
     // M4.5: extraction is build-gated, so production tests must build an extractor first. Picks the
     // lowest-coordinate player-owned deposit tile (deterministic from the seed) and builds the matching
     // Mine/Farm; bumps treasury so cost never blocks the test. Returns the tile and the good it yields.
+    // LR6: also builds the matching Granary/Warehouse (on the capital tile) since Pass 1 won't run an
+    // extractor without one — every test using this helper is about the extraction/haul/sell flow, not the
+    // storage-gate itself (see EconomyBuildGateTests for that).
     private static (Vector2I tile, Good good) BuildPlayerExtractor(Economy e)
     {
         e.PlayerNation.Treasury += Building.ExtractorCost;
@@ -51,9 +54,29 @@ public class EconomyProductionTests
                 // LR: output only banks into the stockpile when a road links the deposit to the capital, so
                 // lay one — every production test here is about the flow, not the connectivity gate.
                 ConnectToCapital(e, tile, n.Capital);
+                BuildMatchingStorage(e, e.TileDeposits[tile].Good);
                 return (tile, e.TileDeposits[tile].Good);
             }
         throw new InvalidOperationException("no player-owned deposit tile available");
+    }
+
+    // LR6: build enough Granary/Warehouse capacity to gate a good's extraction wide open, on empty owned
+    // tiles — NOT assumed to be the capital, since the deposit tile BuildPlayerExtractor picked can itself
+    // be the capital (the lowest-coordinate owned deposit, which the capital tile can be). Two storage
+    // buildings (2 * StorageCapacityPerBuilding = 600) comfortably exceeds any single deposit's max
+    // possible reserve (MaxSize 5 * ReservePerTile 100 = 500), so tests that run a deposit fully dry (e.g.
+    // Reserve_depletes_and_caps_extractor_output) aren't capped by storage instead. Tops up treasury first
+    // so the storage cost never blocks it.
+    private static void BuildMatchingStorage(Economy e, Good good)
+    {
+        BuildingType storageType = good == Good.Ore ? BuildingType.Warehouse : BuildingType.Granary;
+        for (int i = 0; i < 2; i++)
+        {
+            Vector2I tile = e.PlayerNation.Tiles.First(t => !e.TileBuildings.ContainsKey(t));
+            e.PlayerNation.Treasury += Building.Of(storageType).Cost;
+            bool built = storageType == BuildingType.Granary ? e.TryBuildGranary(tile) : e.TryBuildWarehouse(tile);
+            Assert.True(built, "test setup: matching storage building must place somewhere in the nation's territory");
+        }
     }
 
     // LR: lay a contiguous L-shaped road from `tile` to `capital` (walk the column, then the row) so the
@@ -107,6 +130,7 @@ public class EconomyProductionTests
             .OrderBy(t => t.X).ThenBy(t => t.Y).First();
         Good good = economy.TileDeposits[tile].Good;
         Assert.True(economy.TryBuildExtractor(tile));
+        BuildMatchingStorage(economy, good); // LR6: the gate needs it before Pass 1 will run this extractor
 
         // No road yet → reserve depletes but goods strand at the mine (no hauler dispatched).
         float reserveBefore = economy.TileDeposits[tile].Reserve;

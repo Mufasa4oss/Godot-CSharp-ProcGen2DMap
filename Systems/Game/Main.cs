@@ -19,14 +19,15 @@ public partial class Main : Node2D
 	Controls controls; // input hub
 	WorkshopSprites workshopSprites; // animated sprites for player-built workshops
 	GainFeedback gainFeedback; // fading "+N" flashes over producing buildings (M4.5 sub-rung 4)
+	StorageOverlay storageOverlay; // LR6: marker for player/AI-built Granary/Warehouse tiles
 
 	// Carries a loaded save across ReloadCurrentScene(): static lives on the type, so it survives the
 	// scene teardown; _Ready reads it to start worldgen from the saved seed, then clears it.
 	public static GameData PendingLoad;
 
 	// --- Map config ---
-	public static int MapSizeX = 256;
-	public static int MapSizeY = 128;
+	public static int MapSizeX = 1024;
+	public static int MapSizeY = 1024;
 	public static event Action<Texture2D> MapTextureCreated;
 
 	public Main() { }
@@ -86,6 +87,9 @@ public partial class Main : Node2D
 
 		// Spawn sprites for any workshops now in the economy (loaded games; none on a new game).
 		workshopSprites.Initialize();
+		// LR6: same idea for any Granary/Warehouse already built (loaded games, or an AI that beat the
+		// player to one) — must run after ApplySavedState so a loaded storage building actually shows up.
+		storageOverlay.Initialize();
 
 		// "+N" gain flashes: after each tick, drain the economy's production events onto their tiles.
 		// (gainFeedback itself is created in CreateObjs so MapManager can flash "-cost" on a build.)
@@ -190,7 +194,21 @@ public partial class Main : Node2D
 		AddChild(gainFeedback);
 		gainFeedback.SetContext(tml);
 
-		MapManager mapManager = new MapManager(vD, tml, Nht, numNations, tickManager, economy, controls, workshopSprites, gainFeedback);
+		// LR6: storage building marker + export panel — both are MapManager dependencies (it calls
+		// AddStorage/Show on player clicks), so created here rather than alongside the other overlays in
+		// _Ready(), mirroring the workshopSprites/gainFeedback split above. The marker's actual population
+		// scan happens later, in _Ready() after ApplySavedState (see storageOverlay.Initialize()).
+		storageOverlay = new StorageOverlay();
+		AddChild(storageOverlay);
+		storageOverlay.SetContext(economy, tml);
+
+		var exportLayer = new CanvasLayer();
+		AddChild(exportLayer);
+		var exportPanel = new ExportPanel();
+		exportLayer.AddChild(exportPanel);
+		exportPanel.Initialize(economy);
+
+		MapManager mapManager = new MapManager(vD, tml, Nht, numNations, tickManager, economy, controls, workshopSprites, gainFeedback, storageOverlay, exportPanel);
 		AddChild(mapManager);
 		//END CHANGES 23-Jun-26 tiles//
 

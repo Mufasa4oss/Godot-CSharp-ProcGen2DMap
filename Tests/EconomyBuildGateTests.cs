@@ -40,6 +40,19 @@ public class EconomyBuildGateTests
         while (y != capital.Y) { e.Railroads.Add(new Vector2I(x, y)); y += y < capital.Y ? 1 : -1; }
     }
 
+    // LR6: a Farm/Mine can't produce without its matching Granary/Warehouse built somewhere in the nation's
+    // territory — build it on any empty owned tile (NOT assumed to be the capital, since the caller's
+    // extractor can itself sit on the lowest-coordinate owned deposit, which the capital tile can be),
+    // topping up treasury first so the storage cost never blocks it or muddies a caller's own assertions.
+    private static void BuildMatchingStorage(Economy e, Good good)
+    {
+        BuildingType storageType = good == Good.Ore ? BuildingType.Warehouse : BuildingType.Granary;
+        Vector2I tile = e.PlayerNation.Tiles.First(t => !e.TileBuildings.ContainsKey(t));
+        e.PlayerNation.Treasury += Building.Of(storageType).Cost;
+        bool built = storageType == BuildingType.Granary ? e.TryBuildGranary(tile) : e.TryBuildWarehouse(tile);
+        Assert.True(built, "test setup: matching storage building must place somewhere in the nation's territory");
+    }
+
     // ---- Sub-rung 2: build-gated extraction ----
 
     [Fact]
@@ -72,6 +85,8 @@ public class EconomyBuildGateTests
         BuildingType expected = good == Good.Ore ? BuildingType.Mine : BuildingType.Farm;
         Assert.Equal(expected, economy.TileBuildings[tile].Type);
         Assert.Equal(before - Building.ExtractorCost, economy.PlayerNation.Treasury, 3);
+
+        BuildMatchingStorage(economy, good); // LR6: the gate needs it before Pass 1 will run this extractor
 
         // Flow starts: nothing until the first producing tick (every other tick), then a hauler is dispatched.
         economy.OnTick(); // tick 1 (odd: throttled — no output)
@@ -142,6 +157,7 @@ public class EconomyBuildGateTests
         Vector2I tile = FirstDepositTile(economy);
         Good good = economy.TileDeposits[tile].Good;
         economy.TryBuildExtractor(tile);
+        BuildMatchingStorage(economy, good); // LR6: the gate needs it before Pass 1 will run this extractor
 
         economy.OnTick(); // odd tick: throttled off → no gain
         Assert.Empty(economy.ProducedThisTick);

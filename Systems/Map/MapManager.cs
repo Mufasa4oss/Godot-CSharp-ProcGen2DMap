@@ -20,9 +20,11 @@ public partial class MapManager : TileMapLayer
 	private Controls _controls; // input hub: map-click + nations-toggle signals
 	private WorkshopSprites _workshopSprites; // spawns a sprite when the player builds a workshop
 	private GainFeedback _gainFeedback; // flashes a fading "-cost" over a tile when a build is paid for
+	private StorageOverlay _storageOverlay; // LR6: draws a marker when the player builds a Granary/Warehouse
+	private ExportPanel _exportPanel; // LR6: opens when the player clicks an owned Granary/Warehouse
 	private Vector2I? _lastRoadDragTile;   // LR1: anchor for drag-to-lay road interpolation (null = no active drag)
 
-	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numNation, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites, GainFeedback gainFeedback)
+	public MapManager(VoronoiDiagram vD, TileMapLayer tml, NoiseTexture2D nht, int numNation, TickManager tm, Economy economy, Controls controls, WorkshopSprites workshopSprites, GainFeedback gainFeedback, StorageOverlay storageOverlay, ExportPanel exportPanel)
 	{
 		this.vD = vD;
 		this.tml = tml;
@@ -33,6 +35,8 @@ public partial class MapManager : TileMapLayer
 		this._controls = controls;
 		this._workshopSprites = workshopSprites;
 		this._gainFeedback = gainFeedback;
+		this._storageOverlay = storageOverlay;
+		this._exportPanel = exportPanel;
 	}
 	public override void _Ready()
 	{
@@ -89,12 +93,55 @@ public partial class MapManager : TileMapLayer
 			return;
 		}
 
+		// LR6: Granary/Warehouse are pure storage — no deposit needed, just an owned empty land tile, same
+		// affordability/ownership rules as Workshop above.
+		if (_uiManager.IsGranaryBuildMode)
+		{
+			if (_economy != null && _economy.TryBuildGranary(tileCoords))
+			{
+				_storageOverlay.AddStorage(tileCoords, BuildingType.Granary);
+				_gainFeedback.FlashCost(tileCoords, _economy.TileBuildings[tileCoords].Cost);
+				GD.Print($"Built Granary at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
+			}
+			else
+			{
+				GD.Print($"Can't build Granary at {tileCoords} (must be your own empty land tile, and affordable)");
+			}
+			return;
+		}
+
+		if (_uiManager.IsWarehouseBuildMode)
+		{
+			if (_economy != null && _economy.TryBuildWarehouse(tileCoords))
+			{
+				_storageOverlay.AddStorage(tileCoords, BuildingType.Warehouse);
+				_gainFeedback.FlashCost(tileCoords, _economy.TileBuildings[tileCoords].Cost);
+				GD.Print($"Built Warehouse at {tileCoords} | treasury={_economy.PlayerNation.Treasury}");
+			}
+			else
+			{
+				GD.Print($"Can't build Warehouse at {tileCoords} (must be your own empty land tile, and affordable)");
+			}
+			return;
+		}
+
 		// M4.5/LR1: laying road costs treasury (TryBuildRailroad charges + dedupes), a real economic spend.
 		// A single click lays one tile here; holding the button and dragging lays a continuous run (see
 		// _UnhandledInput). Both go through TryLayRoad so they behave identically.
 		if (_uiManager.IsRailroadBuildMode)
 		{
 			TryLayRoad(tileCoords);
+			return;
+		}
+
+		// LR6: clicking an owned Granary/Warehouse (outside build mode) opens the export panel for its
+		// good instead of the usual inspect+highlight — the control panel for that resource lives on the
+		// building itself.
+		if (_economy != null && _economy.TileBuildings.TryGetValue(tileCoords, out Building clickedBuilding) &&
+			clickedBuilding.StorageGood.HasValue &&
+			_economy.TileNation.TryGetValue(tileCoords, out Nation clickedOwner) && clickedOwner.IsPlayer)
+		{
+			_exportPanel.Show(clickedBuilding.StorageGood.Value);
 			return;
 		}
 

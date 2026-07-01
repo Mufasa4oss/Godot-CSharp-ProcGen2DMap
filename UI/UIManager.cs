@@ -9,6 +9,7 @@ public partial class UIManager : Control
 {
 	private Label _treasuryLabel, _incomeLabel, _popLabel, _grainLabel, _oreLabel, _toolsLabel;
 	private Button _buildRailroadButton, _buildWorkshopButton, _buildExtractorButton;
+	private Button _buildGranaryButton, _buildWarehouseButton;   // LR6: storage buildings
 	private Button[] _buildButtons;                              // the mutually-exclusive build toggles
 
 	private PanelContainer _panel;                               // the draggable HUD panel
@@ -21,6 +22,8 @@ public partial class UIManager : Control
 	public bool IsRailroadBuildMode { get; private set; } = false;
 	public bool IsWorkshopBuildMode { get; private set; } = false;
 	public bool IsExtractorBuildMode { get; private set; } = false;
+	public bool IsGranaryBuildMode { get; private set; } = false;
+	public bool IsWarehouseBuildMode { get; private set; } = false;
 
 	private Economy _economy;
 	public void SetEconomy(Economy economy)
@@ -55,12 +58,20 @@ public partial class UIManager : Control
 		_buildRailroadButton = GetNode<Button>("PanelContainer/VBox/RailroadButton");
 		_buildWorkshopButton = GetNode<Button>("PanelContainer/VBox/WorkshopButton");
 		_buildExtractorButton = GetNode<Button>("PanelContainer/VBox/ExtractorButton");
-		_buildButtons = new[] { _buildRailroadButton, _buildWorkshopButton, _buildExtractorButton };
+		_buildGranaryButton = GetNode<Button>("PanelContainer/VBox/GranaryButton");
+		_buildWarehouseButton = GetNode<Button>("PanelContainer/VBox/WarehouseButton");
+		_buildButtons = new[]
+		{
+			_buildRailroadButton, _buildWorkshopButton, _buildExtractorButton, _buildGranaryButton, _buildWarehouseButton
+		};
 		// Label each build action with its treasury cost, sourced from the cost constants so the caption can
 		// never drift from what TryBuild actually charges (the queued "show the cost on every buildable").
 		_buildRailroadButton.Text  = $"Build Railroad ({Economy.RailroadCost:0})";
 		_buildWorkshopButton.Text  = $"Build Workshop ({Building.WorkshopCost:0})";
 		_buildExtractorButton.Text = $"Build Extractor ({Building.ExtractorCost:0})";
+		// LR6: Granary (Grain) / Warehouse (Ore) — required before the matching extractor can produce at all.
+		_buildGranaryButton.Text   = $"Build Granary ({Building.Of(BuildingType.Granary).Cost:0})";
+		_buildWarehouseButton.Text = $"Build Warehouse ({Building.Of(BuildingType.Warehouse).Cost:0})";
 		foreach (Button b in _buildButtons)
 		{
 			Button self = b; // capture per-iteration for the closure
@@ -80,9 +91,11 @@ public partial class UIManager : Control
 			foreach (Button b in _buildButtons)
 				if (b != active) b.ButtonPressed = false;
 
-		IsRailroadBuildMode      = _buildRailroadButton.ButtonPressed;
+		IsRailroadBuildMode  = _buildRailroadButton.ButtonPressed;
 		IsWorkshopBuildMode  = _buildWorkshopButton.ButtonPressed;
 		IsExtractorBuildMode = _buildExtractorButton.ButtonPressed;
+		IsGranaryBuildMode   = _buildGranaryButton.ButtonPressed;
+		IsWarehouseBuildMode = _buildWarehouseButton.ButtonPressed;
 
 		foreach (Button b in _buildButtons)
 			b.Modulate = b.ButtonPressed ? new Color(0.5f, 1f, 0.5f) : Colors.White;

@@ -114,3 +114,15 @@ layout_mode = 2
 toggle_mode = true
 keep_pressed_outside = true
 text = "Build Extractor"
+
+[node name="GranaryButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746077]
+layout_mode = 2
+toggle_mode = true
+keep_pressed_outside = true
+text = "Build Granary"
+
+[node name="WarehouseButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746078]
+layout_mode = 2
+toggle_mode = true
+keep_pressed_outside = true
+text = "Build Warehouse"

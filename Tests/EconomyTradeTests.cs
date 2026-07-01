@@ -40,7 +40,10 @@ public class EconomyTradeTests
         Nation ai = economy.Nations[capB];
         Assert.Contains(economy.TileDeposits.Keys, t => economy.TileNation.GetValueOrDefault(t) == ai); // AI has a deposit
 
-        for (int i = 0; i < 40; i++) economy.OnTick();
+        // LR6: the AI now has to save up for a Granary/Warehouse (75g) before an extractor can produce at
+        // all — on top of the extractor itself (50g) — so bootstrapping from the 50g starting treasury takes
+        // a few tax intervals (50g/10 ticks) longer than the old build-and-go. 150 ticks gives ample margin.
+        for (int i = 0; i < 150; i++) economy.OnTick();
 
         // The AI auto-built at least one extractor on its own land and accumulated a stockpile from it.
         Assert.Contains(economy.TileBuildings.Keys, t => economy.TileNation.GetValueOrDefault(t) == ai);

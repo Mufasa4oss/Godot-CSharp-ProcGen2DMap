@@ -307,6 +307,14 @@ public class Economy
     // Player builds a Workshop (refines Ore→Tools) on any owned, empty land tile they can afford.
     public bool TryBuildWorkshop(Vector2I tile) => TryBuild(tile, Building.Of(BuildingType.Workshop), PlayerNation);
 
+    // LR6: a Granary/Warehouse is a pure storage building — no recipe, just a per-good capacity that gates
+    // and caps the nation's raw extraction (see the Pass 1 capacity check in OnTick). Built on any owned,
+    // empty land tile, same as a Workshop — it doesn't need to sit on a deposit or next to an extractor.
+    public bool TryBuildGranary(Vector2I tile) => TryBuildGranary(tile, PlayerNation);
+    public bool TryBuildWarehouse(Vector2I tile) => TryBuildWarehouse(tile, PlayerNation);
+    private bool TryBuildGranary(Vector2I tile, Nation builder) => TryBuild(tile, Building.Of(BuildingType.Granary), builder);
+    private bool TryBuildWarehouse(Vector2I tile, Nation builder) => TryBuild(tile, Building.Of(BuildingType.Warehouse), builder);
+
     // M4.5: lay one railroad tile for RailroadCost — charges the player's treasury and records the tile,
     // so track is a real spend like the gathering buildings. No-op (false) if the tile is already track or
     // the player can't afford it. Track may cross any territory (it connects nations), so no ownership check.
@@ -390,18 +398,25 @@ public class Economy
         // throttled to keep raw goods scarce (M4.5 sub-rung 3) — a flat 1 unit, and only on alternating
         // ticks — so a deposit isn't effectively free and the one build choice bites. The deposit's
         // reserve still depletes by what's pulled; its Rate is intentionally bypassed for raws.
+        // LR6: also gated on nation-wide storage (Granary/Warehouse) — no storage building of the matching
+        // type anywhere in the nation's territory means the extractor can't operate at all, and once stored
+        // goods reach that storage's capacity, extraction pauses (the reserve is left untouched, not wasted).
         bool rawTickActive = tickCount % 2 == 0;
         foreach (var (tile, building) in TileBuildings)
         {
-            if (building.Inputs.Length != 0) continue;
+            if (building.Inputs.Length != 0 || building.Outputs.Length == 0) continue; // skip workshops + storage buildings
             if (!rawTickActive) continue;
             if (!TileDeposits.TryGetValue(tile, out Deposit deposit)) continue;
             if (deposit.Reserve <= 0f) continue;
 
-            float amount = System.Math.Min(1f, deposit.Reserve);
-            deposit.Reserve -= amount; // extraction is physical — the reserve depletes whether or not a road exists
             Nation nation = TileNation[tile];
             Good good = building.Outputs[0];
+            float capacity = StorageCapacityFor(nation, good);
+            if (capacity <= 0f) continue;                        // no matching storage building built yet
+            if (TotalStored(nation, good) >= capacity) continue; // storage full — pause, reserve stays put
+
+            float amount = System.Math.Min(1f, deposit.Reserve);
+            deposit.Reserve -= amount; // extraction is physical — the reserve depletes whether or not a road exists
             ProducedThisTick.Add((tile, good, amount)); // the "+N" flash fires at the mine regardless (it was dug up)
 
             if (nation.IsPlayer)
@@ -595,32 +610,79 @@ public class Economy
         Vector2I cap = seller.Capital;
 
         var graph = new RoadGraph(Railroads);
-        var buyers = new List<Nation>();
-        foreach (Nation n in Nations.Values)
-            if (!n.IsPlayer && graph.AreConnected(cap, n.Capital)) buyers.Add(n);
+        List<Nation> buyers = ConnectedBuyers(cap, graph);
         if (buyers.Count == 0) return;
-        buyers.Sort((a, b) => a.Capital.X != b.Capital.X ? a.Capital.X - b.Capital.X : a.Capital.Y - b.Capital.Y);
 
         foreach (Good good in BasePrice.Keys)
             foreach (Nation buyer in buyers)
             {
                 if (TileInventory.AmountAt(cap, good) < TradeUnit) break; // capital's surplus of this good is spent
-                if (GetRelation(cap, buyer.Capital) == DiplomaticStance.Hostile) continue; // blockade — no sale
-
-                float transport = TradeCostPerTile * graph.ShortestPathLength(cap, buyer.Capital);
-                float tariff = TariffRate(buyer, seller) * BasePrice.GetValueOrDefault(good); // importer's barrier
-                float proceeds = PriceOf(buyer, good) - tariff - transport;                   // what the player nets
-                if (proceeds <= 0f) continue;               // the gap doesn't clear costs — not worth exporting
-                if (buyer.Treasury < proceeds) continue;    // the buyer can't pay
-
-                TileInventory.Add(cap, good, -TradeUnit);
-                buyer.AddGood(good, TradeUnit);             // they receive it (their scarcity price responds)
-                seller.Treasury += proceeds;
-                buyer.Treasury  -= proceeds;
-                AddFlow(IncomeByGood, good, proceeds);
-                AddFlow(ExportSoldLastTick, good, TradeUnit);
-                TradedThisTick.Add((cap, buyer.Capital, good, TradeUnit, proceeds));
+                TrySellUnitTo(seller, cap, buyer, graph, good);
             }
+    }
+
+    // LR6: the player's manual bulk export — clicking a built Granary/Warehouse lets them pick an amount to
+    // sell instead of waiting for the automatic TradeUnit trickle. Reuses the same buyer-routing, tariff,
+    // transport, and blockade math as RunExport (via TrySellUnitTo/ConnectedBuyers), except a single buyer
+    // can absorb several units if they can afford it, instead of at most one per tick. Returns how much was
+    // actually sold — the request is clamped to what's physically at the capital and to buyer affordability.
+    public float TryExportManual(Good good, float amount)
+    {
+        Nation seller = PlayerNation;
+        if (seller == null || amount <= 0f) return 0f;
+        Vector2I cap = seller.Capital;
+
+        var graph = new RoadGraph(Railroads);
+        List<Nation> buyers = ConnectedBuyers(cap, graph);
+        if (buyers.Count == 0) return 0f;
+
+        float requested = System.Math.Min(amount, TileInventory.AmountAt(cap, good));
+        float sold = 0f;
+        foreach (Nation buyer in buyers)
+        {
+            while (sold < requested && TileInventory.AmountAt(cap, good) >= TradeUnit)
+            {
+                if (TrySellUnitTo(seller, cap, buyer, graph, good) == null) break; // this buyer's tapped out — next
+                sold += TradeUnit;
+            }
+            if (sold >= requested) break;
+        }
+        return sold;
+    }
+
+    // The road-connected AI nations `seller`'s capital can export to, sorted deterministically (lowest
+    // capital coordinate first) so both RunExport and TryExportManual visit buyers in the same order.
+    private List<Nation> ConnectedBuyers(Vector2I sellerCapital, RoadGraph graph)
+    {
+        var buyers = new List<Nation>();
+        foreach (Nation n in Nations.Values)
+            if (!n.IsPlayer && graph.AreConnected(sellerCapital, n.Capital)) buyers.Add(n);
+        buyers.Sort((a, b) => a.Capital.X != b.Capital.X ? a.Capital.X - b.Capital.X : a.Capital.Y - b.Capital.Y);
+        return buyers;
+    }
+
+    // Shared per-unit sale math for RunExport (automatic) and TryExportManual (player bulk export): try to
+    // sell exactly TradeUnit of `good` from the capital to `buyer` at the buyer's price minus tariff and
+    // transport. Performs the transfer and returns the proceeds on success; null (no-op) if this buyer
+    // can't take it right now — blockaded, the margin doesn't clear costs, or they can't afford it.
+    private float? TrySellUnitTo(Nation seller, Vector2I cap, Nation buyer, RoadGraph graph, Good good)
+    {
+        if (GetRelation(cap, buyer.Capital) == DiplomaticStance.Hostile) return null; // blockade — no sale
+
+        float transport = TradeCostPerTile * graph.ShortestPathLength(cap, buyer.Capital);
+        float tariff = TariffRate(buyer, seller) * BasePrice.GetValueOrDefault(good); // importer's barrier
+        float proceeds = PriceOf(buyer, good) - tariff - transport;                   // what the player nets
+        if (proceeds <= 0f) return null;            // the gap doesn't clear costs — not worth exporting
+        if (buyer.Treasury < proceeds) return null;  // the buyer can't pay
+
+        TileInventory.Add(cap, good, -TradeUnit);
+        buyer.AddGood(good, TradeUnit);             // they receive it (their scarcity price responds)
+        seller.Treasury += proceeds;
+        buyer.Treasury  -= proceeds;
+        AddFlow(IncomeByGood, good, proceeds);
+        AddFlow(ExportSoldLastTick, good, TradeUnit);
+        TradedThisTick.Add((cap, buyer.Capital, good, TradeUnit, proceeds));
+        return proceeds;
     }
 
     // Where a producer tile's goods should be hauled — its owning nation's capital. Player tiles only
@@ -629,6 +691,47 @@ public class Economy
     {
         if (!TileNation.TryGetValue(tile, out Nation owner) || !owner.IsPlayer) return null;
         return owner.Capital;
+    }
+
+    // LR6: public read-only views onto a nation's storage state, for UI (the export panel shows the player's
+    // own numbers; kept general so it also works for inspecting an AI nation later if that's ever wanted).
+    public float StorageCapacityOf(Nation nation, Good good) => StorageCapacityFor(nation, good);
+    public float StoredAmountOf(Nation nation, Good good) => TotalStored(nation, good);
+
+    // LR6: which storage building type gates/caps a given good. Only raw goods have one today (Grain via
+    // Granary, Ore via Warehouse); a good with no storage type is uncapped.
+    private static BuildingType? StorageTypeFor(Good good) => good switch
+    {
+        Good.Grain => BuildingType.Granary,
+        Good.Ore   => BuildingType.Warehouse,
+        _ => null,
+    };
+
+    // Sum of StorageCapacity over every storage building of the matching type the nation owns, anywhere in
+    // its territory — storage is nation-wide, not per-tile (a Granary can't sit on the same tile as the
+    // Farm it serves, since one tile holds one building). Zero means no storage of that type exists yet,
+    // which Pass 1 reads as "this extractor can't operate."
+    private float StorageCapacityFor(Nation nation, Good good)
+    {
+        BuildingType? storageType = StorageTypeFor(good);
+        if (storageType == null) return float.PositiveInfinity; // no storage type for this good ⇒ uncapped
+        float capacity = 0f;
+        foreach (Vector2I tile in nation.Tiles)
+            if (TileBuildings.TryGetValue(tile, out Building b) && b.Type == storageType)
+                capacity += b.StorageCapacity;
+        return capacity;
+    }
+
+    // How much of a good the nation currently holds, wherever it physically sits: for the player, summed
+    // across every owned tile's TileInventory (goods can be mid-haul, at rest on a producer tile, or at the
+    // capital); for AI, their abstract Stockpile pool.
+    private float TotalStored(Nation nation, Good good)
+    {
+        if (!nation.IsPlayer) return nation.Stockpile.GetValueOrDefault(good);
+        float total = 0f;
+        foreach (Vector2I tile in nation.Tiles)
+            total += TileInventory.AmountAt(tile, good);
+        return total;
     }
 
     // M6: set every nation's per-good price multiplier from its own scarcity — a good is balanced
@@ -703,19 +806,61 @@ public class Economy
         foreach (Nation nation in Nations.Values.OrderBy(n => n.Owner))
         {
             if (nation.IsPlayer) continue;
+
+            // LR6: always try a missing Granary/Warehouse first — it's a no-op (doesn't spend or return
+            // true) if unaffordable yet, so this doesn't block the extractor pick below on ticks it can't
+            // afford storage. One storage build per nation per tick if it does land.
+            if (TryBuildMissingStorage(nation)) continue;
+
             if (nation.Treasury < Building.ExtractorCost) continue;
 
+            // Only consider deposits whose good already has storage — building an extractor that Pass 1
+            // will permanently gate shut (no matching Granary/Warehouse) would just burn treasury the AI
+            // could otherwise save toward that storage.
             Vector2I? target = null;
             foreach (Vector2I tile in TileDeposits.Keys)
             {
                 if (TileNation.GetValueOrDefault(tile) != nation) continue;
                 if (TileBuildings.ContainsKey(tile)) continue;
+                if (StorageCapacityFor(nation, TileDeposits[tile].Good) <= 0f) continue;
                 if (target == null || tile.X < target.Value.X ||
                     (tile.X == target.Value.X && tile.Y < target.Value.Y))
                     target = tile;
             }
             if (target.HasValue) TryBuildExtractor(target.Value, nation);
         }
+    }
+
+    // LR6: build a missing Granary/Warehouse for an AI nation that owns a deposit of that good but has no
+    // matching storage yet (without it, that deposit's extractor is permanently gated shut in Pass 1).
+    // Deterministic (lowest-coordinate empty owned tile) and treasury-gated, mirroring the extractor pick
+    // above. Returns true if a storage building was placed this tick.
+    private bool TryBuildMissingStorage(Nation nation)
+    {
+        foreach (Good good in new[] { Good.Grain, Good.Ore })
+        {
+            BuildingType storageType = StorageTypeFor(good)!.Value; // Grain/Ore always map to a storage type
+            if (StorageCapacityFor(nation, good) > 0f) continue;    // already has one
+
+            bool ownsDeposit = false;
+            foreach (Vector2I t in nation.Tiles)
+                if (TileDeposits.TryGetValue(t, out Deposit dep) && dep.Good == good) { ownsDeposit = true; break; }
+            if (!ownsDeposit) continue; // nothing to store — don't spend on storage it doesn't need yet
+
+            Building storage = Building.Of(storageType);
+            if (nation.Treasury < storage.Cost) continue;
+
+            Vector2I? target = null;
+            foreach (Vector2I tile in nation.Tiles)
+            {
+                if (TileBuildings.ContainsKey(tile)) continue;
+                if (target == null || tile.X < target.Value.X ||
+                    (tile.X == target.Value.X && tile.Y < target.Value.Y))
+                    target = tile;
+            }
+            if (target.HasValue && TryBuild(target.Value, storage, nation)) return true;
+        }
+        return false;
     }
 
     // M6 phase 3 — diplomacy. Order a capital pair so (a,b) and (b,a) map to one relations entry.

@@ -103,12 +103,6 @@ public partial class Main : Node2D
 
 		DrawPlayerRoads();
 
-		TradeNetworkVisualizer tradeVisualizer = new TradeNetworkVisualizer();
-		AddChild(tradeVisualizer);
-		tradeVisualizer.Initialize(gameContext.economy, tml);
-		// Hand the visualizer each tick's export trades so it animates real flows.
-		gameContext.tickManager.TickProcessed += () => tradeVisualizer.OnTradesProcessed(gameContext.economy.TradedThisTick);
-
 		// LR2: the physical goods layer — auto-haulers crawling the player's roads carrying produced goods to the
 		// capital, plus at-rest piles where goods are stranded (no road) or delivered (the capital warehouse). It
 		// reads the economy's live Dispatcher/TileInventory every frame, so no per-tick hook is needed.

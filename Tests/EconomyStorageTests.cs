@@ -168,21 +168,6 @@ public class EconomyStorageTests
     }
 
     [Fact]
-    public void TryExportManual_is_blockaded_like_automatic_export()
-    {
-        var e = QuietTwoNation(16, out var capA, out var capB);
-        Road(e, 16);
-        e.TileInventory.Add(capA, Good.Ore, 10f);
-        e.Nations[capB].Treasury = 1000f;
-        e.SetPlayerStance(capB, DiplomaticStance.Hostile);
-
-        float sold = e.TryExportManual(Good.Ore, 5f);
-
-        Assert.Equal(0f, sold, 3);
-        Assert.Equal(10f, e.TileInventory.AmountAt(capA, Good.Ore), 3); // nothing crossed the blockade
-    }
-
-    [Fact]
     public void TryExportManual_returns_zero_with_no_road()
     {
         var e = QuietTwoNation(16, out var capA, out var capB);

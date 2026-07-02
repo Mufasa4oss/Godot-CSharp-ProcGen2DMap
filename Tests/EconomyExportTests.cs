@@ -4,8 +4,7 @@ using Godot;
 using Xunit;
 
 // LR4: export. The player's delivered surplus (sitting in the capital inventory after the home market) is sold
-// to ROAD-CONNECTED neighbour nations at their price, gated by diplomacy — Friendly free-trades, Neutral
-// tariffs, Hostile blockades. Plain .NET (no engine).
+// to ROAD-CONNECTED neighbour nations at their price, minus a distance-based transport cost. Plain .NET (no engine).
 public class EconomyExportTests
 {
     // capA (0,0) = player (left half), capB (size-1,0) = AI (right half).
@@ -35,13 +34,6 @@ public class EconomyExportTests
     private static void Road(Economy e, int size)
     {
         for (int x = 1; x <= size - 2; x++) e.Railroads.Add(new Vector2I(x, 0));
-    }
-
-    private static float ExportPrice(Economy e, Vector2I from, Vector2I to, Good good)
-    {
-        foreach (var t in e.TradedThisTick)
-            if (t.From == from && t.To == to && t.Good == good) return t.Price;
-        return -1f;
     }
 
     [Fact]
@@ -74,42 +66,5 @@ public class EconomyExportTests
 
         Assert.Equal(0f, e.ExportSoldLastTick.GetValueOrDefault(Good.Ore), 3);
         Assert.Equal(0f, e.Nations[capB].Stockpile.GetValueOrDefault(Good.Ore), 3);
-    }
-
-    [Fact]
-    public void A_hostile_neighbour_is_blockaded()
-    {
-        var e = Quiet(16, out var capA, out var capB);
-        Road(e, 16);
-        e.TileInventory.Add(capA, Good.Ore, 8f);
-        e.Nations[capB].Treasury = 1000f;
-        e.SetPlayerStance(capB, DiplomaticStance.Hostile); // blockade
-
-        e.OnTick();
-
-        Assert.Equal(0f, e.ExportSoldLastTick.GetValueOrDefault(Good.Ore), 3); // nothing crosses a blockade
-    }
-
-    [Fact]
-    public void Friendly_terms_net_more_than_tariffed_neutral_terms()
-    {
-        var friendly = Quiet(16, out var fa, out var fb);
-        Road(friendly, 16);
-        friendly.TileInventory.Add(fa, Good.Ore, 8f);
-        friendly.Nations[fb].Treasury = 1000f;
-        friendly.SetPlayerStance(fb, DiplomaticStance.Friendly);
-        friendly.OnTick();
-
-        var neutral = Quiet(16, out var na, out var nb);
-        Road(neutral, 16);
-        neutral.TileInventory.Add(na, Good.Ore, 8f);
-        neutral.Nations[nb].Treasury = 1000f; // stance defaults to Neutral
-        neutral.OnTick();
-
-        float friendlyNet = ExportPrice(friendly, fa, fb, Good.Ore);
-        float neutralNet  = ExportPrice(neutral, na, nb, Good.Ore);
-        Assert.True(friendlyNet > 0f && neutralNet > 0f);
-        Assert.True(friendlyNet > neutralNet, // the tariff docks the Neutral export
-            $"friendly net {friendlyNet} should beat tariffed neutral net {neutralNet}");
     }
 }

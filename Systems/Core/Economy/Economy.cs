@@ -32,8 +32,8 @@ public class Economy
     // The player's nation (Owner 0 = the first placed capital). Cached; ownership doesn't change in L1.
     public Nation PlayerNation { get; private set; }
 
-    // M6: when true the AI nations are live economic actors (pops + auto-built extractors + tax). A single
-    // switch so extraction-isolation tests can keep the AI inert (mirrors the `Population = 0f` pattern).
+    // M6: when true the non-player nations are live economic actors (their pops collect tax + pay upkeep). A
+    // single switch so extraction-isolation tests can keep them inert (mirrors the `Population = 0f` pattern).
     public bool EnableAiAutonomy { get; set; } = true;
 
     // Per-good flow into / out of the PLAYER's stockpile during the last tick, so the UI can show
@@ -58,10 +58,6 @@ public class Economy
     // source building (M4.5 sub-rung 4 — see where & why a gain happened). Core stays engine-free: this
     // is plain data (Vector2I only, no signals) that the view drains after each OnTick. Recomputed each tick.
     public readonly List<(Vector2I Tile, Good Good, float Amount)> ProducedThisTick = new();
-
-    // M6 phase 3: pairwise diplomatic stance between nations, keyed by an ordered capital pair so a<->b is one
-    // entry. Defaults to Neutral. Live political state — not serialized yet (resets to Neutral on load).
-    private readonly Dictionary<(Vector2I, Vector2I), DiplomaticStance> _relations = new();
 
     // M6: per-tick inter-nation trade events (seller capital → buyer capital, good, amount, unit price) so the
     // view can later draw real flows. Plain data (Vector2I capitals only). Recomputed each tick.
@@ -115,11 +111,6 @@ public class Economy
     // length, keeping geography meaningful (far buyers cost more to reach than near ones).
     private const float TradeUnit        = 1f;
     private const float TradeCostPerTile = 0.02f;
-
-    // M6 phase 3: a Neutral importer levies this tariff (fraction of a good's base price) on imports — a pure
-    // barrier that raises the price gap a trade must clear (it suppresses imports / denies a rival export
-    // income). Friendly = 0 (free trade); Hostile = full blockade (handled in RunExport).
-    private const float NeutralTariffRate = 0.25f;
 
     // LR3 internal market: the player's pops/economy BUY goods the haulers physically delivered to the capital,
     // paying the treasury — the new income faucet that replaces the manual Sell button. Demand is capped per
@@ -369,7 +360,7 @@ public class Economy
 
     // M3: advance the tick and run production in two passes so workshops can consume what extractors
     // produced the same tick. M5 adds a third pass — pops consume grain — and recomputes scarcity prices.
-    // M6: the AI develop (auto-build), every nation taxes + consumes, and goods trade between nations.
+    // Every nation taxes + consumes; the player exports its surplus to road-connected buyer nations.
     public long OnTick()
     {
         tickCount++;
@@ -389,10 +380,6 @@ public class Economy
             grainAtTickStart[nation] = nation.IsPlayer
                 ? TileInventory.AmountAt(nation.Capital, Good.Grain)
                 : nation.Stockpile.GetValueOrDefault(Good.Grain);
-
-        // M6: the AI develop their territory — each affordable AI nation builds one extractor per tick on its
-        // own deposits. Runs before production so a fresh extractor can produce this tick.
-        RunAiBuild();
 
         // Pass 1 — raw extractors (no inputs): build-gated (only a player-built Mine/Farm produces) and
         // throttled to keep raw goods scarce (M4.5 sub-rung 3) — a flat 1 unit, and only on alternating
@@ -527,8 +514,7 @@ public class Economy
         RunInternalMarket();
 
         // LR4: export — whatever the home market left over at the capital is sold to road-connected neighbours
-        // at their price, gated by diplomacy (Hostile blockades, Neutral tariffs, Friendly free-trades) and
-        // docked by distance. Income layered: home first, foreign second.
+        // at their price, docked by a distance-based transport cost. Income layered: home first, foreign second.
         RunExport();
 
         // Pop dynamics: with all of this tick's grain movement settled, grow/shrink each nation's population from
@@ -598,10 +584,9 @@ public class Economy
         good == Good.Grain ? PlayerNation.Population * GrainPerPopPerTick : InternalRawDemandPerTick;
 
     // LR4: export the player's leftover delivered surplus (sitting in the capital inventory after the home
-    // market) to road-connected neighbour nations. Each connected, non-blockading neighbour buys up to one unit
-    // per good per tick at *their* price, less the importer's tariff and the road transport cost — so a friendly
-    // near neighbour is the best customer and a hostile one buys nothing (the blockade lever). A real gold+goods
-    // transfer (the buyer pays from its treasury and receives the good, so its own prices respond), drained from
+    // market) to road-connected neighbour nations. Each connected neighbour buys up to one unit per good per
+    // tick at *their* price, less the road transport cost — so a near neighbour is the best customer. A real
+    // gold+goods transfer (the buyer pays from its treasury and receives the good, so its own prices respond), drained from
     // the same capital surplus the home market didn't take. Player-only; deterministic (neighbours sorted).
     private void RunExport()
     {
@@ -622,8 +607,8 @@ public class Economy
     }
 
     // LR6: the player's manual bulk export — clicking a built Granary/Warehouse lets them pick an amount to
-    // sell instead of waiting for the automatic TradeUnit trickle. Reuses the same buyer-routing, tariff,
-    // transport, and blockade math as RunExport (via TrySellUnitTo/ConnectedBuyers), except a single buyer
+    // sell instead of waiting for the automatic TradeUnit trickle. Reuses the same buyer-routing and transport
+    // math as RunExport (via TrySellUnitTo/ConnectedBuyers), except a single buyer
     // can absorb several units if they can afford it, instead of at most one per tick. Returns how much was
     // actually sold — the request is clamped to what's physically at the capital and to buyer affordability.
     public float TryExportManual(Good good, float amount)
@@ -662,16 +647,13 @@ public class Economy
     }
 
     // Shared per-unit sale math for RunExport (automatic) and TryExportManual (player bulk export): try to
-    // sell exactly TradeUnit of `good` from the capital to `buyer` at the buyer's price minus tariff and
-    // transport. Performs the transfer and returns the proceeds on success; null (no-op) if this buyer
-    // can't take it right now — blockaded, the margin doesn't clear costs, or they can't afford it.
+    // sell exactly TradeUnit of `good` from the capital to `buyer` at the buyer's price minus the transport
+    // cost. Performs the transfer and returns the proceeds on success; null (no-op) if this buyer can't take
+    // it right now — the margin doesn't clear costs, or they can't afford it.
     private float? TrySellUnitTo(Nation seller, Vector2I cap, Nation buyer, RoadGraph graph, Good good)
     {
-        if (GetRelation(cap, buyer.Capital) == DiplomaticStance.Hostile) return null; // blockade — no sale
-
         float transport = TradeCostPerTile * graph.ShortestPathLength(cap, buyer.Capital);
-        float tariff = TariffRate(buyer, seller) * BasePrice.GetValueOrDefault(good); // importer's barrier
-        float proceeds = PriceOf(buyer, good) - tariff - transport;                   // what the player nets
+        float proceeds = PriceOf(buyer, good) - transport;                            // what the player nets
         if (proceeds <= 0f) return null;            // the gap doesn't clear costs — not worth exporting
         if (buyer.Treasury < proceeds) return null;  // the buyer can't pay
 
@@ -796,98 +778,6 @@ public class Economy
             if (nation.IsPlayer) UpkeepPaidLastInterval = upkeep;
         }
     }
-
-    // M6: each AI nation develops one extractor per tick on its own deposits when it can afford one. Greedy +
-    // deterministic (nations in Owner order, lowest-coordinate un-built owned deposit first) so saves/replays
-    // match. Treasury-gated, so AI grow organically off tax income. Extractors only — no AI refining yet.
-    private void RunAiBuild()
-    {
-        if (!EnableAiAutonomy) return;
-        foreach (Nation nation in Nations.Values.OrderBy(n => n.Owner))
-        {
-            if (nation.IsPlayer) continue;
-
-            // LR6: always try a missing Granary/Warehouse first — it's a no-op (doesn't spend or return
-            // true) if unaffordable yet, so this doesn't block the extractor pick below on ticks it can't
-            // afford storage. One storage build per nation per tick if it does land.
-            if (TryBuildMissingStorage(nation)) continue;
-
-            if (nation.Treasury < Building.ExtractorCost) continue;
-
-            // Only consider deposits whose good already has storage — building an extractor that Pass 1
-            // will permanently gate shut (no matching Granary/Warehouse) would just burn treasury the AI
-            // could otherwise save toward that storage.
-            Vector2I? target = null;
-            foreach (Vector2I tile in TileDeposits.Keys)
-            {
-                if (TileNation.GetValueOrDefault(tile) != nation) continue;
-                if (TileBuildings.ContainsKey(tile)) continue;
-                if (StorageCapacityFor(nation, TileDeposits[tile].Good) <= 0f) continue;
-                if (target == null || tile.X < target.Value.X ||
-                    (tile.X == target.Value.X && tile.Y < target.Value.Y))
-                    target = tile;
-            }
-            if (target.HasValue) TryBuildExtractor(target.Value, nation);
-        }
-    }
-
-    // LR6: build a missing Granary/Warehouse for an AI nation that owns a deposit of that good but has no
-    // matching storage yet (without it, that deposit's extractor is permanently gated shut in Pass 1).
-    // Deterministic (lowest-coordinate empty owned tile) and treasury-gated, mirroring the extractor pick
-    // above. Returns true if a storage building was placed this tick.
-    private bool TryBuildMissingStorage(Nation nation)
-    {
-        foreach (Good good in new[] { Good.Grain, Good.Ore })
-        {
-            BuildingType storageType = StorageTypeFor(good)!.Value; // Grain/Ore always map to a storage type
-            if (StorageCapacityFor(nation, good) > 0f) continue;    // already has one
-
-            bool ownsDeposit = false;
-            foreach (Vector2I t in nation.Tiles)
-                if (TileDeposits.TryGetValue(t, out Deposit dep) && dep.Good == good) { ownsDeposit = true; break; }
-            if (!ownsDeposit) continue; // nothing to store — don't spend on storage it doesn't need yet
-
-            Building storage = Building.Of(storageType);
-            if (nation.Treasury < storage.Cost) continue;
-
-            Vector2I? target = null;
-            foreach (Vector2I tile in nation.Tiles)
-            {
-                if (TileBuildings.ContainsKey(tile)) continue;
-                if (target == null || tile.X < target.Value.X ||
-                    (tile.X == target.Value.X && tile.Y < target.Value.Y))
-                    target = tile;
-            }
-            if (target.HasValue && TryBuild(target.Value, storage, nation)) return true;
-        }
-        return false;
-    }
-
-    // M6 phase 3 — diplomacy. Order a capital pair so (a,b) and (b,a) map to one relations entry.
-    private static (Vector2I, Vector2I) RelationKey(Vector2I a, Vector2I b) =>
-        (a.X < b.X || (a.X == b.X && a.Y <= b.Y)) ? (a, b) : (b, a);
-
-    public DiplomaticStance GetRelation(Vector2I capA, Vector2I capB) =>
-        _relations.GetValueOrDefault(RelationKey(capA, capB), DiplomaticStance.Neutral);
-
-    public void SetRelation(Vector2I capA, Vector2I capB, DiplomaticStance stance) =>
-        _relations[RelationKey(capA, capB)] = stance;
-
-    // The player's stance toward another nation — the diplomatic lever: Friendly = free trade (cheap imports
-    // but enriches the partner), Neutral = tariffed trade, Hostile = blockade (deny a rival all trade).
-    public void SetPlayerStance(Vector2I otherCapital, DiplomaticStance stance)
-    {
-        if (PlayerNation != null) SetRelation(PlayerNation.Capital, otherCapital, stance);
-    }
-
-    // LR4: the buyer's import tariff toward the seller, a fraction of base price (Friendly free-trades,
-    // Neutral levies NeutralTariffRate; Hostile never reaches here — blockaded in RunExport).
-    private float TariffRate(Nation buyer, Nation seller) => GetRelation(buyer.Capital, seller.Capital) switch
-    {
-        DiplomaticStance.Friendly => 0f,
-        DiplomaticStance.Neutral  => NeutralTariffRate,
-        _ => 0f,
-    };
 
     private static void AddFlow(Dictionary<Good, float> flows, Good good, float amount)
     {

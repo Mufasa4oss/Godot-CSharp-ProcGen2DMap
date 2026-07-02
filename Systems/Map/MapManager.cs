@@ -200,9 +200,6 @@ public partial class MapManager : TileMapLayer
 			}
 		}
 
-		// LR4: the diplomacy hotkey (N) now opens a real panel (DiplomacyPanel), which owns N and the per-nation
-		// Friendly/Neutral/Hostile buttons. The old "click a nation, press N to cycle" stance-toggle lived here;
-		// it's superseded by that panel.
 	}
 
 	// LR1: lay one road tile (from a click or a drag). Charges RailroadCost and paints the cell.

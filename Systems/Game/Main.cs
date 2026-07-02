@@ -110,14 +110,6 @@ public partial class Main : Node2D
 		AddChild(haulers);
 		haulers.Initialize(gameContext.economy, tml);
 
-		// LR4: the diplomacy panel (press N) — sets per-nation export terms. On a CanvasLayer so it sits in
-		// screen space, independent of the camera/zoom.
-		var diplomacyLayer = new CanvasLayer();
-		AddChild(diplomacyLayer);
-		DiplomacyPanel diplomacyPanel = new DiplomacyPanel();
-		diplomacyLayer.AddChild(diplomacyPanel);
-		diplomacyPanel.Initialize(gameContext.economy);
-
 		//CHANGES 23-Jun-26 tiles// deposit dots overlay (gray=ore, neon-yellow=grain)
 		DepositOverlay depositOverlay = new DepositOverlay();
 		AddChild(depositOverlay);

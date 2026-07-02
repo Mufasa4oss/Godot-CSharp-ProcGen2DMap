@@ -3,9 +3,10 @@ using System.Linq;
 using Godot;
 using Xunit;
 
-// M6 phase-1: the AI are live economic actors (pops + auto-built extractors + tax), every nation prices
-// goods off its own local scarcity. Inter-nation abstract arbitrage (RunTrade) was retired in LR-cleanup;
-// export is now physical (RunExport, covered by EconomyExportTests). Plain .NET (no engine).
+// M6 phase-1: non-player nations are live economic actors (pops + tax) though static (they no longer
+// auto-build — see [game-design-direction] pivot), and every nation prices goods off its own local
+// scarcity. Inter-nation abstract arbitrage (RunTrade) was retired in LR-cleanup; export is now physical
+// (RunExport, covered by EconomyExportTests). Plain .NET (no engine).
 public class EconomyTradeTests
 {
     // capA (0,0) = player, owns the left half; capB (size-1,0) = AI, owns the right half.
@@ -30,24 +31,6 @@ public class EconomyTradeTests
 
         Assert.True(economy.Nations[capA].Population > 0f); // player
         Assert.True(economy.Nations[capB].Population > 0f); // AI
-    }
-
-    [Fact]
-    public void Ai_develops_its_territory_and_produces()
-    {
-        var land = TwoNationLand(16, out var capA, out var capB);
-        var economy = new Economy(land, new List<Vector2I> { capA, capB }, 2024);
-        Nation ai = economy.Nations[capB];
-        Assert.Contains(economy.TileDeposits.Keys, t => economy.TileNation.GetValueOrDefault(t) == ai); // AI has a deposit
-
-        // LR6: the AI now has to save up for a Granary/Warehouse (75g) before an extractor can produce at
-        // all — on top of the extractor itself (50g) — so bootstrapping from the 50g starting treasury takes
-        // a few tax intervals (50g/10 ticks) longer than the old build-and-go. 150 ticks gives ample margin.
-        for (int i = 0; i < 150; i++) economy.OnTick();
-
-        // The AI auto-built at least one extractor on its own land and accumulated a stockpile from it.
-        Assert.Contains(economy.TileBuildings.Keys, t => economy.TileNation.GetValueOrDefault(t) == ai);
-        Assert.True(ai.Stockpile.Values.Sum() > 0f);
     }
 
     [Fact]

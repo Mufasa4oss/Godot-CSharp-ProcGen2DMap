@@ -48,6 +48,7 @@ Main.MapTextureCreated?.Invoke(tex) → ColoredNationsSprite (the "Nations" over
 | `Systems/Map/VoronoiAssignment.cs` | nearest-capital (pure) | — (tested) |
 | `Systems/Map/VoronoiDiagram.cs` | capitals + colour texture | TerrainTiles, VoronoiAssignment |
 | `Systems/Map/ColoredNationsSprite.cs` | nation-colour overlay (Nations node) | `Main.MapTextureCreated`, `tr.gdshader` |
+| `Systems/Map/RegionSelector.cs` | **left-click → highlight a Voronoi region** on BordersLayer | `VoronoiDiagram.nationsDictionary`, `BorderHighlight.tres` source 2 |
 | `Systems/Rendering/GroundRenderer.cs` | blended ground shader | `terrain_ground.gdshader`, grass/sand PNGs |
 | `Systems/Cameras/Camera.cs` | pan/zoom | `Controls.*` action-name constants, `Main.MapSizeX/Y` |
 | `Systems/Controls/Controls.cs` | input action-name constants | — (its signals now have no subscribers) |

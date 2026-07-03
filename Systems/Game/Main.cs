@@ -64,6 +64,11 @@ public partial class Main : Node2D
 		GD.Print($"Map: {mapCoordsLand.Count} land tiles, {vD.GetCapitals().Count} capitals");
 
 		MapTextureCreated?.Invoke(vD.coloredNationMap);
+
+		// Left-click a tile to highlight its Voronoi region on the BordersLayer overlay.
+		var selector = new RegionSelector();
+		AddChild(selector);
+		selector.Initialize(tml, tml.GetNode<TileMapLayer>("BordersLayer"), vD.nationsDictionary);
 	}
 
 	// Startup splash logo that fades out after a few seconds.

@@ -150,7 +150,8 @@ public class EconomyProductionTests
     {
         var land = SquareLand(12, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, 7);
-        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
+        // Pops left at default so a grain deposit still finds a buyer (grain's home demand scales with
+        // population); an ore deposit sells regardless. Either way the reserve depletes and earns income.
 
         var (tile, _) = BuildPlayerExtractor(economy);
         float reserve = economy.TileDeposits[tile].Reserve;
@@ -169,8 +170,9 @@ public class EconomyProductionTests
         var land = TwoNationLand(16, out var capA, out var capB);
         var economy = new Economy(land, new List<Vector2I> { capA, capB }, 2024);
         Assert.NotEmpty(economy.Deposits);
-        economy.PlayerNation.Population = 0f; // isolate extraction from the M5 pop demand sink
         economy.EnableAiAutonomy = false;     // M6: keep the AI inert so this tests player extraction alone
+        // Pops left at default so a grain deposit's output is bought by the home market (grain demand needs
+        // population); an ore deposit sells regardless.
 
         BuildPlayerExtractor(economy);
         // Run enough ticks for hauler delivery and market income to settle (3 producing ticks + travel time).
@@ -276,7 +278,7 @@ public class EconomyProductionTests
         economy.TileInventory.Add(cap, Good.Ore, 5f);
         economy.OnTick();
         Assert.Equal(1f, economy.TileInventory.AmountAt(workshopTile, Good.Tools), 3); // output on workshop tile
-        Assert.Equal(4f, economy.TileInventory.AmountAt(cap, Good.Ore), 3);            // 4 ore remain at capital
+        Assert.Equal(3f, economy.TileInventory.AmountAt(cap, Good.Ore), 3);            // 5 - 1 (workshop) - 1 (home market)
         Assert.Equal(1f, economy.PlayerConsumedLastTick.GetValueOrDefault(Good.Ore), 3);
         Assert.Equal(1f, economy.PlayerProducedLastTick.GetValueOrDefault(Good.Tools), 3);
     }
@@ -300,12 +302,13 @@ public class EconomyProductionTests
 
         var reserves = played.Deposits.Select(d => d.Reserve).ToList();
         Nation p = played.PlayerNation;
+        // Player goods are physical — save the real holdings (StoredAmountOf), not the empty abstract pool.
         var stocks = new List<NationStock>
         {
             new NationStock(cap, p.Treasury,
-                p.Stockpile.GetValueOrDefault(Good.Grain),
-                p.Stockpile.GetValueOrDefault(Good.Ore),
-                p.Stockpile.GetValueOrDefault(Good.Tools))
+                played.StoredAmountOf(p, Good.Grain),
+                played.StoredAmountOf(p, Good.Ore),
+                played.StoredAmountOf(p, Good.Tools))
         };
         var buildings = new List<TileBuilding>
         {
@@ -323,6 +326,11 @@ public class EconomyProductionTests
         Assert.Equal(BuildingType.Workshop, loaded.TileBuildings[ws].Type);
         Assert.Equal(played.TileBuildings[mine].Type, loaded.TileBuildings[mine].Type);
         Assert.Contains(rail, loaded.Railroads);
+        // Player goods restored physically (into the capital's TileInventory), not the dead Stockpile.
+        Nation lp = loaded.PlayerNation;
+        Assert.Equal(played.StoredAmountOf(p, Good.Grain), loaded.StoredAmountOf(lp, Good.Grain), 3);
+        Assert.Equal(played.StoredAmountOf(p, Good.Ore),   loaded.StoredAmountOf(lp, Good.Ore), 3);
+        Assert.Equal(played.StoredAmountOf(p, Good.Tools), loaded.StoredAmountOf(lp, Good.Tools), 3);
     }
 
     [Fact]

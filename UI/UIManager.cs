@@ -156,9 +156,11 @@ public partial class UIManager : Control
 		foreach (var (nation, label) in _nationRows)
 		{
 			string tag = nation.IsPlayer ? "▶ You" : $"AI {nation.Owner}";
-			label.Text = $"{tag}:  G {nation.Stockpile.GetValueOrDefault(Good.Grain):0}" +
-						 $"  O {nation.Stockpile.GetValueOrDefault(Good.Ore):0}" +
-						 $"  T {nation.Stockpile.GetValueOrDefault(Good.Tools):0}";
+			// Player goods are physical (TileInventory); AI use the abstract Stockpile. StoredAmountOf reads
+			// the right one for each, so the player's row no longer reads a Stockpile it never fills (always 0).
+			label.Text = $"{tag}:  G {_economy.StoredAmountOf(nation, Good.Grain):0}" +
+						 $"  O {_economy.StoredAmountOf(nation, Good.Ore):0}" +
+						 $"  T {_economy.StoredAmountOf(nation, Good.Tools):0}";
 		}
 	}
 
@@ -187,7 +189,9 @@ public partial class UIManager : Control
 	// earning raw Ore), not just a lump total.
 	private string FormatGood(string name, Good good, Nation p)
 	{
-		float amount   = p.Stockpile.GetValueOrDefault(good);
+		// Player goods live in the physical TileInventory, not the abstract Stockpile — read the real holding
+		// (at-rest + in-transit + delivered) so the line reflects what you actually produced and hauled.
+		float amount   = _economy.StoredAmountOf(p, good);
 		float produced = _economy.PlayerProducedLastTick.GetValueOrDefault(good);
 		float consumed = _economy.PlayerConsumedLastTick.GetValueOrDefault(good);
 
@@ -202,6 +206,10 @@ public partial class UIManager : Control
 
 		float earned = _economy.IncomeOf(good);
 		string earnedStr = earned > 0f ? $"  — earned {earned:0}" : "";
-		return $"{name}: {amount:0} @{_economy.PriceOf(good):0}{flow}{earnedStr}";
+		// Show the storage ceiling for capped (raw) goods so the Granary/Warehouse effect is legible; refined
+		// goods (Tools) are uncapped, so just the amount.
+		float cap = _economy.StorageCapacityOf(p, good);
+		string stock = float.IsPositiveInfinity(cap) ? $"{amount:0}" : $"{amount:0}/{cap:0}";
+		return $"{name}: {stock} @{_economy.PriceOf(good):0}{flow}{earnedStr}";
 	}
 }

@@ -17,14 +17,17 @@ public class EconomyDemandTests
         return land;
     }
 
-    // A single-player economy with no buildings, so the only thing touching the stockpile is the demand
-    // sink (no extractor production interfering with the assertions).
+    private static readonly Vector2I Capital = new(0, 0);
+
+    // A single-player economy with no buildings, so the only thing touching the grain is the demand sink.
+    // Player grain is physical (TileInventory at the capital), so empty the starting larder here and let each
+    // test set the supply explicitly.
     private static Economy DemandOnlyEconomy(int seed = 99)
     {
         var land = SquareLand(12, out var capital);
         var economy = new Economy(land, new List<Vector2I> { capital }, seed);
         economy.TileBuildings.Clear();
-        economy.PlayerNation.Stockpile.Clear();
+        economy.TileInventory.Add(capital, Good.Grain, -economy.TileInventory.AmountAt(capital, Good.Grain));
         return economy;
     }
 
@@ -44,25 +47,25 @@ public class EconomyDemandTests
     public void Pops_eat_their_full_grain_demand_when_supply_is_ample()
     {
         var economy = DemandOnlyEconomy();
-        economy.PlayerNation.AddGood(Good.Grain, 100f);
+        economy.TileInventory.Add(Capital, Good.Grain, 100f); // ample grain delivered to the capital
 
         economy.OnTick();
 
         float demand   = economy.PlayerDemandLastTick.GetValueOrDefault(Good.Grain);
         float consumed = economy.PlayerConsumedLastTick.GetValueOrDefault(Good.Grain);
         Assert.Equal(demand, consumed, 3);                                                  // ate the full appetite
-        Assert.Equal(100f - consumed, economy.PlayerNation.Stockpile.GetValueOrDefault(Good.Grain), 3);
+        Assert.Equal(100f - consumed, economy.TileInventory.AmountAt(Capital, Good.Grain), 3);
     }
 
     [Fact]
     public void Grain_stockpile_floors_at_zero_when_demand_outstrips_supply()
     {
         var economy = DemandOnlyEconomy();
-        economy.PlayerNation.AddGood(Good.Grain, 0.05f); // less than one tick of demand
+        economy.TileInventory.Add(Capital, Good.Grain, 0.05f); // less than one tick of demand
 
         economy.OnTick();
 
-        Assert.Equal(0f, economy.PlayerNation.Stockpile.GetValueOrDefault(Good.Grain), 3); // no negative grain
+        Assert.Equal(0f, economy.TileInventory.AmountAt(Capital, Good.Grain), 3);          // no negative grain
         Assert.Equal(0.05f, economy.PlayerConsumedLastTick.GetValueOrDefault(Good.Grain), 3); // ate what was there
     }
 
@@ -86,7 +89,7 @@ public class EconomyDemandTests
     {
         var economy = DemandOnlyEconomy();
         float basePrice = economy.PriceOf(Good.Grain);
-        economy.PlayerNation.AddGood(Good.Grain, 1000f); // far more than the buffer demand wants
+        economy.TileInventory.Add(Capital, Good.Grain, 1000f); // far more than the buffer demand wants
 
         economy.OnTick();
 
@@ -146,7 +149,7 @@ public class EconomyDemandTests
         float shortagePrice = economy.PriceOf(Good.Grain); // empty stock ⇒ elevated
 
         // Stock a healthy grain buffer (as if farms had been feeding it) and let the price re-settle.
-        economy.PlayerNation.AddGood(Good.Grain, 50f);
+        economy.TileInventory.Add(Capital, Good.Grain, 50f);
         economy.OnTick();
 
         Assert.True(economy.PriceOf(Good.Grain) < shortagePrice,

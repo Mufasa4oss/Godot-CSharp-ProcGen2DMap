@@ -48,13 +48,6 @@ public partial class MapManager : TileMapLayer
 		_controls.MapClickRequested += OnMapClick;
 		_controls.NationsToggleRequested += OnToggleNations;
 	}
-	private void Initialize()
-	{
-		//nations = GetNode<Sprite2D>("Nations");
-		nations.Visible = false;
-		//Main.NationsSceneInitalized -= EventMethod;
-
-	}
 	// Left-click: in railroad-build mode lay track; otherwise inspect + highlight the clicked nation.
 	private void OnMapClick()
 	{

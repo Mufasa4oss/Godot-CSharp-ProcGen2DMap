@@ -37,6 +37,19 @@ public class TileInventory
     public float AmountAt(Vector2I tile, Good good) =>
         _byTile.TryGetValue(tile, out Dictionary<Good, float> goods) ? goods.GetValueOrDefault(good) : 0f;
 
+    // Total units of `good` across every tile that holds any. Only the PLAYER's goods ever live in this
+    // inventory (AI keep the abstract Nation.Stockpile), so this is the player's entire physical holding of
+    // the good — at rest on producer tiles, mid-haul, and delivered to the capital. O(populated tiles), which
+    // is a handful in practice, so it's cheap enough to poll from the HUD each frame (unlike scanning every
+    // owned tile, which on a one-nation map is thousands).
+    public float TotalOf(Good good)
+    {
+        float total = 0f;
+        foreach (Dictionary<Good, float> goods in _byTile.Values)
+            total += goods.GetValueOrDefault(good);
+        return total;
+    }
+
     // Total units sitting on a tile (across all goods) — used by the renderer to size the "pile" marker.
     public float TotalAt(Vector2I tile) =>
         _byTile.TryGetValue(tile, out Dictionary<Good, float> goods) ? goods.Values.Sum() : 0f;

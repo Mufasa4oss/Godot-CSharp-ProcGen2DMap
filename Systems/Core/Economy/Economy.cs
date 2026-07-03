@@ -119,6 +119,12 @@ public class Economy
     // tax). Whatever the internal market doesn't absorb stays in the capital inventory for export (LR4).
     private const float InternalRawDemandPerTick = 1f; // ore/tools the home market soaks up each tick
 
+    // LR6 storage: every nation can hold this much of a raw good with NO storage building, so a Mine/Farm
+    // produces from the first tick (no hidden gate); a Granary (Grain) or Warehouse (Ore) each adds
+    // StorageCapacityPerBuilding on top. Only the two raw goods are capped — Tools (refined, sold fast) is
+    // uncapped. Public so tests + tuning can read it. Barebones: a stockpile ceiling, nothing more.
+    public const float BaseStorageCapacity = 50f;
+
     // LR5 upkeep (the missing gold sink). Charged every TaxIntervalTicks: each building a nation owns costs
     // UpkeepPerBuilding, and every road tile the player laid costs UpkeepPerRoad. Sized well under the poll tax
     // (TaxPerInterval) so a lean operation still nets positive, but a sprawling one stops being free — the
@@ -381,13 +387,12 @@ public class Economy
                 ? TileInventory.AmountAt(nation.Capital, Good.Grain)
                 : nation.Stockpile.GetValueOrDefault(Good.Grain);
 
-        // Pass 1 — raw extractors (no inputs): build-gated (only a player-built Mine/Farm produces) and
-        // throttled to keep raw goods scarce (M4.5 sub-rung 3) — a flat 1 unit, and only on alternating
-        // ticks — so a deposit isn't effectively free and the one build choice bites. The deposit's
-        // reserve still depletes by what's pulled; its Rate is intentionally bypassed for raws.
-        // LR6: also gated on nation-wide storage (Granary/Warehouse) — no storage building of the matching
-        // type anywhere in the nation's territory means the extractor can't operate at all, and once stored
-        // goods reach that storage's capacity, extraction pauses (the reserve is left untouched, not wasted).
+        // Pass 1 — raw extractors (no inputs): a player-built Mine/Farm pulls a flat 1 unit on alternating
+        // ticks (throttled so raws stay scarce and the one build choice bites). The deposit's reserve depletes
+        // by what's pulled; its Rate is intentionally bypassed for raws.
+        // Storage (Granary/Warehouse) only caps how much a nation can stockpile: a base capacity lets a fresh
+        // extractor run immediately, and each storage building raises the ceiling. At the cap, extraction
+        // pauses and the reserve is left in the ground (not wasted) until the stockpile is drawn back down.
         bool rawTickActive = tickCount % 2 == 0;
         foreach (var (tile, building) in TileBuildings)
         {
@@ -398,9 +403,7 @@ public class Economy
 
             Nation nation = TileNation[tile];
             Good good = building.Outputs[0];
-            float capacity = StorageCapacityFor(nation, good);
-            if (capacity <= 0f) continue;                        // no matching storage building built yet
-            if (TotalStored(nation, good) >= capacity) continue; // storage full — pause, reserve stays put
+            if (TotalStored(nation, good) >= StorageCapacityFor(nation, good)) continue; // stockpile full — pause
 
             float amount = System.Math.Min(1f, deposit.Reserve);
             deposit.Reserve -= amount; // extraction is physical — the reserve depletes whether or not a road exists
@@ -689,31 +692,29 @@ public class Economy
         _ => null,
     };
 
-    // Sum of StorageCapacity over every storage building of the matching type the nation owns, anywhere in
-    // its territory — storage is nation-wide, not per-tile (a Granary can't sit on the same tile as the
-    // Farm it serves, since one tile holds one building). Zero means no storage of that type exists yet,
-    // which Pass 1 reads as "this extractor can't operate."
+    // A nation's stockpile ceiling for a good: the base capacity plus StorageCapacity from every matching
+    // storage building it owns (nation-wide — a Granary can sit anywhere in territory). Iterates the built
+    // buildings (few) rather than every owned tile (thousands on a one-nation map).
     private float StorageCapacityFor(Nation nation, Good good)
     {
         BuildingType? storageType = StorageTypeFor(good);
         if (storageType == null) return float.PositiveInfinity; // no storage type for this good ⇒ uncapped
-        float capacity = 0f;
-        foreach (Vector2I tile in nation.Tiles)
-            if (TileBuildings.TryGetValue(tile, out Building b) && b.Type == storageType)
+        float capacity = BaseStorageCapacity;
+        foreach (var (tile, b) in TileBuildings)
+            if (b.Type == storageType && TileNation.GetValueOrDefault(tile) == nation)
                 capacity += b.StorageCapacity;
         return capacity;
     }
 
-    // How much of a good the nation currently holds, wherever it physically sits: for the player, summed
-    // across every owned tile's TileInventory (goods can be mid-haul, at rest on a producer tile, or at the
-    // capital); for AI, their abstract Stockpile pool.
+    // How much of a good the nation holds at rest: for the player, the total across the physical
+    // TileInventory (at rest on a producer tile or delivered to the capital — goods riding a hauler aren't
+    // counted, they're between tiles); for AI, their abstract Stockpile pool. TileInventory only ever holds
+    // the player's goods, so its per-good total IS the player's holding — a single pass over the (few)
+    // populated tiles, cheaper than scanning every owned tile (Pass 1 calls this per extractor per tick).
     private float TotalStored(Nation nation, Good good)
     {
         if (!nation.IsPlayer) return nation.Stockpile.GetValueOrDefault(good);
-        float total = 0f;
-        foreach (Vector2I tile in nation.Tiles)
-            total += TileInventory.AmountAt(tile, good);
-        return total;
+        return TileInventory.TotalOf(good);
     }
 
     // M6: set every nation's per-good price multiplier from its own scarcity — a good is balanced
@@ -785,6 +786,10 @@ public class Economy
         flows[good] = current + amount;
     }
 
+    // Force a capital tile's stock of one good to `amount` (used by load: overwrite, not accumulate).
+    private void SetCapitalGood(Vector2I capital, Good good, float amount) =>
+        TileInventory.Add(capital, good, amount - TileInventory.AmountAt(capital, good));
+
     // Overwrite the freshly-regenerated economy with saved state on load: deposit reserves (by index,
     // deterministic order), each nation's treasury + stockpile (by capital), the player-built buildings —
     // extractors and workshops (M4.5: none are seed-derived, so they must be re-placed) — and the
@@ -806,9 +811,21 @@ public class Economy
                 if (Nations.TryGetValue(ns.Capital, out Nation nation))
                 {
                     nation.Treasury = ns.Treasury;
-                    nation.Stockpile[Good.Grain] = ns.Grain;
-                    nation.Stockpile[Good.Ore]   = ns.Ore;
-                    nation.Stockpile[Good.Tools] = ns.Tools;
+                    if (nation.IsPlayer)
+                    {
+                        // Player goods are physical (TileInventory), not the abstract Stockpile. Restore the
+                        // saved totals as a stock at the capital (worldgen only pre-seeded starting grain
+                        // there); Set (not Add) so a reload isn't doubled.
+                        SetCapitalGood(nation.Capital, Good.Grain, ns.Grain);
+                        SetCapitalGood(nation.Capital, Good.Ore,   ns.Ore);
+                        SetCapitalGood(nation.Capital, Good.Tools, ns.Tools);
+                    }
+                    else
+                    {
+                        nation.Stockpile[Good.Grain] = ns.Grain;
+                        nation.Stockpile[Good.Ore]   = ns.Ore;
+                        nation.Stockpile[Good.Tools] = ns.Tools;
+                    }
                 }
 
         if (buildings != null)

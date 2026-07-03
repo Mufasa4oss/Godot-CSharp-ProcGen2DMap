@@ -33,13 +33,15 @@ public class TickManager
 			economy.OnTick();
 			TickProcessed?.Invoke();
 
-			// Alive-check heartbeat: global stockpile totals climb each tick as extractors produce.
+			// Alive-check heartbeat: global goods totals climb each tick as extractors produce. StoredAmountOf
+			// covers both economies (player's physical TileInventory + AI's abstract Stockpile) so the player's
+			// output isn't invisible here the way a raw Stockpile sum would leave it.
 			float grain = 0f, ore = 0f, tools = 0f;
 			foreach (var nation in economy.Nations.Values)
 			{
-				grain += nation.Stockpile.GetValueOrDefault(Good.Grain);
-				ore   += nation.Stockpile.GetValueOrDefault(Good.Ore);
-				tools += nation.Stockpile.GetValueOrDefault(Good.Tools);
+				grain += economy.StoredAmountOf(nation, Good.Grain);
+				ore   += economy.StoredAmountOf(nation, Good.Ore);
+				tools += economy.StoredAmountOf(nation, Good.Tools);
 			}
 			GD.Print($"tick {currentTick} | nations={economy.Nations.Count} | grain={grain:0} ore={ore:0} tools={tools:0}");
 		}

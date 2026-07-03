@@ -29,13 +29,15 @@ public partial class InitSaveAndLoad : Node
 		Economy economy = gameContext.economy;
 		foreach (Deposit dep in economy.Deposits)
 			data.DepositReserves.Add(dep.Reserve);
+		// StoredAmountOf reads the right store per nation (player = physical TileInventory, AI = Stockpile),
+		// so the player's accumulated goods actually persist instead of saving an empty abstract pool.
 		foreach (Nation nation in economy.Nations.Values)
 			data.NationStocks.Add(new NationStock(
 				nation.Capital,
 				nation.Treasury,
-				nation.Stockpile.GetValueOrDefault(Good.Grain),
-				nation.Stockpile.GetValueOrDefault(Good.Ore),
-				nation.Stockpile.GetValueOrDefault(Good.Tools)));
+				economy.StoredAmountOf(nation, Good.Grain),
+				economy.StoredAmountOf(nation, Good.Ore),
+				economy.StoredAmountOf(nation, Good.Tools)));
 		foreach (var (tile, building) in economy.TileBuildings)
 			data.Buildings.Add(new TileBuilding(tile, building.Type));
 		foreach (Vector2I tile in economy.Railroads)

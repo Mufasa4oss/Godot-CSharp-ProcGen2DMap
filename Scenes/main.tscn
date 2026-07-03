@@ -51,7 +51,7 @@ scale = Vector2(0.999742, 1)
 limit_enabled = false
 position_smoothing_enabled = true
 script = ExtResource("3_21xkr")
-ZoomLimits = Vector2(-100, 100)
+ZoomLimits = Vector2(0.5, 3)
 
 [node name="Nations" type="Sprite2D" parent="." unique_id=394796974]
 visible = false

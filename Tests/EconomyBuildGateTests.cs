@@ -59,6 +59,7 @@ public class EconomyBuildGateTests
     public void Unbuilt_deposit_produces_nothing()
     {
         var economy = PlayerEconomy(out _);
+        economy.PlayerNation.Population = 0f; // silence grain demand so the starting larder can't earn income
         Assert.NotEmpty(economy.Deposits);
         Assert.Empty(economy.TileBuildings); // M4.5: no auto-placed extractors
         for (int i = 0; i < 10; i++) economy.OnTick();
@@ -91,9 +92,9 @@ public class EconomyBuildGateTests
         // Flow starts: nothing until the first producing tick (every other tick), then a hauler is dispatched.
         economy.OnTick(); // tick 1 (odd: throttled — no output)
         Assert.Empty(economy.ProducedThisTick);
-        economy.OnTick(); // tick 2 (even: produces → hauler dispatched)
-        Assert.True(economy.Haulers.Count > 0 || economy.TileInventory.AmountAt(tile, good) > 0f,
-            "producing tick should have dispatched a hauler or left goods on the mine tile");
+        economy.OnTick(); // tick 2 (even: produces)
+        // The producing tick recorded a gain for this tile (whether the good then hauls, sits, or sells).
+        Assert.Contains(economy.ProducedThisTick, e => e.Tile == tile && e.Good == good);
     }
 
     [Fact]

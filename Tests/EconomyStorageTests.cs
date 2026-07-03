@@ -1,19 +1,16 @@
 using System.Collections.Generic;
-using System.Linq;
 using Godot;
 using Xunit;
 
-// LR6: storage buildings (Granary/Warehouse) gate and cap raw extraction — a Farm/Mine can't produce at all
-// without the matching storage built somewhere in the nation's territory, and once built, total stored
-// goods can't exceed its capacity (extraction pauses, doesn't waste the deposit reserve). Also covers the
-// player's manual bulk export (TryExportManual), which reuses RunExport's buyer-routing math for a
-// player-chosen amount instead of the automatic TradeUnit trickle. Plain .NET (no engine).
+// LR6 storage (reworked): a Granary/Warehouse is a stockpile ceiling, not a gate. A Mine/Farm produces from
+// the first tick up to a base capacity; each storage building raises that ceiling. At the cap, extraction
+// pauses without wasting the deposit reserve. Also covers the player's manual bulk export (TryExportManual),
+// which reuses RunExport's buyer-routing math for a player-chosen amount. Plain .NET (no engine).
 public class EconomyStorageTests
 {
     private static readonly Vector2I Capital = new(0, 0);
     private static readonly Vector2I Farm    = new(0, 2);
-    private static readonly Vector2I Mine    = new(0, 3);
-    private static readonly Vector2I Link    = new(0, 1); // the single road tile between Farm/Mine and capital
+    private static readonly Vector2I Link    = new(0, 1); // the single road tile between Farm and capital
 
     private static Dictionary<Vector2I, Vector2I> SquareLand(int size, Vector2I capital)
     {
@@ -35,57 +32,41 @@ public class EconomyStorageTests
         return economy;
     }
 
-    // ---- Gate: no storage ⇒ no production ----
+    // ---- Base capacity: extraction runs without a storage building, capped ----
 
     [Fact]
-    public void Farm_without_a_granary_produces_nothing()
+    public void Farm_produces_without_a_granary_up_to_base_capacity()
     {
         var economy = Bare();
-        economy.TileDeposits[Farm] = new Deposit(Good.Grain, new HashSet<Vector2I> { Farm }, 100f, 1f);
+        economy.TileDeposits[Farm] = new Deposit(Good.Grain, new HashSet<Vector2I> { Farm }, 1000f, 1f);
         economy.TileBuildings[Farm] = Building.Of(BuildingType.Farm);
         economy.Railroads.Add(Link);
 
-        for (int i = 0; i < 6; i++) economy.OnTick();
+        // No Granary, no consumption (pop 0): a Farm still runs, filling the base capacity then pausing.
+        for (int i = 0; i < 400; i++) economy.OnTick();
 
-        Assert.Equal(100f, economy.TileDeposits[Farm].Reserve, 3); // untouched — extraction never ran
-        Assert.Equal(0f, economy.TileInventory.AmountAt(Farm, Good.Grain), 3);
-        Assert.Empty(economy.Haulers);
+        float stored = economy.StoredAmountOf(economy.PlayerNation, Good.Grain);
+        Assert.True(stored > 0f, "a Farm should produce even with no Granary (base storage capacity)");
+        Assert.True(stored <= Economy.BaseStorageCapacity + 1f,
+            $"stored ({stored}) should cap at the base capacity ({Economy.BaseStorageCapacity})");
+        Assert.True(economy.TileDeposits[Farm].Reserve > 0f, "the reserve isn't wasted once extraction pauses");
     }
 
     [Fact]
-    public void Mine_without_a_warehouse_produces_nothing()
+    public void Building_a_granary_raises_the_storage_ceiling()
     {
         var economy = Bare();
-        economy.TileDeposits[Mine] = new Deposit(Good.Ore, new HashSet<Vector2I> { Mine }, 100f, 1f);
-        economy.TileBuildings[Mine] = Building.Of(BuildingType.Mine);
-        economy.Railroads.Add(Link);
-        economy.Railroads.Add(new Vector2I(0, 2)); // extend the link one further tile to reach Mine at y=3
+        Nation p = economy.PlayerNation;
+        Assert.Equal(Economy.BaseStorageCapacity, economy.StorageCapacityOf(p, Good.Grain), 3);
 
-        for (int i = 0; i < 6; i++) economy.OnTick();
-
-        Assert.Equal(100f, economy.TileDeposits[Mine].Reserve, 3);
-        Assert.Equal(0f, economy.TileInventory.AmountAt(Mine, Good.Ore), 3);
-    }
-
-    [Fact]
-    public void Building_a_granary_unblocks_farm_production()
-    {
-        var economy = Bare();
-        economy.TileDeposits[Farm] = new Deposit(Good.Grain, new HashSet<Vector2I> { Farm }, 100f, 1f);
-        economy.TileBuildings[Farm] = Building.Of(BuildingType.Farm);
-        economy.Railroads.Add(Link);
-
-        economy.OnTick();
-        Assert.Equal(100f, economy.TileDeposits[Farm].Reserve, 3); // still gated, no Granary yet
-
-        economy.PlayerNation.Treasury += Building.Of(BuildingType.Granary).Cost;
+        p.Treasury += Building.Of(BuildingType.Granary).Cost;
         Assert.True(economy.TryBuildGranary(Capital));
-        for (int i = 0; i < 4; i++) economy.OnTick(); // a couple of producing (even) ticks
 
-        Assert.True(economy.TileDeposits[Farm].Reserve < 100f, "a built Granary should unblock extraction");
+        Assert.Equal(Economy.BaseStorageCapacity + Building.StorageCapacityPerBuilding,
+            economy.StorageCapacityOf(p, Good.Grain), 3);
     }
 
-    // ---- Cap: storage full ⇒ production pauses without wasting the reserve ----
+    // ---- Cap: stockpile full ⇒ extraction pauses without wasting the reserve ----
 
     [Fact]
     public void Production_pauses_once_storage_is_full_without_depleting_the_deposit()
@@ -93,16 +74,15 @@ public class EconomyStorageTests
         var economy = Bare();
         economy.TileDeposits[Farm] = new Deposit(Good.Grain, new HashSet<Vector2I> { Farm }, 1000f, 1f);
         economy.TileBuildings[Farm] = Building.Of(BuildingType.Farm);
-        economy.TileBuildings[Capital] = Building.Of(BuildingType.Granary); // capacity = StorageCapacityPerBuilding
+        economy.TileBuildings[Capital] = Building.Of(BuildingType.Granary);
         economy.Railroads.Add(Link);
 
-        // Run far longer than it would take, uncapped, to reach the Granary's capacity.
-        int ticks = (int)(Building.StorageCapacityPerBuilding * 2) + 40;
+        float cap = Economy.BaseStorageCapacity + Building.StorageCapacityPerBuilding;
+        int ticks = (int)(cap * 2) + 40;
         for (int i = 0; i < ticks; i++) economy.OnTick();
 
-        float stored = economy.TileInventory.AmountAt(Farm, Good.Grain) + economy.TileInventory.AmountAt(Capital, Good.Grain);
-        Assert.True(stored <= Building.StorageCapacityPerBuilding + 1f,
-            $"stored ({stored}) should have capped near the Granary's capacity ({Building.StorageCapacityPerBuilding})");
+        float stored = economy.StoredAmountOf(economy.PlayerNation, Good.Grain);
+        Assert.True(stored <= cap + 1f, $"stored ({stored}) should cap near capacity ({cap})");
         Assert.True(economy.TileDeposits[Farm].Reserve > 0f,
             "the deposit shouldn't fully deplete once storage caps further extraction");
     }
@@ -178,26 +158,5 @@ public class EconomyStorageTests
         float sold = e.TryExportManual(Good.Ore, 5f);
 
         Assert.Equal(0f, sold, 3);
-    }
-
-    // ---- AI bootstrapping under the new gate ----
-
-    [Fact]
-    public void Ai_eventually_builds_storage_and_produces_under_the_gate()
-    {
-        var land = TwoNationLand(16, out var capA, out var capB);
-        var economy = new Economy(land, new List<Vector2I> { capA, capB }, 2024);
-        Nation ai = economy.Nations[capB];
-        Assert.Contains(economy.TileDeposits.Keys, t => economy.TileNation.GetValueOrDefault(t) == ai);
-
-        // Bootstrapping now costs an extractor (50g) AND its matching storage (75g) — several tax intervals
-        // (50g/10 ticks) beyond the 50g starting treasury. 200 ticks gives ample margin either order.
-        for (int i = 0; i < 200; i++) economy.OnTick();
-
-        Assert.True(
-            economy.TileBuildings.Any(kv => economy.TileNation.GetValueOrDefault(kv.Key) == ai &&
-                                             (kv.Value.Type == BuildingType.Granary || kv.Value.Type == BuildingType.Warehouse)),
-            "the AI should have built a matching storage building by now");
-        Assert.True(ai.Stockpile.Values.Sum() > 0f, "the AI should have produced something once storage unblocked it");
     }
 }

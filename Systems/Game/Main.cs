@@ -26,8 +26,8 @@ public partial class Main : Node2D
 	public static GameData PendingLoad;
 
 	// --- Map config ---
-	public static int MapSizeX = 1024;
-	public static int MapSizeY = 1024;
+	public static int MapSizeX = 128;
+	public static int MapSizeY = 128;
 	public static event Action<Texture2D> MapTextureCreated;
 
 	public Main() { }
@@ -144,11 +144,6 @@ public partial class Main : Node2D
 		AddChild(ground);
 		ground.Initialize(init.TerrainMask, MapSizeX, MapSizeY);
 
-		// Bitmask still built (GameContext carries it), but grass autotiling is no longer rendered:
-		// ground tiles are transparent and the look comes from GroundRenderer's shader, so we skip
-		// OrientCells() (it would also fail now that Grass is a single-tile source).
-		Bitmask bitmaskObj = new Bitmask(tml, MapSizeX, MapSizeY);
-
 		VoronoiDiagram vD = new VoronoiDiagram(MapSizeX, MapSizeY, numNations, mapCoordsLand, tml, worldSeed);
 
 		//CHANGES 23-Jun-26 tiles// build economy with the single worldSeed; add land cross-check + deposits summary
@@ -201,9 +196,7 @@ public partial class Main : Node2D
 		var nationTexture = vD.coloredNationMap;
 		MapTextureCreated?.Invoke(nationTexture);
 
-		//CHANGES 23-Jun-26// GameContext now carries economy instead of resourceManager + tilesResources
-		return new GameContext(bitmaskObj, vD, economy, tickManager, mapManager, nationTexture, noise, MapSizeX, MapSizeY, tml);
-		//END CHANGES 23-Jun-26//
+		return new GameContext(vD, economy, tickManager, mapManager, nationTexture, noise, MapSizeX, MapSizeY, tml);
 	}
 
 	public void PopupSceneLoad()

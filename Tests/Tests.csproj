@@ -15,8 +15,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Link the pure Core sources (compiled into this test assembly, not the game's). -->
-    <Compile Include="..\Systems\Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Link the pure map-gen sources under test (compiled into this test assembly, not the game's).
+         Listed explicitly because Systems/Map also holds Godot-Node files that can't compile headless. -->
+    <Compile Include="..\Systems\Map\TerrainType.cs" Link="Map\TerrainType.cs" />
+    <Compile Include="..\Systems\Map\TerrainRules.cs" Link="Map\TerrainRules.cs" />
+    <Compile Include="..\Systems\Map\VoronoiAssignment.cs" Link="Map\VoronoiAssignment.cs" />
   </ItemGroup>
 
   <ItemGroup>

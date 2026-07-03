@@ -7,7 +7,6 @@
 [ext_resource type="Script" uid="uid://clehyfud31ory" path="res://Systems/Map/ColoredNationsSprite.cs" id="4_6bp64"]
 [ext_resource type="TileSet" uid="uid://0cior3rfmbg7" path="res://tilesets/road.tres" id="4_344ge"]
 [ext_resource type="Script" uid="uid://dw5qrglxk2coj" path="res://UI/UIManager.cs" id="6_21xkr"]
-[ext_resource type="Texture2D" uid="uid://hiqqvhkimd63" path="res://Images/Blender & Krita Assets/Rails/RailsHoriz.png" id="7_6bp64"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3
@@ -51,7 +50,6 @@ scale = Vector2(0.999742, 1)
 limit_enabled = false
 position_smoothing_enabled = true
 script = ExtResource("3_21xkr")
-ZoomLimits = Vector2(0.5, 3)
 
 [node name="Nations" type="Sprite2D" parent="." unique_id=394796974]
 visible = false
@@ -77,52 +75,3 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_344ge")
 layout_mode = 2
 mouse_filter = 0
 theme = SubResource("Theme_h3mdq")
-
-[node name="TreasuryLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1025436104]
-layout_mode = 2
-
-[node name="IncomeLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1025436105]
-layout_mode = 2
-
-[node name="PopLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1025436106]
-layout_mode = 2
-
-[node name="GrainLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1756451296]
-layout_mode = 2
-
-[node name="OreLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=855809429]
-layout_mode = 2
-
-[node name="ToolsLabel" type="Label" parent="UIManager/PanelContainer/VBox" unique_id=1756451297]
-layout_mode = 2
-
-[node name="RailroadButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746071]
-layout_mode = 2
-toggle_mode = true
-keep_pressed_outside = true
-text = "Build Railroad"
-icon = ExtResource("7_6bp64")
-
-[node name="WorkshopButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746072]
-layout_mode = 2
-toggle_mode = true
-keep_pressed_outside = true
-text = "Build Workshop"
-
-[node name="ExtractorButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746076]
-layout_mode = 2
-toggle_mode = true
-keep_pressed_outside = true
-text = "Build Extractor"
-
-[node name="GranaryButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746077]
-layout_mode = 2
-toggle_mode = true
-keep_pressed_outside = true
-text = "Build Granary"
-
-[node name="WarehouseButton" type="Button" parent="UIManager/PanelContainer/VBox" unique_id=1773746078]
-layout_mode = 2
-toggle_mode = true
-keep_pressed_outside = true
-text = "Build Warehouse"

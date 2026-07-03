@@ -2,14 +2,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot; // Vector2I struct only — Core stays engine-free (mirrors RoadGraph / VoronoiAssignment).
 
-// LR2: goods AT REST, located on specific tiles. The physical counterpart to Nation.Stockpile's abstract
-// national pool — a producer drops its output here, on its OWN tile, and it stays put until a hauler carries
-// it off. A good with no road path to a sink just piles up where it was made = visibly stranded (geography
-// finally bites). Pure Core (Vector2I keys only), so it unit-tests headless like the rest of Logistics.
+// LR2: goods AT REST, located on specific tiles. The PLAYER's entire goods economy lives here (the AI keep
+// the abstract Nation.Stockpile) — a producer drops its output on its OWN tile, and it stays put until a
+// hauler carries it off. A good with no road path to a sink just piles up where it was made = visibly
+// stranded (geography finally bites). Pure Core (Vector2I keys only), so it unit-tests headless like the
+// rest of Logistics.
 //
-// Transitional in LR2: production still mirrors into Nation.Stockpile (the economy + every existing test read
-// that), so this layer is the *visible physical truth* of goods moving while the abstract pool keeps the
-// numbers running. LR3 makes this layer load-bearing (crediting a nation only when a good is delivered).
+// This layer is load-bearing: a nation is only credited (internal market / export) for goods physically
+// delivered to its capital. Read player holdings via Economy.StoredAmountOf, never Nation.Stockpile.
 public class TileInventory
 {
     private readonly Dictionary<Vector2I, Dictionary<Good, float>> _byTile = new();
@@ -38,10 +38,10 @@ public class TileInventory
         _byTile.TryGetValue(tile, out Dictionary<Good, float> goods) ? goods.GetValueOrDefault(good) : 0f;
 
     // Total units of `good` across every tile that holds any. Only the PLAYER's goods ever live in this
-    // inventory (AI keep the abstract Nation.Stockpile), so this is the player's entire physical holding of
-    // the good — at rest on producer tiles, mid-haul, and delivered to the capital. O(populated tiles), which
-    // is a handful in practice, so it's cheap enough to poll from the HUD each frame (unlike scanning every
-    // owned tile, which on a one-nation map is thousands).
+    // inventory (AI keep the abstract Nation.Stockpile), so this is the player's physical holding of the good
+    // AT REST — on producer tiles and delivered to the capital. NOTE: goods riding a hauler are removed from
+    // the inventory for the trip (see Dispatcher), so in-transit units are NOT counted here. O(populated
+    // tiles), a handful in practice, so it's cheap to poll from the HUD each frame.
     public float TotalOf(Good good)
     {
         float total = 0f;

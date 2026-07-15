@@ -7,14 +7,14 @@ public partial class Camera : Camera2D
 	
 	[Export] public float PanSpeed = 1500f;
 	[Export] public float ZoomSpeed = 0.1f;
-	[Export] public Vector2 ZoomLimits = new Vector2(0.5f, 3f);
+	[Export] public Vector2 ZoomLimits = new Vector2(0.1f, 3f);
 	[Export] public bool DebugZoom = true; // print the zoom level to the console whenever it changes
 	ShaderMaterial shaderMat = new ShaderMaterial();
 	private const int TileSize = 64; // pixels per tile (matches the tileset cell size)
 
 
 
-    public override void _Ready()
+	public override void _Ready()
 	{
 		// Map size in pixels (tiles * pixels-per-tile), derived from the map dims so it works for any
 		// map size instead of being hardcoded.

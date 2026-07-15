@@ -47,6 +47,7 @@ tile_set = ExtResource("4_344ge")
 [node name="Camera2D" type="Camera2D" parent="." unique_id=536846053]
 z_as_relative = false
 scale = Vector2(0.999742, 1)
+zoom = Vector2(0.5, 0.5)
 limit_enabled = false
 position_smoothing_enabled = true
 script = ExtResource("3_21xkr")

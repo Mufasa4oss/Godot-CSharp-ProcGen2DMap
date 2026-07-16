@@ -10,7 +10,7 @@ public partial class Camera : Camera2D
 	[Export] public Vector2 ZoomLimits = new Vector2(0.1f, 3f);
 	[Export] public bool DebugZoom = true; // print the zoom level to the console whenever it changes
 	ShaderMaterial shaderMat = new ShaderMaterial();
-	private const int TileSize = 64; // pixels per tile (matches the tileset cell size)
+	private const int TileSize = GlobalConfig.TileSizePx; // pixels per tile (matches the tileset cell size)
 
 
 

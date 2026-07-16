@@ -9,23 +9,41 @@ public class City
 {
     public Vector2I Location { get; }
     public Resources Stockpile { get; } = new Resources();
+    public Population Population { get; } // the city owns its people
 
-    private const int DemandPerTick = 1; // units of each resource the city wants per tick
-
-    public City(Vector2I location)
+    // Main hands us the deposits and the tile->capital ownership map; we count the deposits that fall in
+    // our own Voronoi territory and let the population form around them.
+    public City(Vector2I location, IReadOnlyDictionary<Vector2I, ResourceType> deposits,
+                IReadOnlyDictionary<Vector2I, Vector2I> tileToCapital)
     {
         Location = location;
+        Population = new Population(CountOwned(deposits, tileToCapital));
+    }
+
+    // How many deposits of each resource sit on tiles this city owns (its Voronoi region).
+    private Dictionary<ResourceType, int> CountOwned(
+        IReadOnlyDictionary<Vector2I, ResourceType> deposits,
+        IReadOnlyDictionary<Vector2I, Vector2I> tileToCapital)
+    {
+        var owned = new Dictionary<ResourceType, int>();
+        foreach (var (tile, type) in deposits)
+            if (tileToCapital.TryGetValue(tile, out Vector2I capital) && capital == Location)
+            {
+                owned.TryGetValue(type, out int count);
+                owned[type] = count + 1;
+            }
+        return owned;
     }
 
     // How much of a resource this city wants each tick (uniform across resources for now).
-    public int DemandFor(ResourceType type) => DemandPerTick;
+    public int DemandFor(ResourceType type) => GlobalConfig.CityDemandPerTick;
 
     // Take one tick of demand from the stockpile; return the resources there wasn't enough of.
     public List<ResourceType> ConsumeDemand()
     {
         var unmet = new List<ResourceType>();
         foreach (ResourceType type in Enum.GetValues<ResourceType>())
-            if (!Stockpile.TryRemove(type, DemandPerTick))
+            if (!Stockpile.TryRemove(type, GlobalConfig.CityDemandPerTick))
                 unmet.Add(type);
         return unmet;
     }

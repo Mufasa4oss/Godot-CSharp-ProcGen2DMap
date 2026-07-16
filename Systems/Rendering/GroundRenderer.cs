@@ -5,7 +5,7 @@ using Godot;
 // tilemap's ground tiles are made transparent (Phase 3), this renders hidden behind them.
 public partial class GroundRenderer : Sprite2D
 {
-	private const int TilePx = 64; // map cell size in pixels (matches the TileSet tile_size)
+	private const int TilePx = GlobalConfig.TileSizePx; // map cell size in pixels (matches the TileSet tile_size)
 
 	// mask: one texel per cell (R = sandiness, G = water), built by Initialize from the same noise
 	// that decides gameplay terrain — so the look always matches the data grid.

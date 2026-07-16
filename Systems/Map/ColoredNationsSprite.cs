@@ -15,7 +15,7 @@ public partial class ColoredNationsSprite : Sprite2D
 		Vector2 textureSize = new Vector2(texture.GetWidth(), texture.GetHeight());
 		// Match the TileMap size in pixels (tiles * 64). Derived from the map dims so a
 		// non-square map scales correctly instead of being stretched to a square.
-		Vector2 targetSize = new Vector2(Main.MapSizeX * 64, Main.MapSizeY * 64);
+		Vector2 targetSize = new Vector2(Main.MapSizeX * GlobalConfig.TileSizePx, Main.MapSizeY * GlobalConfig.TileSizePx);
 
 		Scale = targetSize / textureSize; // Scale to fit the map
 		Position = targetSize / 2; // Center it

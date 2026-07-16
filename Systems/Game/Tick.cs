@@ -19,7 +19,7 @@ public partial class Tick : Timer
 
 	public override void _Ready()
 	{
-		WaitTime = 1.0;   // one tick per second
+		WaitTime = GlobalConfig.TickSeconds; // one tick per second
 		OneShot = false;  // repeat forever
 		Timeout += Advance;
 		Start();

@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class Roads
 {
 	// How many vehicles a road tile can hold before it counts as a bottleneck.
-	public int Capacity = 5;
+	public int Capacity = GlobalConfig.RoadCapacity;
 
 	// road tile -> number of vehicles currently on it
 	private readonly Dictionary<Vector2I, int> _vehiclesByTile = new();

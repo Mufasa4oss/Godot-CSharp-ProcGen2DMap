@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://hf6yuj4ke4n8"]
+[gd_scene format=3 uid="uid://hf6yuj4ke4n8"]
 
 [ext_resource type="Shader" uid="uid://dmhaq05waw1yk" path="res://Shaders/ResourcePopup.gdshader" id="1_ac8o0"]
 [ext_resource type="Texture2D" uid="uid://dcr2d17xu4y3b" path="res://Images/Temp_Item_Icon.png" id="1_dip04"]

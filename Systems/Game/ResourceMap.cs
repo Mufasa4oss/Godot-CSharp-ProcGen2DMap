@@ -6,9 +6,6 @@ using System.Collections.Generic;
 // Placement is a deterministic scatter for now: a handful of each kind on random land tiles.
 public partial class ResourceMap : Node2D
 {
-    private const int PerResource = 8;   // deposits of each kind to scatter
-    private const float DotRadius = 20f; // dot size (tiles are 64px)
-
     private TileMapLayer _tml;
     private readonly Dictionary<Vector2I, ResourceType> _deposits = new();
 
@@ -27,10 +24,10 @@ public partial class ResourceMap : Node2D
             (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
         }
 
-        // Take distinct tiles off the shuffled list, PerResource of each kind, so none collide.
+        // Take distinct tiles off the shuffled list, DepositsPerResource of each kind, so none collide.
         int index = 0;
         foreach (ResourceType type in Enum.GetValues<ResourceType>())
-            for (int n = 0; n < PerResource && index < shuffled.Count; n++, index++)
+            for (int n = 0; n < GlobalConfig.DepositsPerResource && index < shuffled.Count; n++, index++)
                 _deposits[shuffled[index]] = type;
 
         QueueRedraw(); // ask Godot to (re)run _Draw
@@ -40,7 +37,7 @@ public partial class ResourceMap : Node2D
     {
         if (_tml == null) return;
         foreach (var (tile, type) in _deposits)
-            DrawCircle(_tml.MapToLocal(tile), DotRadius, ColorOf(type));
+            DrawCircle(_tml.MapToLocal(tile), GlobalConfig.ResourceDotRadiusPx, ColorOf(type));
     }
 
     // The colour each resource is drawn in.

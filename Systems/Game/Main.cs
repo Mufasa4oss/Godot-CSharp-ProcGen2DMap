@@ -19,15 +19,16 @@ public partial class Main : Node2D
 	Roads roads;
 
 	// Every capital is a city consumer, keyed by its tile so a click can look it up.
-	Dictionary<Vector2I, City> cities = new();
+	public Dictionary<Vector2I, City> cities = new();
 
-	// Map config — read by Camera / ColoredNationsSprite for sizing.
-	public static int MapSizeX = 256;
-	public static int MapSizeY = 256;
+	// Map config — read by Camera / ColoredNationsSprite for sizing. Runtime values, seeded from the
+	// read-only defaults in GlobalConfig (so a settings menu could later override them at boot).
+	public static int MapSizeX = GlobalConfig.MapSizeX;
+	public static int MapSizeY = GlobalConfig.MapSizeY;
 
 	// Fired once the nation-colour texture is built; ColoredNationsSprite (the "Nations" overlay) listens.
 	public static event Action<Texture2D> MapTextureCreated;
-
+	
 	public override void _Ready()
 	{
 		noise = Nht.Noise;
@@ -89,7 +90,7 @@ public partial class Main : Node2D
 
 		// Every capital is a city — a consumer that demands all four resources each tick.
 		foreach (var capital in vD.GetCapitals())
-			cities[capital] = new City(capital);
+			cities[capital] = new City(capital, resourceMap.Deposits, vD.nationsDictionary);
 
 		// Hand the cities + tilemap to the UI so left-clicking a city shows its demand.
 		GetNode<UIManager>("UIManager").Initialize(tml, cities);

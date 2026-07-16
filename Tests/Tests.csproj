@@ -22,6 +22,8 @@
     <Compile Include="..\Systems\Map\VoronoiAssignment.cs" Link="Map\VoronoiAssignment.cs" />
     <!-- Game-logic source under test. Plain class (no Godot Node), so it compiles headless too. -->
     <Compile Include="..\Systems\Game\Roads.cs" Link="Game\Roads.cs" />
+    <!-- Read-only tunables Roads (and others) reference; no Godot types, so it compiles headless. -->
+    <Compile Include="..\Systems\Game\GlobalConfig.cs" Link="Game\GlobalConfig.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 // Boot: generate and render the map. Gameplay (economy/finance/pops/logistics) has been removed — this is
 // now just the world: procedural terrain, the blended ground shader, and one capital per nation placed on
-// the map, with the nation-colour overlay available (hidden by default). No ticks, no save/load, no HUD.
+// the map, with the nation-colour overlay available (hidden by default). A tick heartbeat now drives
+// per-road vehicle/bottleneck checks; still no save/load or HUD.
 public partial class Main : Node2D
 {
 	[Export] NoiseTexture2D Nht;
@@ -14,9 +15,15 @@ public partial class Main : Node2D
 	TileMapLayer tml;
 	int worldSeed;
 
+	// The player-built road network + vehicles on it; the tick inspects this each beat.
+	Roads roads;
+
+	// Every capital is a city consumer, keyed by its tile so a click can look it up.
+	Dictionary<Vector2I, City> cities = new();
+
 	// Map config — read by Camera / ColoredNationsSprite for sizing.
-	public static int MapSizeX = 128;
-	public static int MapSizeY = 128;
+	public static int MapSizeX = 256;
+	public static int MapSizeY = 256;
 
 	// Fired once the nation-colour texture is built; ColoredNationsSprite (the "Nations" overlay) listens.
 	public static event Action<Texture2D> MapTextureCreated;
@@ -36,6 +43,16 @@ public partial class Main : Node2D
 		tml = GetNode<TileMapLayer>("0zTileMapLayer");
 
 		GenerateWorld();
+
+		// Start the game heartbeat: one shared road network, checked once per tick.
+		roads = new Roads();
+		AddChild(new Tick { Roads = roads, Cities = cities.Values });
+
+		// Player builds roads by clicking (press R to toggle build mode).
+		var roadPlacer = new RoadPlacer();
+		AddChild(roadPlacer);
+		roadPlacer.Initialize(roads, tml);
+
 		PopupSceneLoad();
 	}
 
@@ -65,10 +82,17 @@ public partial class Main : Node2D
 
 		MapTextureCreated?.Invoke(vD.coloredNationMap);
 
-		// Left-click a tile to highlight its Voronoi region on the BordersLayer overlay.
-		var selector = new RegionSelector();
-		AddChild(selector);
-		selector.Initialize(tml, tml.GetNode<TileMapLayer>("BordersLayer"), vD.nationsDictionary);
+		// Scatter raw resources on the map and draw them as coloured dots.
+		var resourceMap = new ResourceMap();
+		tml.AddChild(resourceMap);
+		resourceMap.Initialize(tml, mapCoordsLand, worldSeed);
+
+		// Every capital is a city — a consumer that demands all four resources each tick.
+		foreach (var capital in vD.GetCapitals())
+			cities[capital] = new City(capital);
+
+		// Hand the cities + tilemap to the UI so left-clicking a city shows its demand.
+		GetNode<UIManager>("UIManager").Initialize(tml, cities);
 	}
 
 	// Startup splash logo that fades out after a few seconds.

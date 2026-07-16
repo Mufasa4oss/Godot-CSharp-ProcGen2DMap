@@ -6,14 +6,14 @@ using Godot;
 // tile within that source, and the alternative-tile id. The TileSet itself is implied by the layer.
 public readonly struct TileId
 {
-    public readonly int Source;          // sources/N in the .tres ("AtlasID")
-    public readonly Vector2I AtlasCoords; // cell within that atlas source
-    public readonly int Alternative;      // alternative-tile id (the "/N" suffix in the .tres)
+	public readonly int Source;          // sources/N in the .tres ("AtlasID")
+	public readonly Vector2I AtlasCoords; // cell within that atlas source
+	public readonly int Alternative;      // alternative-tile id (the "/N" suffix in the .tres)
 
-    public TileId(int source, Vector2I atlasCoords, int alternative = 0)
-    {
-        Source = source;
-        AtlasCoords = atlasCoords;
-        Alternative = alternative;
-    }
+	public TileId(int source, Vector2I atlasCoords, int alternative = 0)
+	{
+		Source = source;
+		AtlasCoords = atlasCoords;
+		Alternative = alternative;
+	}
 }

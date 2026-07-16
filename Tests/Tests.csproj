@@ -20,6 +20,8 @@
     <Compile Include="..\Systems\Map\TerrainType.cs" Link="Map\TerrainType.cs" />
     <Compile Include="..\Systems\Map\TerrainRules.cs" Link="Map\TerrainRules.cs" />
     <Compile Include="..\Systems\Map\VoronoiAssignment.cs" Link="Map\VoronoiAssignment.cs" />
+    <!-- Game-logic source under test. Plain class (no Godot Node), so it compiles headless too. -->
+    <Compile Include="..\Systems\Game\Roads.cs" Link="Game\Roads.cs" />
   </ItemGroup>
 
   <ItemGroup>

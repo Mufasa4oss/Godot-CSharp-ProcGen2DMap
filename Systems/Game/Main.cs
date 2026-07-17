@@ -10,6 +10,7 @@ public partial class Main : Node2D
 {
 	[Export] NoiseTexture2D Nht;
 	[Export] int numNations = 1;
+	UIManager UI;
 
 	Noise noise;
 	TileMapLayer tml;
@@ -45,9 +46,11 @@ public partial class Main : Node2D
 
 		GenerateWorld();
 
-		// Start the game heartbeat: one shared road network, checked once per tick.
+		// Start the game heartbeat. Tick just fires Ticked; each system subscribes to do its own work.
 		roads = new Roads();
-		AddChild(new Tick { Roads = roads, Cities = cities.Values });
+		var tick = new Tick();
+		AddChild(tick);
+		WireTickSubscribers(tick);
 
 		// Player builds roads by clicking (press R to toggle build mode).
 		var roadPlacer = new RoadPlacer();
@@ -55,6 +58,63 @@ public partial class Main : Node2D
 		roadPlacer.Initialize(roads, tml);
 
 		PopupSceneLoad();
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────────────────────────
+	//  EVENT SYSTEM
+	// ─────────────────────────────────────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Wires every system that needs to run on the game clock into <see cref="Tick"/>'s heartbeat.
+	/// This method is the one and only place those connections are made.
+	///
+	/// <para>
+	/// HOW THE EVENT SYSTEM WORKS.
+	/// <see cref="Tick"/> is the heartbeat: once per second it fires its <c>Ticked</c> event and hands
+	/// every listener the current tick number. Tick does no game work itself — it just announces "a beat
+	/// happened." Each system decides what to do about that beat by subscribing here. This is the
+	/// publish/subscribe pattern: Tick is the publisher, the systems are the subscribers, and neither
+	/// side knows about the other. Main is the switchboard that plugs them together.
+	/// </para>
+	///
+	/// <para>
+	/// WHY IT'S SET UP THIS WAY. Because Tick never names its subscribers, it never has to change when
+	/// the game grows. Adding a new clock-driven system is a one-line edit *here*, and Tick.cs is left
+	/// untouched. Systems stay decoupled — Roads, City and the UI don't know the clock exists; they just
+	/// expose a method, and Main hands that method to the tick.
+	/// </para>
+	///
+	/// <para>
+	/// TO TIE A NEW SYSTEM INTO THE TICK:
+	/// <list type="number">
+	///   <item>Give the system a method to run each beat, e.g. <c>population.Grow()</c> or
+	///         <c>economy.Settle(long tick)</c>.</item>
+	///   <item>Add one line below: <c>tick.Ticked += n =&gt; yourSystem.DoThing();</c></item>
+	///   <item>Done. You never touch Tick.cs — Tick keeps broadcasting and your system now hears it.</item>
+	/// </list>
+	/// <c>n</c> is the tick number the event hands every subscriber. We name it <c>n</c> on every line for
+	/// consistency: pass it on when the method wants it (<c>n =&gt; economy.Settle(n)</c>), and simply
+	/// leave it unused when it doesn't (<c>n =&gt; population.Grow()</c>). You may also see <c>_ =&gt;</c>
+	/// elsewhere, which is the same thing written to say "I deliberately ignore this value."
+	/// </para>
+	///
+	/// <para>
+	/// GOTCHA — LIFETIME. The event holds a reference to whatever you subscribe, so a subscriber can't be
+	/// garbage-collected while it's still attached. If a system is ever destroyed mid-game
+	/// (<c>QueueFree</c>), unsubscribe it first with <c>tick.Ticked -= handler</c>, or it will be kept
+	/// alive and keep firing. Nothing here is freed today, so it isn't a problem yet — but it's the trap
+	/// to remember once cities or roads can disappear at runtime.
+	/// </para>
+	/// </summary>
+	private void WireTickSubscribers(Tick tick)
+	{
+		tick.Ticked += n => roads.ReportBottlenecks(n);  // road bottleneck check each tick
+		tick.Ticked += n => UI.Update(n);                // refresh the on-screen panel each tick
+		foreach (var c in cities.Values)
+		{
+			tick.Ticked += n => c.ConsumeDemand();       // each city consumes a tick of demand
+			tick.Ticked += n => c.GrowPopulation();      // each city grows its population each tick
+		}
 	}
 
 	// Terrain tiles + the realistic blended ground + capitals and the nation-colour map. Pure worldgen.
@@ -93,7 +153,9 @@ public partial class Main : Node2D
 			cities[capital] = new City(capital, resourceMap.Deposits, vD.nationsDictionary);
 
 		// Hand the cities + tilemap to the UI so left-clicking a city shows its demand.
-		GetNode<UIManager>("UIManager").Initialize(tml, cities);
+		UI = GetNode<UIManager>("UIManager");
+		UI.Initialize(tml, cities);
+
 	}
 
 	// Startup splash logo that fades out after a few seconds.

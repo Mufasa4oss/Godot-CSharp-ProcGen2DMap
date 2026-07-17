@@ -11,6 +11,8 @@ public class City
     public Resources Stockpile { get; } = new Resources();
     public Population Population { get; } // the city owns its people
 
+
+
     // Main hands us the deposits and the tile->capital ownership map; we count the deposits that fall in
     // our own Voronoi territory and let the population form around them.
     public City(Vector2I location, IReadOnlyDictionary<Vector2I, ResourceType> deposits,
@@ -18,8 +20,14 @@ public class City
     {
         Location = location;
         Population = new Population(CountOwned(deposits, tileToCapital));
+
     }
 
+    public void GrowPopulation()
+    {
+        Population.totalPopulation += (int)(Population.totalPopulation * 0.1f);
+        //GD.Print("Population grew");
+    }
     // How many deposits of each resource sit on tiles this city owns (its Voronoi region).
     private Dictionary<ResourceType, int> CountOwned(
         IReadOnlyDictionary<Vector2I, ResourceType> deposits,

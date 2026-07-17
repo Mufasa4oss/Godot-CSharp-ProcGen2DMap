@@ -11,12 +11,19 @@ the flow breaks down. The whole world is generated deterministically from a sing
 - **Capitals & nations** — a Voronoi diagram over `numNations` randomly-placed capitals, plus a
   per-nation colour map.
 - **Cities** — every capital is a **city consumer** that demands all four resources each tick
-  (infinite demand for now). Click a city to see its per-resource demand.
+  (infinite demand for now) and **grows its population** each tick. Click a city to open a live
+  panel showing its per-resource demand, total population, and its worker job breakdown; the panel
+  refreshes every tick.
+- **Population** — each city has a population of workers + dependents. Workers are split into jobs
+  (farmer / miner / craftsman / unemployed) weighted by the resource deposits the city owns, and the
+  total grows a little every tick.
 - **Resources** — grain / iron / water / wood, scattered on land and drawn as coloured dots
   (grain yellow, iron gray, water blue, wood brown).
 - **Roads** — **player-built**: toggle build mode and left-click to lay rail tiles. A per-tick
   system flags any road carrying more vehicles than its capacity — the core *bottleneck* signal.
-- **Tick** — a one-per-second heartbeat that drives the road-bottleneck checks and city consumption.
+- **Tick** — a one-per-second heartbeat. It does no game work itself: it fires a `Ticked` event and
+  each system (road-bottleneck check, city consumption, population growth, UI refresh) subscribes to
+  it. All subscriptions live in one place, `Main.WireTickSubscribers`.
 
 ## Controls
 
@@ -58,8 +65,9 @@ dependency, the tests stop compiling.
 
 ## Project structure
 
-- `Systems/Game/` — the game loop and systems: `Main` (boot), `Tick` (heartbeat), `Roads` +
-  `RoadPlacer`, `City`, `Resources` + `ResourceMap`, `Initialize` (terrain placement).
+- `Systems/Game/` — the game loop and systems: `Main` (boot + tick wiring), `Tick` (heartbeat that
+  fires the `Ticked` event), `Roads` + `RoadPlacer`, `City` + `Population`, `Resources` +
+  `ResourceMap`, `Initialize` (terrain placement).
 - `Systems/Map/` — worldgen and tiles: terrain rules/types, Voronoi assignment/diagram, tile ids.
 - `Systems/Cameras/`, `Systems/Controls/`, `Systems/Rendering/` — camera, input mapping, ground shader.
 - `UI/` — `UIManager`, the on-screen panel.

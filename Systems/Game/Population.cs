@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 
@@ -17,14 +18,14 @@ public class Population //Add small random varitation to reduce predicability???
 {
 	public int workingPopulation;
 	public int dependentPopulation;
+	public int totalPopulation;
+	public Dictionary<PopTypes, Dictionary<string, float>> PopStats { get; private set; } //currently is filled but does nothing
 
-	//To add 
-
-	/// <summary>
-	/// Internal dictionary storing how many workers belong to each PopType.
-	/// Exposed as a read-only view so external code cannot mutate it.
-	/// </summary>
-	private readonly Dictionary<PopTypes, int> _composition = new();
+    /// <summary>
+    /// Internal dictionary storing how many workers belong to each PopType.
+    /// Exposed as a read-only view so external code cannot mutate it.
+    /// </summary>
+    private readonly Dictionary<PopTypes, int> _composition = new();
 	public IReadOnlyDictionary<PopTypes, int> Composition => _composition;
 
 	/// <summary>
@@ -39,12 +40,15 @@ public class Population //Add small random varitation to reduce predicability???
 		Craftsman   // Iron → crafting (general artisan)
 	}
 
-	/// <summary>
-	/// Constructor.
-	/// City passes in its owned resource counts.
-	/// We set worker/dependent counts, then split workers across jobs.
-	/// </summary>
-	public Population(Dictionary<ResourceType, int> citysOwnedResources)
+
+
+
+    /// <summary>
+    /// Constructor.
+    /// City passes in its owned resource counts.
+    /// We set worker/dependent counts, then split workers across jobs.
+    /// </summary>
+    public Population(Dictionary<ResourceType, int> citysOwnedResources)
 	{
 		workingPopulation = GlobalConfig.StartingWorkers;
 
@@ -52,20 +56,22 @@ public class Population //Add small random varitation to reduce predicability???
 		dependentPopulation = (int)Math.Floor(
 			workingPopulation * GlobalConfig.WorkerToDependentRatio
 		);
+		totalPopulation = dependentPopulation + workingPopulation;
 
 		// Build the job composition based on the city's resources
 		WeighResources(citysOwnedResources);
-	}
+        PopStats = CreatePopStats();
+    }
 
-	/// <summary>
-	/// Splits the working population across job types.
-	/// The weights come from the city's resource deposits.
-	/// 
-	/// Workers start as Unemployed.
-	/// Then they are assigned proportionally based on weights.
-	/// Any leftover (due to integer truncation) stays Unemployed.
-	/// </summary>
-	public void WeighResources(Dictionary<ResourceType, int> citysOwnedResources)
+    /// <summary>
+    /// Splits the working population across job types.
+    /// The weights come from the city's resource deposits.
+    /// 
+    /// Workers start as Unemployed.
+    /// Then they are assigned proportionally based on weights.
+    /// Any leftover (due to integer truncation) stays Unemployed.
+    /// </summary>
+    public void WeighResources(Dictionary<ResourceType, int> citysOwnedResources)
 	{
 		_composition.Clear();
 
@@ -104,5 +110,42 @@ public class Population //Add small random varitation to reduce predicability???
 
 		// leftover is the truncated remainder from integer division
 		_composition[PopTypes.Unemployed] = leftover;
+	}
+    private Dictionary<PopTypes, Dictionary<string, float>> CreatePopStats()
+	{
+
+        var popStats = new Dictionary<PopTypes, Dictionary<string, float>>();
+
+        //rate constants
+        foreach (PopTypes type in Enum.GetValues<PopTypes>())
+        {
+            var stat = new Dictionary<string, float>();
+
+            switch (type)
+            {
+                case PopTypes.Farmer:
+                    stat["reproductionRate"] = 1.2f;
+                    stat["wage"] = 0.8f;
+                    break;
+
+                case PopTypes.Miner:
+                    stat["reproductionRate"] = 0.9f;
+                    stat["wage"] = 1.5f;
+                    break;
+
+                case PopTypes.Craftsman:
+                    stat["reproductionRate"] = 1.0f;
+                    stat["wage"] = 1.3f;
+                    break;
+
+                case PopTypes.Unemployed:
+                    stat["reproductionRate"] = 1.0f;
+                    stat["wage"] = 0f;
+                    break;
+            }
+
+            popStats[type] = stat;
+        }
+		return popStats;
 	}
 }

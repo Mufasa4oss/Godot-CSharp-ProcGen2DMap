@@ -44,4 +44,12 @@ public class Roads
 
 	// Every road tile and its vehicle count — what the tick walks over.
 	public IEnumerable<KeyValuePair<Vector2I, int>> All => _vehiclesByTile;
+
+	// One tick's work: print any road carrying more than it can handle. Subscribed to Tick.Ticked.
+	public void ReportBottlenecks(long gameTick)
+	{
+		foreach (var (tile, vehicles) in _vehiclesByTile)
+			if (vehicles > Capacity)
+				GD.Print($"[tick {gameTick}] bottleneck: road {tile} has {vehicles}/{Capacity} vehicles");
+	}
 }

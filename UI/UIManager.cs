@@ -16,12 +16,14 @@ public partial class UIManager : Control //hey claude answer this next time you 
 
     private readonly Dictionary<ResourceType, Label> _demandLabels = new();
     private readonly Dictionary<Population.PopTypes, Label> _popTypeLabels = new();
+    private Label _totalPopLabel;               // single total-population number for the city
 
 
 
 
     private TileMapLayer _tml;                  // to turn a click position into a tile cell
     private Dictionary<Vector2I, City> _cities; // capital tile -> the city there
+    private City _selectedCity;                 // the city shown in the panel; redrawn each tick
 
     // Panel-drag state: whether a drag is underway, and where on the panel we grabbed it.
     private bool _dragging;
@@ -33,7 +35,11 @@ public partial class UIManager : Control //hey claude answer this next time you 
         _tml = tml;
         _cities = cities;
     }
-
+    // Called every tick from Main: redraw whatever city is currently shown.
+    public void Update(long gametick)
+    {
+        Refresh();
+    }
     public override void _Ready()
     {
         _panel = GetNode<PanelContainer>("PanelContainer");
@@ -55,6 +61,10 @@ public partial class UIManager : Control //hey claude answer this next time you 
             _demandLabels[type] = label;
             _vbox.AddChild(label);
         }
+
+        // Total population for the whole city, shown above the per-job breakdown.
+        _totalPopLabel = new Label { Text = "Total Population: 0", MouseFilter = MouseFilterEnum.Ignore };
+        _vbox.AddChild(_totalPopLabel);
 
         // One label per population type (Farmer, Miner, Craftsman, Unemployed)
         foreach (Population.PopTypes type in Enum.GetValues<Population.PopTypes>())
@@ -99,22 +109,30 @@ public partial class UIManager : Control //hey claude answer this next time you 
         }
     }
 
-    // Fill the panel with one city's demand stats.
+    // Remember which city was clicked, then draw it. Refresh() does the actual drawing so the tick
+    // can redraw the same city without needing another click.
     private void ShowCity(City city)
     {
-        _header.Text = $"City {city.Location}";
+        _selectedCity = city;
+        Refresh();
+    }
+
+    // Redraw the selected city's stats. Called on click and once per tick. Does nothing until a
+    // city has been picked.
+    private void Refresh()
+    {
+        if (_selectedCity == null) return;
+
+        _header.Text = $"City {_selectedCity.Location}";
+
         foreach (ResourceType type in Enum.GetValues<ResourceType>())
-            _demandLabels[type].Text = $"{type} Demand: {city.DemandFor(type)}";
-        
+            _demandLabels[type].Text = $"{type} Demand: {_selectedCity.DemandFor(type)}";
+
+        _totalPopLabel.Text = $"Total Population: {_selectedCity.Population.totalPopulation}";
+
         // Update population composition labels
-        foreach (var kvp in city.Population.Composition)
-        {
-            Population.PopTypes type = kvp.Key;
-            int count = kvp.Value;
-
-            _popTypeLabels[type].Text = $"{type}: {count}";
-        }
-
+        foreach (var kvp in _selectedCity.Population.Composition)
+            _popTypeLabels[kvp.Key].Text = $"{kvp.Key}: {kvp.Value}";
     }
 
 }

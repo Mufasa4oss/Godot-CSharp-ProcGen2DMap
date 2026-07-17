@@ -25,4 +25,18 @@ public static class GlobalConfig
 	public const float WorkerToDependentRatio = 1f / 2f; // Worker:Dependent
 	public const float PopBaselineWeight = 1f;           // baseline so every job type can still appear
 	public const float ResourcePullWeight = 5f;          // how hard a nearby deposit pulls the job mix
+
+	// --- DemandForResources ---
+	public const int GrainPerWorkerRatio = 3;
+    public const int GrainPerDependentRatio = 2;
+    public const int WaterPerWorkerRatio = 6;
+    public const int WaterPerDependentRatio = 4;
+    public const int IronPerToolShop = 2;
+    public const int WoodPerToolRatio = 4;
+
+    // --- BuildingProductionRates ---
+    public const int FarmGrainProductionPerTick = 2;
+    public const int MineIronProductionPerTick = 1;
+	public const int WellWaterProductionPerTick = 1;
+	public const int ForestryLumberProductionPerTick = 1;
 }

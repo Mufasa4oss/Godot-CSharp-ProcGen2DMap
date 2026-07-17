@@ -19,8 +19,6 @@ public partial class UIManager : Control //hey claude answer this next time you 
     private Label _totalPopLabel;               // single total-population number for the city
 
 
-
-
     private TileMapLayer _tml;                  // to turn a click position into a tile cell
     private Dictionary<Vector2I, City> _cities; // capital tile -> the city there
     private City _selectedCity;                 // the city shown in the panel; redrawn each tick
@@ -125,8 +123,9 @@ public partial class UIManager : Control //hey claude answer this next time you 
 
         _header.Text = $"City {_selectedCity.Location}";
 
+        var demand = _selectedCity.Demand.PerResourceDemand();
         foreach (ResourceType type in Enum.GetValues<ResourceType>())
-            _demandLabels[type].Text = $"{type} Demand: {_selectedCity.DemandFor(type)}";
+            _demandLabels[type].Text = $"{type} Demand: {demand[type]}";
 
         _totalPopLabel.Text = $"Total Population: {_selectedCity.Population.totalPopulation}";
 

@@ -8,10 +8,12 @@ using System.Collections.Generic;
 public class City
 {
     public Vector2I Location { get; }
-    public Resources Stockpile { get; } = new Resources();
+    public Resources Resources { get; }
     public Population Population { get; } // the city owns its people
 
-
+    public Demand Demand { get; }
+    
+    //Enum CityType //based on type of resources as of current
 
     // Main hands us the deposits and the tile->capital ownership map; we count the deposits that fall in
     // our own Voronoi territory and let the population form around them.
@@ -20,13 +22,25 @@ public class City
     {
         Location = location;
         Population = new Population(CountOwned(deposits, tileToCapital));
-
+        Resources = new Resources();
+        Demand = new Demand(Population, Resources);
     }
 
     public void GrowPopulation()
     {
-        Population.totalPopulation += (int)(Population.totalPopulation * 0.1f);
+        Population.workingPopulation += (int)(Population.workingPopulation * 0.01f);
+        Population.dependentPopulation =
+            (int)Math.Floor(Population.workingPopulation * GlobalConfig.WorkerToDependentRatio);
+        Population.totalPopulation = Population.workingPopulation + Population.dependentPopulation;
         //GD.Print("Population grew");
+    }
+
+
+
+    public void ShrinkPopulation()
+    {
+        Population.totalPopulation -= (int)(Population.totalPopulation * 0.01f);
+        //GD.Print("Population shrank");
     }
     // How many deposits of each resource sit on tiles this city owns (its Voronoi region).
     private Dictionary<ResourceType, int> CountOwned(
@@ -43,16 +57,12 @@ public class City
         return owned;
     }
 
-    // How much of a resource this city wants each tick (uniform across resources for now).
-    public int DemandFor(ResourceType type) => GlobalConfig.CityDemandPerTick;
-
-    // Take one tick of demand from the stockpile; return the resources there wasn't enough of.
-    public List<ResourceType> ConsumeDemand()
+    // Take one tick of demand out of the stockpile. Nothing delivers yet, so for now every
+    // resource is empty and these removals simply fail (the city goes unfed).
+    public void ConsumeDemand()
     {
-        var unmet = new List<ResourceType>();
-        foreach (ResourceType type in Enum.GetValues<ResourceType>())
-            if (!Stockpile.TryRemove(type, GlobalConfig.CityDemandPerTick))
-                unmet.Add(type);
-        return unmet;
+        foreach (var (type, amount) in Demand.PerResourceDemand())
+            Resources.TryRemove(type, amount);
     }
+    //switch(case)//for city type implementation e.g. lumber town, mining town
 }

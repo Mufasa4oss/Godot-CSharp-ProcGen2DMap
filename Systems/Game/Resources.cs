@@ -1,4 +1,14 @@
+using System;
 using System.Collections.Generic;
+
+// The kinds of resource in the game — one entry per raw good the economy moves around.
+public enum ResourceType
+{
+    Grain,
+    Iron,
+    Water,
+    Wood,
+}
 
 // A stockpile of resources: how much of each ResourceType something is holding right now.
 // Anything that stores goods — a city, a building, a cart — owns one of these.
@@ -22,4 +32,14 @@ public class Resources
         _amounts[type] = Get(type) - amount;
         return true;
     }
+    public Dictionary<ResourceType, int> GetDictionaryResourceType()
+    {
+        var result = new Dictionary<ResourceType, int>();
+
+        foreach (ResourceType r in Enum.GetValues<ResourceType>())
+            result[r] = Get(r);
+
+        return result;
+    }
+
 }

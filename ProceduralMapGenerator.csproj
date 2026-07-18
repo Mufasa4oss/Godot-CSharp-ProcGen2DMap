@@ -8,4 +8,7 @@
   <ItemGroup>
     <Compile Remove="Tests/**/*.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Scenes\" />
+  </ItemGroup>
 </Project>

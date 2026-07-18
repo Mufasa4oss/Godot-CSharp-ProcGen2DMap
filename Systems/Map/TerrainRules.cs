@@ -32,5 +32,8 @@ public static class TerrainRules
 
     // Is a (land) cell at this height a beach rather than a desert? Lets generation/economy tell the
     // two sand kinds apart without re-deriving the band. Only meaningful when Classify == Sand.
-    public static bool IsBeach(float height) => height > WaterLevel && height < BeachLine;
+    public static bool IsBeach(float height)
+    {
+        return height > WaterLevel && height < BeachLine;
+    }
 }

@@ -8,7 +8,7 @@ using System.Collections.Generic;
 public class City
 {
     public Vector2I Location { get; }
-    public Resources Resources { get; }
+    public Resources Stockpile { get; }
     public Population Population { get; } // the city owns its people
 
     public Demand Demand { get; }
@@ -22,8 +22,8 @@ public class City
     {
         Location = location;
         Population = new Population(CountOwned(deposits, tileToCapital));
-        Resources = new Resources();
-        Demand = new Demand(Population, Resources);
+        Stockpile = new Resources();
+        Demand = new Demand(Population, Stockpile);
     }
 
     public void GrowPopulation()
@@ -34,9 +34,6 @@ public class City
         Population.totalPopulation = Population.workingPopulation + Population.dependentPopulation;
         //GD.Print("Population grew");
     }
-
-
-
     public void ShrinkPopulation()
     {
         Population.totalPopulation -= (int)(Population.totalPopulation * 0.01f);
@@ -56,13 +53,16 @@ public class City
             }
         return owned;
     }
+    public void Delivered()
+    {
 
+    }
     // Take one tick of demand out of the stockpile. Nothing delivers yet, so for now every
     // resource is empty and these removals simply fail (the city goes unfed).
     public void ConsumeDemand()
     {
         foreach (var (type, amount) in Demand.PerResourceDemand())
-            Resources.TryRemove(type, amount);
+            Stockpile.TryRemove(type, amount);
     }
     //switch(case)//for city type implementation e.g. lumber town, mining town
 }

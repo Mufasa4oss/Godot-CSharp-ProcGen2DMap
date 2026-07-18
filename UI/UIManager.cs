@@ -2,49 +2,56 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-// The on-screen panel. Left-click a city tile (a capital) and this fills the VBox with that city's
-// per-resource demand. The demand labels are created once in _Ready and kept so we can rewrite their
-// text whenever a different city is picked. The panel is a draggable window: press and drag anywhere
-// on it to move it around the screen.
-public partial class UIManager : Control //hey claude answer this next time you read this file. Can this class which is attached to the root of the UI see all of it's children and therefore do shit with them without having to use GetNode<>?
+public partial class UIManager : Control
 {
-    private PanelContainer _panel; // the draggable window itself
+    // --- City Panel ---
+    private PanelContainer _panel;
     private VBoxContainer _vbox;
     private Label _header;
 
-    
-
     private readonly Dictionary<ResourceType, Label> _demandLabels = new();
     private readonly Dictionary<Population.PopTypes, Label> _popTypeLabels = new();
-    private Label _totalPopLabel;               // single total-population number for the city
+    private Label _totalPopLabel;
 
+    // --- Building Panel (now external UI script) ---
+    private BuildingUI _buildingUI;
 
-    private TileMapLayer _tml;                  // to turn a click position into a tile cell
-    private Dictionary<Vector2I, City> _cities; // capital tile -> the city there
-    private City _selectedCity;                 // the city shown in the panel; redrawn each tick
+    // --- Game Data ---
+    private TileMapLayer _tml;
+    private Dictionary<Vector2I, City> _cities;
+    private City _selectedCity;
 
-    // Panel-drag state: whether a drag is underway, and where on the panel we grabbed it.
+    private Buildings _buildings;
+    private TileMapLayer _buildingsLayer;
+    private Building.BuildingType? _placingType;
+
+    // The build buttons, and which type each one places. Kept so a single shared handler can ask the
+    // group which button is pressed and look the answer up here. Keyed by Godot's instance id rather
+    // than the button object: the id is a plain number that is guaranteed stable for the node's life,
+    // so the lookup can't miss even if Godot hands us a different C# wrapper for the same button.
+    private ButtonGroup _buildGroup;
+    private readonly Dictionary<ulong, Building.BuildingType> _buildButtons = new();
+
+    // --- Dragging ---
     private bool _dragging;
-    private Vector2 _grabOffset; // vector from the panel's top-left to the mouse, fixed for the drag
+    private Vector2 _grabOffset;
 
-    // Main hands us the tilemap (for click -> tile) and every city keyed by its tile.
-    public void Initialize(TileMapLayer tml, Dictionary<Vector2I, City> cities)
+    // --- Initialization from Main ---
+    public void Initialize(TileMapLayer tml, Dictionary<Vector2I, City> cities,
+                           Buildings buildings, TileMapLayer buildingsLayer)
     {
         _tml = tml;
         _cities = cities;
+        _buildings = buildings;
+        _buildingsLayer = buildingsLayer;
     }
-    // Called every tick from Main: redraw whatever city is currently shown.
-    public void Update(long gametick)
-    {
-        Refresh();
-    }
+
     public override void _Ready()
     {
+        // --- City Panel Setup ---
         _panel = GetNode<PanelContainer>("PanelContainer");
         _vbox = GetNode<VBoxContainer>("PanelContainer/VBox");
 
-        // Make the panel a solid, draggable window: the panel itself catches every click (and shields
-        // the map underneath), while its contents ignore the mouse so a grab anywhere starts a drag.
         _panel.MouseFilter = MouseFilterEnum.Stop;
         _vbox.MouseFilter = MouseFilterEnum.Ignore;
         _panel.GuiInput += OnPanelInput;
@@ -52,7 +59,7 @@ public partial class UIManager : Control //hey claude answer this next time you 
         _header = new Label { Text = "Click a city", MouseFilter = MouseFilterEnum.Ignore };
         _vbox.AddChild(_header);
 
-        // One demand label per resource, kept so we can update them when a city is picked.
+        // Resource demand labels
         foreach (ResourceType type in Enum.GetValues<ResourceType>())
         {
             var label = new Label { Text = $"{type} Demand: 0", MouseFilter = MouseFilterEnum.Ignore };
@@ -60,27 +67,77 @@ public partial class UIManager : Control //hey claude answer this next time you 
             _vbox.AddChild(label);
         }
 
-        // Total population for the whole city, shown above the per-job breakdown.
+        // Total population
         _totalPopLabel = new Label { Text = "Total Population: 0", MouseFilter = MouseFilterEnum.Ignore };
         _vbox.AddChild(_totalPopLabel);
 
-        // One label per population type (Farmer, Miner, Craftsman, Unemployed)
+        // Population breakdown
         foreach (Population.PopTypes type in Enum.GetValues<Population.PopTypes>())
         {
-            var label = new Label
-            {
-                Text = $"{type}: 0",
-                MouseFilter = MouseFilterEnum.Ignore
-            };
-
+            var label = new Label { Text = $"{type}: 0", MouseFilter = MouseFilterEnum.Ignore };
             _popTypeLabels[type] = label;
             _vbox.AddChild(label);
         }
 
+        // --- Build Buttons ---
+        var buildRow = new HBoxContainer();
+        _vbox.AddChild(buildRow);
+
+        _buildGroup = new ButtonGroup { AllowUnpress = true };
+
+        foreach (Building.BuildingType type in Enum.GetValues<Building.BuildingType>())
+        {
+            var button = new Button
+            {
+                Text = type.ToString(),
+                ToggleMode = true,
+                ButtonGroup = _buildGroup
+            };
+
+            _buildButtons[button.GetInstanceId()] = type;
+            button.Toggled += OnBuildToggled;
+            buildRow.AddChild(button);
+        }
+
+        // --- Building UI (external panel) ---
+        _buildingUI = GetNode<BuildingUI>("BuildingPanelContainer");
     }
 
-    // Drag the whole panel by pressing and moving the mouse anywhere on it. While a mouse button is
-    // held, Godot keeps sending the moves here (to the pressed panel) even if the cursor slips off it.
+    public void Update(long gametick)
+    {
+        RefreshCity();
+        _buildingUI.Refresh();
+    }
+
+    // A build button was toggled. Every button shares this one handler, so instead of each button
+    // remembering its own type, we ask the group which button is pressed right now and look it up.
+    // That also makes the order the press/unpress signals arrive in irrelevant — we only ever read the
+    // final state. The 'on' flag is ignored for the same reason.
+    private void OnBuildToggled(bool on)
+    {
+        BaseButton pressed = _buildGroup.GetPressedButton();
+        if (pressed == null)
+        {
+            _placingType = null;   // nothing armed — clicking the armed button again unpresses it
+            return;
+        }
+
+        _placingType = _buildButtons[pressed.GetInstanceId()];
+    }
+
+    // Disarm build mode and pop the pressed button back out, so the armed state and what the player
+    // sees can't disagree. Unpressing fires OnBuildToggled, which clears _placingType on its own; the
+    // assignment below covers the case where nothing was pressed to begin with.
+    private void CancelPlacement()
+    {
+        BaseButton pressed = _buildGroup.GetPressedButton();
+        if (pressed != null)
+            pressed.ButtonPressed = false;
+
+        _placingType = null;
+    }
+
+    // --- Dragging the City Panel ---
     private void OnPanelInput(InputEvent @event)
     {
         if (@event is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left)
@@ -95,29 +152,57 @@ public partial class UIManager : Control //hey claude answer this next time you 
         }
     }
 
+    // --- Input Handling ---
     public override void _UnhandledInput(InputEvent @event)
     {
         if (_cities == null) return;
+        if (@event is not InputEventMouseButton mb || !mb.Pressed) return;
 
-        if (@event is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
+        // Right-click anywhere closes the building panel and cancels build mode.
+        if (mb.ButtonIndex == MouseButton.Right)
         {
-            Vector2I cell = _tml.LocalToMap(_tml.GetLocalMousePosition());
-            if (_cities.TryGetValue(cell, out City city))
-                ShowCity(city);
+            _buildingUI.HidePanel();
+            CancelPlacement();
+            return;
+        }
+
+        if (mb.ButtonIndex != MouseButton.Left) return;
+
+        Vector2I cell = _tml.LocalToMap(_tml.GetLocalMousePosition());
+
+        // Building placement
+        if (_placingType is Building.BuildingType type)
+        {
+            if (_buildings.Place(type, cell))
+            {
+                TileId tile = Tiles.ForBuilding(type);
+                _buildingsLayer.SetCell(cell, tile.Source, tile.AtlasCoords, tile.Alternative);
+            }
+            return;
+        }
+
+        // Inspect building
+        if (_buildings.At(cell) is Building building)
+        {
+            _buildingUI.ShowBuilding(building);
+            return;
+        }
+
+        // Inspect city
+        if (_cities.TryGetValue(cell, out City city))
+        {
+            ShowCity(city);
         }
     }
 
-    // Remember which city was clicked, then draw it. Refresh() does the actual drawing so the tick
-    // can redraw the same city without needing another click.
+    // --- City UI ---
     private void ShowCity(City city)
     {
         _selectedCity = city;
-        Refresh();
+        RefreshCity();
     }
 
-    // Redraw the selected city's stats. Called on click and once per tick. Does nothing until a
-    // city has been picked.
-    private void Refresh()
+    private void RefreshCity()
     {
         if (_selectedCity == null) return;
 
@@ -129,9 +214,7 @@ public partial class UIManager : Control //hey claude answer this next time you 
 
         _totalPopLabel.Text = $"Total Population: {_selectedCity.Population.totalPopulation}";
 
-        // Update population composition labels
         foreach (var kvp in _selectedCity.Population.Composition)
             _popTypeLabels[kvp.Key].Text = $"{kvp.Key}: {kvp.Value}";
     }
-
 }

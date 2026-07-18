@@ -1,7 +1,6 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 public partial class VoronoiDiagram
 {
 	//private int width;
@@ -90,14 +89,18 @@ public partial class VoronoiDiagram
 		unchecked { return worldSeed * (int)0x9E3779B1 + 0x632BE5AB; }
 	}
 
-	private HashSet<Color> CreateUniqueColorSet()
+	// Returns a List, not the HashSet: the caller pairs colour i with capital i, and only a List
+	// promises an order. The HashSet stays inside the method, doing the one job it's good at —
+	// rejecting a colour we've already used.
+	private List<Color> CreateUniqueColorSet()
 	{
 		int numNations = placedCords.Count;
 		Color lastColor = new Color(0, 0, 0);
 		// Derived sub-seed so nation colors are deterministic but not correlated with capital placement.
 		var random = new System.Random(DeriveColorSeed(worldSeed));
 
-		HashSet<Color> colorSet = new HashSet<Color>();
+		HashSet<Color> used = new HashSet<Color>();
+		List<Color> colors = new List<Color>();
 		for (int i = 0; i < numNations; i++)
 		{
 			Color color;
@@ -107,17 +110,18 @@ public partial class VoronoiDiagram
 				hue = hue % 1.0f;
 				color = Color.FromHsv(hue, 1f, 1f, 1f);
 
-			} while (colorSet.Contains(color));
+			} while (used.Contains(color));
 
-			colorSet.Add(color);
+			used.Add(color);
+			colors.Add(color);
 		}
-		return colorSet;
+		return colors;
 	}
 	private Texture2D CreateNationMap()
 	{
 		int pixelSizeX = mapSizeX;
 		int pixelSizeY = mapSizeY;
-		HashSet<Color> colorSet = CreateUniqueColorSet();
+		List<Color> colorSet = CreateUniqueColorSet();
 		Image image = Image.CreateEmpty(pixelSizeX, pixelSizeY, false, Image.Format.Rgba8);
 		Dictionary<Vector2I, Vector2I> nationMap = CreateDictionaryOfTilesCapitals();
 		nationsDictionary = nationMap;
@@ -127,7 +131,7 @@ public partial class VoronoiDiagram
 
 		for (int i = 0; i < placedCords.Count; i++)
 		{
-			nationColors[placedCords[i]] = colorSet.ElementAt(i);
+			nationColors[placedCords[i]] = colorSet[i];
 		}
 
 

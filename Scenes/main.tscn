@@ -3,10 +3,12 @@
 [ext_resource type="Script" uid="uid://hkw3gbc4j32n" path="res://Systems/Game/Main.cs" id="1_jjvhh"]
 [ext_resource type="TileSet" uid="uid://dhpknl1krdn23" path="res://tilesets/tilesetTest.tres" id="2_kry3j"]
 [ext_resource type="Script" uid="uid://o6vvujhl4c1e" path="res://Systems/Cameras/Camera.cs" id="3_21xkr"]
-[ext_resource type="TileSet" uid="uid://dx55c1nn6ogax" path="res://tilesets/BorderHighlight.tres" id="3_kry3j"]
 [ext_resource type="Script" uid="uid://clehyfud31ory" path="res://Systems/Map/ColoredNationsSprite.cs" id="4_6bp64"]
 [ext_resource type="TileSet" uid="uid://0cior3rfmbg7" path="res://tilesets/road.tres" id="4_344ge"]
 [ext_resource type="Script" uid="uid://dw5qrglxk2coj" path="res://UI/UIManager.cs" id="6_21xkr"]
+[ext_resource type="TileSet" uid="uid://paejk8lr28cp" path="res://tilesets/buildings.tres" id="7_bld"]
+[ext_resource type="TileSet" uid="uid://c1kskn4igcjwe" path="res://tilesets/resources.tres" id="8_res"]
+[ext_resource type="Script" uid="uid://ck7g7qojf71wi" path="res://UI/BuildingUI.cs" id="9_ynf5e"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3
@@ -40,11 +42,14 @@ numNations = 10
 tile_set = ExtResource("2_kry3j")
 rendering_quadrant_size = 64
 
-[node name="BordersLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=182775386]
-tile_set = ExtResource("3_kry3j")
-
 [node name="RailroadLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=915398877]
 tile_set = ExtResource("4_344ge")
+
+[node name="ResourcesLayer" type="TileMapLayer" parent="0zTileMapLayer" unique_id=2035056552]
+tile_set = ExtResource("8_res")
+
+[node name="BuildingsLayer" type="TileMapLayer" parent="0zTileMapLayer/ResourcesLayer" unique_id=1638745835]
+tile_set = ExtResource("7_bld")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=536846053]
 z_as_relative = false
@@ -58,7 +63,9 @@ script = ExtResource("3_21xkr")
 visible = false
 script = ExtResource("4_6bp64")
 
-[node name="UIManager" type="Control" parent="." unique_id=1941409794]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2062318606]
+
+[node name="UIManager" type="Control" parent="CanvasLayer" unique_id=1941409794]
 z_index = 1
 z_as_relative = false
 layout_mode = 3
@@ -67,14 +74,40 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("6_21xkr")
 
-[node name="PanelContainer" type="PanelContainer" parent="UIManager" unique_id=2028285405]
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer/UIManager" unique_id=2028285405]
 layout_mode = 0
 offset_left = 100.0
 offset_right = 672.0
 offset_bottom = 530.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_344ge")
 
-[node name="VBox" type="VBoxContainer" parent="UIManager/PanelContainer" unique_id=1034808013]
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/UIManager/PanelContainer" unique_id=1034808013]
 layout_mode = 2
 mouse_filter = 0
 theme = SubResource("Theme_h3mdq")
+
+[node name="BuildingPanelContainer" type="PanelContainer" parent="CanvasLayer/UIManager" unique_id=1008345471]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 60.0
+offset_bottom = 151.0
+script = ExtResource("9_ynf5e")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/UIManager/BuildingPanelContainer" unique_id=20975127]
+layout_mode = 2
+
+[node name="Header" type="Label" parent="CanvasLayer/UIManager/BuildingPanelContainer/VBoxContainer" unique_id=1806066176]
+layout_mode = 2
+
+[node name="GrainLabel" type="Label" parent="CanvasLayer/UIManager/BuildingPanelContainer/VBoxContainer" unique_id=1833484025]
+layout_mode = 2
+
+[node name="IronLabel" type="Label" parent="CanvasLayer/UIManager/BuildingPanelContainer/VBoxContainer" unique_id=1625036993]
+layout_mode = 2
+
+[node name="WaterLabel" type="Label" parent="CanvasLayer/UIManager/BuildingPanelContainer/VBoxContainer" unique_id=54665426]
+layout_mode = 2
+
+[node name="WoodLabel" type="Label" parent="CanvasLayer/UIManager/BuildingPanelContainer/VBoxContainer" unique_id=2023493008]
+layout_mode = 2

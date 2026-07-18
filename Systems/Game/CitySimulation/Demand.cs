@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,13 +25,22 @@ public class Demand
 
         foreach (ResourceType type in Enum.GetValues<ResourceType>())
         {
-            int demand = type switch
+            int demand;
+            switch (type)
             {
-                ResourceType.Grain => Population.workingPopulation * GlobalConfig.GrainPerWorkerRatio
-                                    + Population.dependentPopulation * GlobalConfig.GrainPerDependentRatio,
-                ResourceType.Water => Population.workingPopulation * GlobalConfig.WaterPerWorkerRatio,
-                _ => 0, // Iron & Wood aren't population-driven yet — see notes
-            };
+                case ResourceType.Grain:
+                    demand = Population.workingPopulation * GlobalConfig.GrainPerWorkerRatio
+                           + Population.dependentPopulation * GlobalConfig.GrainPerDependentRatio;
+                    break;
+
+                case ResourceType.Water:
+                    demand = Population.workingPopulation * GlobalConfig.WaterPerWorkerRatio;
+                    break;
+
+                default:
+                    demand = 0; // Iron & Wood aren't population-driven yet — see notes
+                    break;
+            }
 
             result[type] = demand;
         }

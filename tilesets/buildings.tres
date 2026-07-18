@@ -1,0 +1,34 @@
+[gd_resource type="TileSet" format=3 uid="uid://paejk8lr28cp"]
+
+[ext_resource type="Texture2D" uid="uid://ohmcmwt5a140" path="res://Images/Placeholders/farm.png" id="1_farm"]
+[ext_resource type="Texture2D" uid="uid://c4knxm56hpvp1" path="res://Images/Placeholders/mine.png" id="2_mine"]
+[ext_resource type="Texture2D" uid="uid://ct64tc6gu8l7a" path="res://Images/Placeholders/well.png" id="3_well"]
+[ext_resource type="Texture2D" uid="uid://b2r54sa23vn4v" path="res://Images/Placeholders/forestry.png" id="4_fore"]
+
+[sub_resource type="TileSetAtlasSource" id="src_farm"]
+texture = ExtResource("1_farm")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="src_mine"]
+texture = ExtResource("2_mine")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="src_well"]
+texture = ExtResource("3_well")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="src_fore"]
+texture = ExtResource("4_fore")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[resource]
+resource_name = "buildings"
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("src_farm")
+sources/1 = SubResource("src_mine")
+sources/2 = SubResource("src_well")
+sources/3 = SubResource("src_fore")

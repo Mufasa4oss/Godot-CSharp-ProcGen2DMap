@@ -18,12 +18,19 @@ public class Resources
     private readonly Dictionary<ResourceType, int> _amounts = new();
 
     // How much of this resource is held (0 if none).
-    public int Get(ResourceType type) =>
-        _amounts.TryGetValue(type, out int amount) ? amount : 0;
+    public int Get(ResourceType type)
+    {
+        if (_amounts.TryGetValue(type, out int amount))
+            return amount;
+
+        return 0;
+    }
 
     // Add some of a resource to the stockpile.
-    public void Add(ResourceType type, int amount) =>
+    public void Add(ResourceType type, int amount)
+    {
         _amounts[type] = Get(type) + amount;
+    }
 
     // Take some out, but only if there's enough. Returns false and changes nothing if short.
     public bool TryRemove(ResourceType type, int amount)

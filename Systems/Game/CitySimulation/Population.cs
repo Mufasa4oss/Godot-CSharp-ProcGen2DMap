@@ -26,7 +26,10 @@ public class Population //Add small random varitation to reduce predicability???
     /// Exposed as a read-only view so external code cannot mutate it.
     /// </summary>
     private readonly Dictionary<PopTypes, int> _composition = new();
-	public IReadOnlyDictionary<PopTypes, int> Composition => _composition;
+	public IReadOnlyDictionary<PopTypes, int> Composition
+	{
+		get { return _composition; }
+	}
 
 	/// <summary>
 	/// Job types workers can be assigned to.

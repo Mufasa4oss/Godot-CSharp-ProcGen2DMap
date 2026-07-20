@@ -24,6 +24,9 @@
     <Compile Include="..\Systems\Game\Roads.cs" Link="Game\Roads.cs" />
     <!-- Read-only tunables Roads (and others) reference; no Godot types, so it compiles headless. -->
     <Compile Include="..\Systems\Game\GlobalConfig.cs" Link="Game\GlobalConfig.cs" />
+    <!-- The stockpile each road tile owns. Roads gained this dependency when cargo replaced vehicle
+         counts; it's plain C# (no Godot types), so linking it keeps this project headless. -->
+    <Compile Include="..\Systems\Game\Resources.cs" Link="Game\Resources.cs" />
   </ItemGroup>
 
   <ItemGroup>

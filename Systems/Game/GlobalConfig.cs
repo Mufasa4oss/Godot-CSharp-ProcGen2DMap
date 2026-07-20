@@ -13,7 +13,12 @@ public static class GlobalConfig
 
 	// --- Simulation ---
 	public const double TickSeconds = 1.0; // real seconds between game ticks
-	public const int RoadCapacity = 5;     // vehicles on a road before it counts as a bottleneck
+
+	// --- Hauling ---
+	// Together these two set how much a road can actually carry. Capacity is how much can be *parked* on
+	// a tile; HaulPerTick is how fast it moves along. Lower either one and jams show up sooner.
+	public const int RoadCapacity = 5; // units of cargo one road tile holds before it backs up
+	public const int HaulPerTick = 2;  // units a tile passes to the next tile each tick
 
 	// --- Resources ---
 	public const int DepositsPerResource = 8;     // deposits of each kind scattered on the map

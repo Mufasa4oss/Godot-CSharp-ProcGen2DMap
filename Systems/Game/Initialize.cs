@@ -36,7 +36,7 @@ public partial class Initialize : Node2D
 	}
 
 	//place tiles unordered only happens once
-	public List<Vector2I> PlaceTiles() // Make it return MapsCoordsLand?
+	public List<Vector2I> PlaceTiles() // MapCoordsLand
 	{
 
 		int water = 0, grass = 0, beach = 0, desert = 0;

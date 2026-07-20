@@ -9,6 +9,7 @@
 [ext_resource type="TileSet" uid="uid://paejk8lr28cp" path="res://tilesets/buildings.tres" id="7_bld"]
 [ext_resource type="TileSet" uid="uid://c1kskn4igcjwe" path="res://tilesets/resources.tres" id="8_res"]
 [ext_resource type="Script" uid="uid://ck7g7qojf71wi" path="res://UI/BuildingUI.cs" id="9_ynf5e"]
+[ext_resource type="Script" uid="uid://bsqtaels52yba" path="res://UI/CityUI.cs" id="10_cityui"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0xm2m"]
 noise_type = 3
@@ -74,16 +75,18 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("6_21xkr")
 
-[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer/UIManager" unique_id=2028285405]
+[node name="CityPanelContainer" type="PanelContainer" parent="CanvasLayer/UIManager" unique_id=2028285405]
+visible = false
 layout_mode = 0
 offset_left = 100.0
 offset_right = 672.0
 offset_bottom = 530.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_344ge")
+script = ExtResource("10_cityui")
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/UIManager/PanelContainer" unique_id=1034808013]
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/UIManager/CityPanelContainer" unique_id=1034808013]
 layout_mode = 2
-mouse_filter = 0
+mouse_filter = 2
 theme = SubResource("Theme_h3mdq")
 
 [node name="BuildingPanelContainer" type="PanelContainer" parent="CanvasLayer/UIManager" unique_id=1008345471]

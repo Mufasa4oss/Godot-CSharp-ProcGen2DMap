@@ -16,9 +16,15 @@ public partial class Main : Node2D
 	TileMapLayer tml;
 	int worldSeed;
 
+	// Every land tile, produced by worldgen. Kept as a field so GenerateWorld can hand it to the
+	// systems that need the land list (nation borders, resource scattering).
+	List<Vector2I> mapCoordsLand;
+
 	// The player-built road network; each road tile holds the goods currently sitting on it.
-	// Nothing drives it on the tick yet — that's the revamp in progress.
 	Roads roads;
+
+	// Moves goods along those roads, one tile per tick, toward whichever city they can reach.
+	Haulage haulage;
 
 	// The buildings the player has placed; each produces into its own stockpile every tick.
 	Buildings buildings;
@@ -52,6 +58,11 @@ public partial class Main : Node2D
 
 		// Start the game heartbeat. Tick just fires Ticked; each system subscribes to do its own work.
 		roads = new Roads();
+
+		// The hauler needs the roads it moves goods along, the buildings that load them, and the cities
+		// they're headed for. GenerateWorld made the last two, so this has to come after it.
+		haulage = new Haulage(roads, buildings, cities);
+
 		var tick = new Tick();
 		AddChild(tick);
 		WireTickSubscribers(tick);
@@ -119,6 +130,7 @@ public partial class Main : Node2D
 	private void OnTick(long n)
 	{
 		buildings.ProduceAll();          // every placed building produces
+		haulage.HaulOneTick();           // goods shuffle one tile closer to a city
 		foreach (City c in cities.Values)
 		{
 			c.ConsumeDemand();           // each city consumes a tick of demand
@@ -140,7 +152,7 @@ public partial class Main : Node2D
 		};
 
 		var init = new Initialize(tml, noise, moisture, MapSizeX, MapSizeY);
-		List<Vector2I> mapCoordsLand = init.PlaceTiles();
+		mapCoordsLand = init.PlaceTiles();
 
 		// Blended ground (shader), rendered under the tilemap.
 		var ground = new GroundRenderer();

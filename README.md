@@ -47,27 +47,13 @@ deterministically from it.
 
 ## Build & run
 
-Requires **Godot 4.7 (.NET / Mono build)** and the **.NET 8 SDK**.
+Requires **Godot 4.7 (.NET version)** and the **.NET 8 SDK**.
 
-```sh
-dotnet build ProceduralMapGenerator.csproj
-```
-
-Then open the project in the Godot editor and press play. Running Godot does not rebuild the C#, so
-run `dotnet build` after code changes.
-
-## Tests
-
-Engine-free logic is unit-tested with xUnit in a plain .NET project:
-
-```sh
-dotnet test Tests/Tests.csproj
-```
 
 The test project deliberately does **not** use the Godot SDK. It links only the pure sources it needs
 and references GodotSharp just for the `Vector2I` struct, so if that logic ever takes a Godot `Node`
 dependency, the tests stop compiling. Current tests cover terrain classification and Voronoi
-assignment.
+assignment. -> I want to put an emphasis on modular code for easier iteration.
 
 ## Project structure
 

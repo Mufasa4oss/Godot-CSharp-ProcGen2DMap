@@ -1,4 +1,4 @@
-<Project Sdk="Godot.NET.Sdk/4.7.0">
+<Project Sdk="Godot.NET.Sdk/4.7.1">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
@@ -10,5 +10,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scenes\" />
+  </ItemGroup>
+  <!-- DeprecatedCode/ holds source from the original version, kept for reference only. Exclude it so
+       its classes (VoronoiDiagram, MapManager, ...) don't collide with or break the current build. -->
+  <ItemGroup>
+    <Compile Remove="DeprecatedCode/**/*.cs" />
   </ItemGroup>
 </Project>

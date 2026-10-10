@@ -27,6 +27,7 @@ public static class GlobalConfig
 	// --- City & population ---
 	public const int CityDemandPerTick = 1;              // units of each resource a city wants per tick
 	public const int StartingWorkers = 100;              // working population a new city starts with
+	public const int MaxWorkersPerCity = 1000000;        // growth stops here; keeps demand maths well inside int range
 	public const float WorkerToDependentRatio = 1f / 2f; // Worker:Dependent
 	public const float PopBaselineWeight = 1f;           // baseline so every job type can still appear
 	public const float ResourcePullWeight = 5f;          // how hard a nearby deposit pulls the job mix

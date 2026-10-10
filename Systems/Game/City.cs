@@ -28,7 +28,15 @@ public class City
 
     public void GrowPopulation()
     {
-        Population.workingPopulation += (int)(Population.workingPopulation * 0.01f);
+        // Grow 1% per tick, but never past the cap. Without the cap, 1% compounding every second passes
+        // int's limit in about 25 minutes and the population (and demand) wraps around to negative.
+        int growth = (int)(Population.workingPopulation * 0.01f);
+        int grown = Population.workingPopulation + growth;
+        if (grown > GlobalConfig.MaxWorkersPerCity)
+        {
+            grown = GlobalConfig.MaxWorkersPerCity;
+        }
+        Population.workingPopulation = grown;
         Population.dependentPopulation =
             (int)Math.Floor(Population.workingPopulation * GlobalConfig.WorkerToDependentRatio);
         Population.totalPopulation = Population.workingPopulation + Population.dependentPopulation;
